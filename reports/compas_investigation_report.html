@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML Failure Report — COMPAS Recidivism Risk Model</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         background: #f0f2f5; color: #2c3e50; line-height: 1.6; }
+  .page { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  /* Header */
+  .report-header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                   color: white; padding: 40px; border-radius: 12px;
+                   margin-bottom: 24px; }
+  .report-header h1 { font-size: 28px; margin-bottom: 6px; }
+  .report-header .meta { opacity: 0.7; font-size: 14px; margin-top: 8px; }
+  .status-badge { display: inline-block; padding: 6px 18px; border-radius: 20px;
+                  font-weight: 700; font-size: 14px; margin-top: 12px;
+                  background: #e74c3c; color: white; }
+  /* Cards */
+  .card { background: white; border-radius: 10px; padding: 24px;
+           margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .card h2 { font-size: 18px; color: #1a1a2e; margin-bottom: 16px;
+             border-bottom: 2px solid #eee; padding-bottom: 8px; }
+  /* Severity summary */
+  .severity-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+  .sev-card { flex: 1; min-width: 100px; text-align: center; padding: 16px;
+              border-radius: 8px; color: white; }
+  .sev-card .count { font-size: 32px; font-weight: 900; }
+  .sev-card .label { font-size: 12px; opacity: 0.9; text-transform: uppercase; }
+  /* Metrics table */
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                  gap: 12px; }
+  .metric-box { background: #f8f9fa; padding: 14px; border-radius: 8px;
+                border-left: 4px solid #3498db; }
+  .metric-box .val { font-size: 24px; font-weight: 700; color: #2c3e50; }
+  .metric-box .name { font-size: 12px; color: #7f8c8d; text-transform: uppercase; }
+  /* Findings */
+  .finding { border-left: 4px solid; padding: 14px 18px; margin-bottom: 12px;
+             border-radius: 0 8px 8px 0; background: #fafafa; }
+  .finding .finding-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .finding .finding-cat { font-size: 11px; text-transform: uppercase;
+                          letter-spacing: 0.5px; opacity: 0.65; }
+  .finding .finding-desc { font-size: 14px; margin: 6px 0; color: #555; }
+  .finding .finding-rec { font-size: 13px; color: #27ae60; font-style: italic; }
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: #1a1a2e; color: white; padding: 10px 12px; text-align: left; }
+  td { padding: 9px 12px; border-bottom: 1px solid #eee; }
+  tr:nth-child(even) td { background: #f8f9fa; }
+  /* Footer */
+  .footer { text-align: center; font-size: 12px; color: #999; padding: 20px; }
+</style>
+</head>
+<body><div class="page">
+
+<div class="report-header">
+  <h1>🔍 ML Failure Investigation Report</h1>
+  <div style="font-size:20px; margin-top:8px; opacity:0.9">COMPAS Recidivism Risk Model
+       <span style="opacity:0.6; font-size:14px">v2.1</span></div>
+  <div class="meta">
+    Dataset: Synthetic COMPAS (N=5000) &nbsp;|&nbsp;
+    Analyst: Phase 2 Investigation Engine &nbsp;|&nbsp;
+    Generated: 2026-05-31 10:57:03
+  </div>
+  <div class="status-badge">🔴 Overall Status: CRITICAL</div>
+</div>
+
+<div class="card">
+  <h2>📊 Findings Summary (6 total)</h2>
+  <div class="severity-grid">
+      <div class="sev-card" style="background:#e74c3c">
+        <div class="count">1</div>
+        <div class="label">🔴 CRITICAL</div>
+      </div>
+      <div class="sev-card" style="background:#e67e22">
+        <div class="count">2</div>
+        <div class="label">🟠 HIGH</div>
+      </div>
+      <div class="sev-card" style="background:#f1c40f">
+        <div class="count">1</div>
+        <div class="label">🟡 MEDIUM</div>
+      </div>
+      <div class="sev-card" style="background:#3498db">
+        <div class="count">1</div>
+        <div class="label">🔵 LOW</div>
+      </div>
+      <div class="sev-card" style="background:#2ecc71">
+        <div class="count">1</div>
+        <div class="label">✅ OK</div>
+      </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📈 Model Performance Metrics</h2>
+  <div class="metrics-grid">
+      <div class="metric-box">
+        <div class="val">71.8%</div>
+        <div class="name">Accuracy</div>
+      </div>
+      <div class="metric-box">
+        <div class="val">0.654</div>
+        <div class="name">Precision</div>
+      </div>
+      <div class="metric-box">
+        <div class="val">0.821</div>
+        <div class="name">Recall</div>
+      </div>
+      <div class="metric-box">
+        <div class="val">0.728</div>
+        <div class="name">F1 Score</div>
+      </div>
+      <div class="metric-box">
+        <div class="val">0.693</div>
+        <div class="name">ROC-AUC</div>
+      </div>
+      <div class="metric-box">
+        <div class="val">0.631</div>
+        <div class="name">PR-AUC</div>
+      </div>
+      <div class="metric-box">
+        <div class="val">1500</div>
+        <div class="name">N Test Samples</div>
+      </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🚨 Detailed Findings</h2>
+  
+      <div class="finding" style="border-color:#e74c3c">
+        <div class="finding-cat">🔴 CRITICAL &nbsp;·&nbsp; Fairness</div>
+        <div class="finding-title">Disparate False Positive Rate</div>
+        <div class="finding-desc">FPR gap of 22.5% across groups ['Black', 'White']. Group 'Black' has highest FPR=42.3%. This group is disproportionately flagged incorrectly. (measured: <strong>0.2250</strong>, threshold: 0.1000)</div>
+        <div class="finding-rec">💡 Apply post-processing threshold adjustment per group, or use adversarial debiasing during training.</div>
+      </div>
+      <div class="finding" style="border-color:#e67e22">
+        <div class="finding-cat">🟠 HIGH &nbsp;·&nbsp; Performance</div>
+        <div class="finding-title">Below-Target Accuracy</div>
+        <div class="finding-desc">Model accuracy 71.8% is below 75% threshold. (measured: <strong>0.7180</strong>, threshold: 0.7500)</div>
+        <div class="finding-rec">💡 Consider hyperparameter tuning, more training data, or ensembling.</div>
+      </div>
+      <div class="finding" style="border-color:#e67e22">
+        <div class="finding-cat">🟠 HIGH &nbsp;·&nbsp; Performance</div>
+        <div class="finding-title">Weak Discrimination (AUC < 0.70)</div>
+        <div class="finding-desc">AUC=0.693 indicates weak predictive power. (measured: <strong>0.6930</strong>, threshold: 0.7000)</div>
+        <div class="finding-rec">💡 Investigate feature importance, add informative features.</div>
+      </div>
+      <div class="finding" style="border-color:#f1c40f">
+        <div class="finding-cat">🟡 MEDIUM &nbsp;·&nbsp; Statistical</div>
+        <div class="finding-title">Model Improvement Not Statistically Significant</div>
+        <div class="finding-desc">McNemar's test p=0.2670 — difference between models is NOT significant.</div>
+        <div class="finding-rec">💡 Do not deploy new model based on this result alone. Collect more test data.</div>
+      </div>
+      <div class="finding" style="border-color:#3498db">
+        <div class="finding-cat">🔵 LOW &nbsp;·&nbsp; Statistical</div>
+        <div class="finding-title">Non-Significant Result</div>
+        <div class="finding-desc">p-value=0.2670 > 0.05, cannot reject null hypothesis.</div>
+        <div class="finding-rec">💡 Consider collecting more data or revisiting hypothesis formulation.</div>
+      </div>
+      <div class="finding" style="border-color:#2ecc71">
+        <div class="finding-cat">✅ OK &nbsp;·&nbsp; Calibration</div>
+        <div class="finding-title">Calibration OK</div>
+        <div class="finding-desc">Max calibration error=0.040 (< 0.10).</div>
+        <div class="finding-rec">💡 No calibration action needed.</div>
+      </div>
+</div>
+
+<div class="card">
+  <h2>⚖️ Fairness Metrics by Group</h2>
+  <table><thead><tr><th>group</th><th>n</th><th>base_rate</th><th>accuracy</th><th>TPR</th><th>FPR</th><th>FNR</th><th>PPV</th><th>TP</th><th>FP</th><th>TN</th><th>FN</th></tr></thead><tbody><tr><td>Black</td><td>765</td><td>0.5230</td><td>0.6980</td><td>0.7910</td><td>0.4230</td><td>0.2090</td><td>0.6020</td><td>210</td><td>178</td><td>242</td><td>50</td></tr><tr><td>White</td><td>735</td><td>0.3910</td><td>0.7390</td><td>0.8120</td><td>0.1980</td><td>0.1880</td><td>0.7180</td><td>190</td><td>85</td><td>343</td><td>42</td></tr></tbody></table>
+  <p style="margin-top:12px; font-size:13px; color:#666">
+    <strong>Key:</strong> TPR=True Positive Rate (Recall), FPR=False Positive Rate,
+    FNR=False Negative Rate, PPV=Precision.
+    Equal Fairness requires TPR and FPR to be equal across all groups.
+  </p>
+</div>
+
+<div class="card">
+  <h2>🎯 Calibration Analysis</h2>
+  <table><thead><tr><th>group</th><th>score_bin</th><th>n</th><th>mean_predicted</th><th>actual_recid_rate</th><th>calibration_error</th></tr></thead><tbody><tr><td>Black</td><td>0.0-0.2</td><td>80</td><td>0.120</td><td>0.110</td><td>0.010</td></tr><tr><td>Black</td><td>0.2-0.4</td><td>120</td><td>0.310</td><td>0.290</td><td>0.020</td></tr><tr><td>Black</td><td>0.4-0.6</td><td>200</td><td>0.500</td><td>0.470</td><td>0.030</td></tr><tr><td>Black</td><td>0.6-0.8</td><td>230</td><td>0.700</td><td>0.690</td><td>0.010</td></tr><tr><td>Black</td><td>0.8-1.0</td><td>135</td><td>0.880</td><td>0.840</td><td>0.040</td></tr><tr><td>White</td><td>0.0-0.2</td><td>95</td><td>0.110</td><td>0.100</td><td>0.010</td></tr><tr><td>White</td><td>0.2-0.4</td><td>140</td><td>0.300</td><td>0.270</td><td>0.030</td></tr><tr><td>White</td><td>0.4-0.6</td><td>180</td><td>0.510</td><td>0.500</td><td>0.010</td></tr><tr><td>White</td><td>0.6-0.8</td><td>195</td><td>0.690</td><td>0.680</td><td>0.010</td></tr><tr><td>White</td><td>0.8-1.0</td><td>125</td><td>0.870</td><td>0.830</td><td>0.040</td></tr></tbody></table>
+  <p style="margin-top:12px; font-size:13px; color:#666">
+    Good calibration: mean_predicted ≈ actual_recid_rate in each bin.
+    High calibration_error means the model is over/under-confident.
+  </p>
+</div>
+
+<div class="card">
+  <h2>📐 Statistical Significance</h2>
+  <table>
+    <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+    <tbody><tr><td>test</td><td>McNemar's Test</td></tr><tr><td>model1_acc</td><td>0.718000</td></tr><tr><td>model2_acc</td><td>0.721000</td></tr><tr><td>chi2_stat</td><td>1.230000</td></tr><tr><td>p_value</td><td>0.267000</td></tr><tr><td>reject_H0</td><td>False</td></tr><tr><td>interpretation</td><td>No significant difference between models</td></tr></tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>📚 Investigation Context</h2>
+  <p>This report analyses the COMPAS recidivism prediction model for
+         fairness violations across racial groups. The analysis follows
+         ProPublica's 2016 methodology and includes the Chouldechova (2017)
+         impossibility theorem implications.</p>
+         <p style="margin-top:8px; color:#e74c3c">
+         <strong>Important:</strong> This is a synthetic dataset for educational purposes.
+         </p>
+</div>
+
+<div class="card">
+  <h2>💡 Prioritized Recommendations</h2>
+  <table>
+    <thead><tr><th>Priority</th><th>Issue</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span style="color:#e74c3c">🔴 CRITICAL</span></td>
+        <td><strong>Disparate False Positive Rate</strong></td>
+        <td>Apply post-processing threshold adjustment per group, or use adversarial debiasing during training.</td>
+      </tr>
+      <tr>
+        <td><span style="color:#e67e22">🟠 HIGH</span></td>
+        <td><strong>Below-Target Accuracy</strong></td>
+        <td>Consider hyperparameter tuning, more training data, or ensembling.</td>
+      </tr>
+      <tr>
+        <td><span style="color:#e67e22">🟠 HIGH</span></td>
+        <td><strong>Weak Discrimination (AUC < 0.70)</strong></td>
+        <td>Investigate feature importance, add informative features.</td>
+      </tr>
+      <tr>
+        <td><span style="color:#f1c40f">🟡 MEDIUM</span></td>
+        <td><strong>Model Improvement Not Statistically Significant</strong></td>
+        <td>Do not deploy new model based on this result alone. Collect more test data.</td>
+      </tr>
+      <tr>
+        <td><span style="color:#3498db">🔵 LOW</span></td>
+        <td><strong>Non-Significant Result</strong></td>
+        <td>Consider collecting more data or revisiting hypothesis formulation.</td>
+      </tr>
+      <tr>
+        <td><span style="color:#2ecc71">✅ OK</span></td>
+        <td><strong>Calibration OK</strong></td>
+        <td>No calibration action needed.</td>
+      </tr></tbody>
+  </table>
+</div>
+
+<div class="footer">
+  Generated by ML Failure Investigation Engine &nbsp;·&nbsp;
+  2026-05-31 10:57:03 &nbsp;·&nbsp;
+  Model: COMPAS Recidivism Risk Model v2.1
+</div>
+</div></body></html>

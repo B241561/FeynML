@@ -1,0 +1,79 @@
+{
+  "model_name": "COMPAS Recidivism Risk Model",
+  "model_version": "2.1",
+  "dataset": "Synthetic COMPAS (N=5000)",
+  "report_date": "2026-05-31 10:57:03",
+  "overall_status": "CRITICAL",
+  "severity_counts": {
+    "CRITICAL": 1,
+    "HIGH": 2,
+    "MEDIUM": 1,
+    "LOW": 1,
+    "OK": 1
+  },
+  "metrics": {
+    "accuracy": 0.718,
+    "precision": 0.654,
+    "recall": 0.821,
+    "f1": 0.728,
+    "roc_auc": 0.693,
+    "pr_auc": 0.631,
+    "n_test_samples": 1500
+  },
+  "findings": [
+    {
+      "category": "Performance",
+      "title": "Below-Target Accuracy",
+      "description": "Model accuracy 71.8% is below 75% threshold.",
+      "severity": "HIGH",
+      "metric_value": 0.718,
+      "threshold": 0.75,
+      "recommendation": "Consider hyperparameter tuning, more training data, or ensembling."
+    },
+    {
+      "category": "Performance",
+      "title": "Weak Discrimination (AUC < 0.70)",
+      "description": "AUC=0.693 indicates weak predictive power.",
+      "severity": "HIGH",
+      "metric_value": 0.693,
+      "threshold": 0.7,
+      "recommendation": "Investigate feature importance, add informative features."
+    },
+    {
+      "category": "Fairness",
+      "title": "Disparate False Positive Rate",
+      "description": "FPR gap of 22.5% across groups ['Black', 'White']. Group 'Black' has highest FPR=42.3%. This group is disproportionately flagged incorrectly.",
+      "severity": "CRITICAL",
+      "metric_value": 0.22499999999999998,
+      "threshold": 0.1,
+      "recommendation": "Apply post-processing threshold adjustment per group, or use adversarial debiasing during training."
+    },
+    {
+      "category": "Statistical",
+      "title": "Model Improvement Not Statistically Significant",
+      "description": "McNemar's test p=0.2670 \u2014 difference between models is NOT significant.",
+      "severity": "MEDIUM",
+      "metric_value": null,
+      "threshold": null,
+      "recommendation": "Do not deploy new model based on this result alone. Collect more test data."
+    },
+    {
+      "category": "Statistical",
+      "title": "Non-Significant Result",
+      "description": "p-value=0.2670 > 0.05, cannot reject null hypothesis.",
+      "severity": "LOW",
+      "metric_value": null,
+      "threshold": null,
+      "recommendation": "Consider collecting more data or revisiting hypothesis formulation."
+    },
+    {
+      "category": "Calibration",
+      "title": "Calibration OK",
+      "description": "Max calibration error=0.040 (< 0.10).",
+      "severity": "OK",
+      "metric_value": null,
+      "threshold": null,
+      "recommendation": "No calibration action needed."
+    }
+  ]
+}
