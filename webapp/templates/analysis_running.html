@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5 mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 animate-up">
+            <div class="text-center mb-5">
+                <div class="spinner-border text-indigo-600 mb-4 analysis-spinner" role="status"></div>
+                <h1 class="display-5 fw-bold mb-2">Analysis in Progress</h1>
+                <p class="lead text-muted">FeynML is executing the 4-phase diagnostic audit...</p>
+            </div>
+
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden mb-5">
+                <div class="card-header bg-secondary p-4 border-bottom d-flex justify-content-between align-items-center">
+                    <span class="small fw-bold text-uppercase opacity-75">Investigation Log</span>
+                    <span class="badge bg-indigo-600 rounded-pill px-3">Live</span>
+                </div>
+                <div class="card-body bg-card p-0 log-panel">
+                    <pre id="log-output" class="text-success p-4 mb-0 h-100 overflow-auto small"></pre>
+                </div>
+            </div>
+
+            <div class="row g-4 text-center">
+                <div class="col-md-3">
+                    <div class="p-3">
+                        <i class="bi bi-activity h3 text-indigo-600"></i>
+                        <div class="small fw-bold mt-2">Diagnostics</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 opacity-50" id="step-drift">
+                        <i class="bi bi-eye h3 text-muted"></i>
+                        <div class="small fw-bold mt-2">Drift</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 opacity-50" id="step-root">
+                        <i class="bi bi-search h3 text-muted"></i>
+                        <div class="small fw-bold mt-2">Root Cause</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 opacity-50" id="step-report">
+                        <i class="bi bi-file-earmark-check h3 text-muted"></i>
+                        <div class="small fw-bold mt-2">Final Report</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const logOutput = document.getElementById('log-output');
+    
+    function pollLogs() {
+        fetch('/analysis-status')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.logs && data.logs.length > 0) {
+                    logOutput.textContent = data.logs.join('\n');
+                    logOutput.scrollTop = logOutput.scrollHeight;
+                }
+                
+                // Update step indicators based on log keywords or status
+                const fullText = logOutput.textContent;
+                if (fullText.includes('Phase 3') || fullText.includes('DriftEngine')) {
+                    document.getElementById('step-drift').classList.remove('opacity-50');
+                    document.getElementById('step-drift').querySelector('i').classList.replace('text-muted', 'text-indigo-600');
+                }
+                if (fullText.includes('Phase 4') || fullText.includes('LabelNoiseEngine')) {
+                    document.getElementById('step-root').classList.remove('opacity-50');
+                    document.getElementById('step-root').querySelector('i').classList.replace('text-muted', 'text-indigo-600');
+                }
+                if (data.status === 'completed' || fullText.includes('ANALYSIS_COMPLETED')) {
+                    document.getElementById('step-report').classList.remove('opacity-50');
+                    document.getElementById('step-report').querySelector('i').classList.replace('text-muted', 'text-indigo-600');
+                    
+                    // Delay slightly to show completion before redirect
+                    setTimeout(() => {
+                        window.location.href = `/dashboard/${data.report_id}`;
+                    }, 1000);
+                } else if (data.status === 'failed') {
+                    alert('Analysis failed: ' + (data.error || 'Unknown error'));
+                    window.location.href = '/analyze';
+                } else {
+                    setTimeout(pollLogs, 1000);
+                }
+            })
+            .catch(error => {
+                console.error('Polling error:', error);
+                // Retry after delay
+                setTimeout(pollLogs, 2000);
+            });
+    }
+    pollLogs();
+</script>
+{% endblock %}

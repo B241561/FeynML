@@ -71,6 +71,18 @@ class CalibrationEngine:
         if not _MODULES_LOADED:
             return {"error": _IMPORT_ERROR}
         result = calibration_summary(y_true, y_prob, self.n_bins, model_name)
+        
+        # Normalize severity for webapp compatibility
+        # EXCELLENT -> NONE, GOOD -> LOW, MODERATE -> MEDIUM, POOR -> HIGH
+        severity_map = {
+            "EXCELLENT": "NONE",
+            "GOOD":      "LOW",
+            "MODERATE":  "MEDIUM",
+            "POOR":      "HIGH"
+        }
+        if "severity" in result:
+            result["severity"] = severity_map.get(result["severity"], result["severity"])
+            
         self._results["last_eval"] = result
         return result
 
@@ -260,7 +272,7 @@ if __name__ == "__main__":
 
         ce     = CalibrationEngine()
         report = ce.evaluate(y_t, raw, "DemoModel")
-        print(f"ECE: {report['ece']}  Rating: {report['rating']}")
+        print(f"ECE: {report['ece']}  Severity: {report['severity']}")
 
         ac = ce.auto_calibrate(y_t[:split], raw[:split], y_t[split:], raw[split:])
         print(f"Auto-calibrate: {ac['interpretation']}")

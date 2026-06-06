@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-5 animate-premium">
+        <div>
+            <h2 class="fw-bold mb-1">Investigation Dashboard</h2>
+            <p class="text-muted mb-0">Audit session: <span class="badge bg-light border">{{ report_id }}</span></p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="dropdown">
+                <button class="btn btn-outline-indigo dropdown-toggle rounded-pill" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-download me-2"></i>Export
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 bg-card">
+                    <li><a class="dropdown-item py-2 text-main" href="{{ url_for('export_json', report_id=report_id) }}"><i class="bi bi-filetype-json me-2 text-indigo-500"></i>Raw JSON</a></li>
+                    <li><a class="dropdown-item py-2 text-main" href="{{ url_for('export_csv', report_id=report_id) }}"><i class="bi bi-filetype-csv me-2 text-indigo-500"></i>Summary CSV</a></li>
+                    <li><a class="dropdown-item py-2 text-main" href="{{ url_for('export_pdf', report_id=report_id) }}"><i class="bi bi-filetype-pdf me-2 text-indigo-500"></i>Full PDF</a></li>
+                </ul>
+            </div>
+            <div class="text-end">
+                <div class="label text-muted small fw-bold text-uppercase opacity-50 mb-1">Global Status</div>
+                {% set r_color = 'critical' if risk_level == 'CRITICAL' else 'high' if risk_level == 'HIGH' else 'medium' if risk_level == 'MEDIUM' else 'low' if risk_level == 'LOW' else 'none' %}
+                <span class="badge-pill badge-{{ r_color }}">{{ risk_level }} RISK</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Row: KPI Cards -->
+    <div class="row g-4 mb-5 animate-premium" style="animation-delay: 0.1s;">
+        <div class="col-md">
+            <div class="card kpi-card h-100 p-4">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="label">Calibration</div>
+                    {% if data.get('calibration') and data.calibration.get('prediction_source') == 'auto_generated' %}
+                    <span class="badge badge-xs bg-indigo-50 text-indigo-600 border border-indigo-200">AUTO MODEL</span>
+                    {% endif %}
+                </div>
+                {% if not data.get('calibration') or data.calibration.status == 'SKIPPED' %}
+                <div class="metric text-muted">SKIPPED</div>
+                <div class="small text-muted mt-2">No predictions provided</div>
+                {% else %}
+                {% set ece = data.calibration.get('ece', data.calibration.get('findings', {}).get('ece', 0)) %}
+                <div class="metric">{{ (ece * 100) | round(1) }}%</div>
+                <div class="small text-muted mt-2">Expected Error (ECE)</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="card kpi-card h-100 p-4">
+                <div class="label">Feature Drift</div>
+                {% set drift_findings = data.get('drift', {}).get('findings', {}) %}
+                {% set num_drifted = drift_findings.get('num_drifted_features', drift_findings.get('n_drifted', 0)) %}
+                <div class="metric">{{ num_drifted }}</div>
+                <div class="small text-muted mt-2">Drifted Features</div>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="card kpi-card h-100 p-4">
+                <div class="label">Label Noise</div>
+                {% set noise_findings = data.get('label_noise', {}).get('findings', {}) %}
+                {% set noise = noise_findings.get('estimated_noise_fraction', 0) %}
+                <div class="metric">{{ (noise * 100) | round(1) }}%</div>
+                <div class="small text-muted mt-2">Noise Fraction</div>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="card kpi-card h-100 p-4">
+                <div class="label">Leakage</div>
+                {% set leakage_findings = data.get('leakage', {}).get('findings', {}) %}
+                {% set suspects = leakage_findings.get('num_suspects', 0) %}
+                <div class="metric">{{ suspects }}</div>
+                <div class="small text-muted mt-2">Suspect Columns</div>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="card kpi-card h-100 p-4">
+                <div class="label">Missingness</div>
+                {% set missing_findings = data.get('missing_data', {}).get('findings', {}) %}
+                {% set max_miss = missing_findings.get('max_missing_rate', 0) %}
+                <div class="metric">{{ (max_miss * 100) | round(1) }}%</div>
+                <div class="small text-muted mt-2">Max Feature Rate</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Middle Row: Detail Grid -->
+    <div class="row g-4 mb-5">
+        <!-- Visual Analytics Row -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <span>Calibration & Diagnostics</span>
+                        {% if data.get('calibration') and data.calibration.get('prediction_source') == 'auto_generated' %}
+                        <small class="text-indigo-600 ms-2 fw-normal" style="font-size: 0.75rem;">(Auto-generated: {{ data.calibration.get('model_type', 'Baseline') }})</small>
+                        {% endif %}
+                    </div>
+                    <i class="bi bi-graph-up text-indigo-500"></i>
+                </div>
+                <div class="card-body p-0">
+                    {% if data.get('calibration') and data.calibration.status == 'SKIPPED' %}
+                    <div class="d-flex align-items-center justify-content-center" style="height:350px;">
+                        <div class="text-center">
+                            <i class="bi bi-slash-circle display-4 text-muted mb-3"></i>
+                            <p class="text-muted">Calibration analysis skipped.<br><small>No prediction column provided.</small></p>
+                        </div>
+                    </div>
+                    {% elif not charts.get('calibration') %}
+                    <div class="d-flex align-items-center justify-content-center p-5" style="height:350px;">
+                        <div class="text-center">
+                            <i class="bi bi-info-circle display-4 text-indigo-600 mb-3"></i>
+                            <h5 class="fw-bold">Reliability curve unavailable</h5>
+                            <p class="text-muted small px-4">The auto-generated regression model cannot produce a standard classification reliability curve.</p>
+                            <div class="mt-3 p-3 bg-light rounded text-start small">
+                                <div><strong>ECE:</strong> {{ (ece * 100) | round(2) }}%</div>
+                                <div><strong>Source:</strong> {{ data.calibration.prediction_source }}</div>
+                                <div><strong>Severity:</strong> {{ data.calibration.severity }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div id="chart-calibration" style="width:100%; height:350px;"></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Feature Drift Analytics</span>
+                    <i class="bi bi-bar-chart-line text-indigo-500"></i>
+                </div>
+                <div class="card-body p-0">
+                    <div id="chart-drift" style="width:100%; height:350px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Phase 2 Card -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Diagnostics & Fairness</span>
+                    <i class="bi bi-activity text-indigo-500"></i>
+                </div>
+                <div class="card-body">
+                    {% if data.get('fairness') and data.fairness.status != 'SKIPPED' %}
+                    <div class="row text-center g-4">
+                        <div class="col-4">
+                            <div class="label text-muted small mb-1">Detected Bias</div>
+                            <div class="metric h2 fw-bold mb-0">{% if data.fairness.findings.get('disparity_ratio') is defined %}{{ data.fairness.findings.disparity_ratio | round(2) }}{% else %}0.0{% endif %}</div>
+                        </div>
+                        <div class="col-4 border-start border-end">
+                            <div class="label text-muted small mb-1">Impacted Groups</div>
+                            <div class="metric h2 fw-bold mb-0">{% if data.fairness.findings.get('groups') is defined %}{{ data.fairness.findings.groups | length }}{% else %}0{% endif %}</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="label text-muted small mb-1">Disparity Index</div>
+                            <div class="metric h2 fw-bold mb-0">{% if data.fairness.findings.get('max_disparity') is defined %}{{ (data.fairness.findings.max_disparity * 100) | round(1) }}%{% else %}0%{% endif %}</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="d-flex align-items-center justify-content-center h-100">
+                        <p class="text-fairness-muted fst-italic mb-0">Fairness audit not configured.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Observability (Drift)</span>
+                    <i class="bi bi-eye text-indigo-500"></i>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            {% set drift_findings = data.get('drift', {}).get('findings', {}) %}
+                            <div class="metric display-6 fw-bold">{% if drift_findings.get('domain_auc') is defined %}{{ drift_findings.domain_auc | round(3) }}{% else %}0.0{% endif %}</div>
+                            <div class="label text-muted small mt-1">Domain AUC</div>
+                        </div>
+                        <div class="col border-start ms-3">
+                            <div class="label text-muted small mb-1">Drifted Features</div>
+                            <div class="metric h2 fw-bold mb-0">{{ num_drifted }}</div>
+                        </div>
+                        <div class="col border-start">
+                            <div class="label text-muted small mb-1">Mean PSI</div>
+                            <div class="metric h5 mb-0">{{ drift_findings.get('mean_psi', 0) | round(3) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Action Row -->
+    <div class="card audit-banner p-4 shadow-lg">
+        <div class="row align-items-center">
+            <div class="col">
+                <h4 class="mb-1">Comprehensive Audit Report</h4>
+                <p class="mb-0">View full statistical breakdowns, charts, and mitigation strategies.</p>
+            </div>
+            <div class="col-auto">
+                <a href="{{ url_for('view_report', report_id=report_id) }}" class="btn btn-indigo px-4 py-2">
+                    <i class="bi bi-file-earmark-bar-graph me-2"></i>View Full Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+    <!-- Phase 4 Section -->
+    <section class="phase4-section mt-5">
+        <div class="container">
+            <h3 class="fw-bold mb-3">Phase 4 — Advanced Analysis</h3>
+            <div class="analysis-cards-grid d-flex gap-3">
+                <div class="card p-3">
+                    <h5>Label Noise Analysis</h5>
+                    <p class="small">Detect mislabeled samples and estimate noise.</p>
+                    <a href="{{ url_for('phase4.label_noise') }}" class="btn btn-sm btn-outline-indigo">Open</a>
+                </div>
+                <div class="card p-3">
+                    <h5>Leakage Detection</h5>
+                    <p class="small">Identify target and temporal leakage.</p>
+                    <a href="{{ url_for('phase4.leakage') }}" class="btn btn-sm btn-outline-indigo">Open</a>
+                </div>
+                <div class="card p-3">
+                    <h5>Missing Data</h5>
+                    <p class="small">Analyze missingness mechanisms and patterns.</p>
+                    <a href="{{ url_for('phase4.missing_data') }}" class="btn btn-sm btn-outline-indigo">Open</a>
+                </div>
+                <div class="card p-3">
+                    <h5>Causal Analysis</h5>
+                    <p class="small">Causal graphing and causal effect estimation.</p>
+                    <a href="{{ url_for('phase4.causal') }}" class="btn btn-sm btn-outline-indigo">Open</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% if charts %}
+<script>
+    // Initialize Plotly Charts with theme awareness
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    const baseLayout = {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { 
+            color: isDarkMode ? '#ffffff' : '#0f172a',
+            family: "Inter, sans-serif"
+        },
+        xaxis: {
+            gridcolor: isDarkMode ? '#334155' : '#e2e8f0',
+            zerolinecolor: isDarkMode ? '#334155' : '#e2e8f0',
+            tickfont: { color: isDarkMode ? '#94a3b8' : '#64748b' }
+        },
+        yaxis: {
+            gridcolor: isDarkMode ? '#334155' : '#e2e8f0',
+            zerolinecolor: isDarkMode ? '#334155' : '#e2e8f0',
+            tickfont: { color: isDarkMode ? '#94a3b8' : '#64748b' }
+        }
+    };
+
+    {% if charts.get('calibration') %}
+    var calChart = {{ charts.calibration | safe }};
+    Object.assign(calChart.layout, baseLayout);
+    Plotly.newPlot('chart-calibration', calChart.data, calChart.layout, {responsive: true, displayModeBar: false});
+    {% endif %}
+
+    {% if charts.get('drift') %}
+    var driftChart = {{ charts.drift | safe }};
+    Object.assign(driftChart.layout, baseLayout);
+    Plotly.newPlot('chart-drift', driftChart.data, driftChart.layout, {responsive: true, displayModeBar: false});
+    {% endif %}
+</script>
+{% endif %}
+{% endblock %}

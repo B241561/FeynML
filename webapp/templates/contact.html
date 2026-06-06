@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5 mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 animate-up">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold mb-3">Contact Us</h1>
+                <p class="lead text-muted">Have questions about the platform or interested in enterprise licensing?</p>
+            </div>
+            
+            <div class="card p-5 shadow border-0 rounded-4">
+                <form id="contactForm">
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Full Name</label>
+                        <input type="text" class="form-control bg-main border-color p-3" placeholder="John Doe" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Work Email</label>
+                        <input type="email" class="form-control bg-main border-color p-3" placeholder="john@company.ai" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Inquiry Type</label>
+                        <select class="form-select bg-main border-color p-3">
+                            <option>Platform Support</option>
+                            <option>Enterprise Inquiry</option>
+                            <option>Feature Request</option>
+                            <option>General Feedback</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Message</label>
+                        <textarea class="form-control bg-main border-color p-3" rows="4" placeholder="How can we help?" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-indigo w-100 p-3 rounded-3 fw-bold">
+                        Send Message
+                    </button>
+                </form>
+                
+                <div id="successMessage" class="mt-4 alert alert-success d-none border-0 shadow-sm">
+                    <i class="bi bi-check-circle-fill me-2"></i> Message sent successfully! We'll get back to you shortly.
+                </div>
+            </div>
+            
+            <div class="mt-5">
+                <p class="contact-email-note">Prefer email? Reach us at <a href="mailto:b241706@skit.ac.in">b241706@skit.ac.in</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        this.classList.add('d-none');
+        document.getElementById('successMessage').classList.remove('d-none');
+    });
+</script>
+{% endblock %}

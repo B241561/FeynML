@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Usage Dashboard | FeynML{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Usage Analytics</h2>
+            <p class="text-muted mb-0">Track your platform activity, uploads, storage, and recent investigations.</p>
+        </div>
+        <a href="{{ url_for('saved_reports') }}" class="btn btn-outline-indigo">View Reports</a>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card p-4 shadow-lg border-0">
+                <div class="label text-muted small text-uppercase mb-2">Total Analyses</div>
+                <div class="h2 fw-bold">{{ totals.total_analyses }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-4 shadow-lg border-0">
+                <div class="label text-muted small text-uppercase mb-2">Uploads</div>
+                <div class="h2 fw-bold">{{ totals.total_uploads }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-4 shadow-lg border-0">
+                <div class="label text-muted small text-uppercase mb-2">Storage Used</div>
+                <div class="h2 fw-bold">{{ totals.storage_used_mb }} MB</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-4 shadow-lg border-0">
+                <div class="label text-muted small text-uppercase mb-2">Last Analysis</div>
+                <div class="h2 fw-bold">{{ totals.last_analysis }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card p-4 shadow-lg border-0">
+                <h5 class="fw-bold mb-3">Recent Analysis History</h5>
+                {% if analyses %}
+                <div class="list-group list-group-flush">
+                    {% for analysis in analyses %}
+                    <div class="list-group-item bg-main border-color rounded-4 mb-3 p-4">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <h6 class="fw-bold mb-1">{{ analysis.dataset_name }}</h6>
+                                <p class="text-muted small mb-0">Completed {{ analysis.completed_at.strftime('%b %d, %Y @ %H:%M') }}</p>
+                            </div>
+                            <span class="badge bg-indigo-50 text-indigo-600">{{ analysis.status }}</span>
+                        </div>
+                        <div class="mt-3 d-flex gap-2 flex-wrap">
+                            {% if analysis.report_id %}
+                            <a href="{{ url_for('view_dashboard', report_id=analysis.report_id) }}" class="btn btn-outline-indigo btn-sm">Open Report</a>
+                            <a href="{{ url_for('export_pdf', report_id=analysis.report_id) }}" class="btn btn-indigo btn-sm">Download PDF</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-5 text-center text-muted">No analysis history available yet.</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card p-4 shadow-lg border-0">
+                <h5 class="fw-bold mb-3">Insights</h5>
+                <ul class="list-unstyled text-muted small">
+                    <li class="mb-3"><span class="fw-semibold">Growth:</span> Your analysis volume is automatically tracked for every completed report.</li>
+                    <li class="mb-3"><span class="fw-semibold">Storage:</span> The system calculates dataset storage and report artifacts in real time.</li>
+                    <li><span class="fw-semibold">Retention:</span> You can delete old datasets and reports to free space.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

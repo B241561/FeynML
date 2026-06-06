@@ -293,6 +293,60 @@ def shap_waterfall_data(shap_values, feature_names, feature_values, base_value, 
         "steps":       waterfall,
     }
 
+
+def shap_waterfall_plot_data(shap_values, feature_names, feature_values, base_value, prediction):
+    """
+    Prepare complete data for SHAP waterfall plot visualization.
+    Includes plotting coordinates and visual formatting.
+    
+    Args:
+        shap_values: list of SHAP values for each feature
+        feature_names: list of feature names
+        feature_values: list of actual feature values
+        base_value: base expectation value
+        prediction: model prediction
+    
+    Returns:
+        dict with plot-ready data including coordinates and formatting
+    """
+    contributions = sorted(
+        zip(shap_values, feature_names, feature_values),
+        key=lambda t: abs(t[0]), reverse=True
+    )
+    
+    plot_data = []
+    running = base_value
+    
+    # Calculate plot coordinates
+    for i, (shap_val, fname, fval) in enumerate(contributions):
+        start_y = running
+        end_y = running + shap_val
+        running += shap_val
+        
+        plot_data.append({
+            "feature": fname,
+            "feature_value": fval,
+            "shap_value": round(shap_val, 6),
+            "start_y": round(start_y, 6),
+            "end_y": round(end_y, 6),
+            "bar_height": round(abs(shap_val), 6),
+            "direction": "positive" if shap_val >= 0 else "negative",
+            "x_position": i,
+            "color_intensity": min(abs(shap_val) * 2, 1.0),  # Normalize for color
+        })
+    
+    return {
+        "base_value": round(base_value, 6),
+        "prediction": round(prediction, 6),
+        "bars": plot_data,
+        "n_features": len(contributions),
+        "interpretation": (
+            "Waterfall plot shows how each feature contributes to the prediction. "
+            "Starting from base value (average prediction), each bar adds or subtracts "
+            "to reach the final prediction. Red bars increase, blue bars decrease."
+        )
+    }
+
 def shap_summary_data(shap_matrix, feature_names):
     """
     Prepare data for a SHAP summary (beeswarm) plot.
@@ -313,6 +367,109 @@ def shap_summary_data(shap_matrix, feature_names):
         })
     summary.sort(key=lambda x: x["mean_abs_shap"], reverse=True)
     return summary
+
+
+def shap_summary_plot_data(shap_matrix, feature_values, feature_names):
+    """
+    Prepare complete data for SHAP summary plot visualization.
+    Includes feature values for coloring by feature value.
+    
+    Args:
+        shap_matrix: list of lists, SHAP values for each instance
+        feature_values: list of lists, actual feature values for each instance
+        feature_names: list of feature names
+    
+    Returns:
+        dict with plot-ready data including feature values for color mapping
+    """
+    n_samples = len(shap_matrix)
+    n_features = len(feature_names)
+    
+    plot_data = []
+    for j in range(n_features):
+        vals = [shap_matrix[i][j] for i in range(n_samples)]
+        feat_vals = [feature_values[i][j] for i in range(n_samples)]
+        mean_abs = sum(abs(v) for v in vals) / n_samples
+        
+        # Normalize feature values for color mapping (0-1)
+        min_fv, max_fv = min(feat_vals), max(feat_vals)
+        if max_fv - min_fv > 1e-12:
+            norm_vals = [(fv - min_fv) / (max_fv - min_fv) for fv in feat_vals]
+        else:
+            norm_vals = [0.5] * n_samples
+        
+        plot_data.append({
+            "feature": feature_names[j],
+            "shap_values": vals,
+            "feature_values": feat_vals,
+            "normalized_values": norm_vals,
+            "mean_abs_shap": round(mean_abs, 6),
+            "positive_pct": round(sum(1 for v in vals if v > 0) / n_samples, 4),
+        })
+    
+    plot_data.sort(key=lambda x: x["mean_abs_shap"], reverse=True)
+    
+    return {
+        "features": plot_data,
+        "n_samples": n_samples,
+        "n_features": n_features,
+        "interpretation": (
+            "Each point represents one instance. "
+            "X-axis: SHAP value (impact on prediction). "
+            "Color: feature value (red=high, blue=low). "
+            "Features sorted by mean absolute SHAP value."
+        )
+    }
+
+
+def shap_dependence_data(shap_matrix, feature_values, feature_names, feature_idx):
+    """
+    Prepare data for SHAP dependence plot.
+    Shows relationship between a feature's value and its SHAP value.
+    
+    Args:
+        shap_matrix: list of lists, SHAP values for each instance
+        feature_values: list of lists, actual feature values for each instance
+        feature_names: list of feature names
+        feature_idx: index of feature to plot dependence for
+    
+    Returns:
+        dict with x_values (feature values), y_values (SHAP values), and metadata
+    """
+    n_samples = len(shap_matrix)
+    x_vals = [feature_values[i][feature_idx] for i in range(n_samples)]
+    y_vals = [shap_matrix[i][feature_idx] for i in range(n_samples)]
+    
+    # Compute correlation between feature value and SHAP value
+    n = len(x_vals)
+    mean_x = sum(x_vals) / n
+    mean_y = sum(y_vals) / n
+    
+    if n > 1:
+        cov_xy = sum((x_vals[i] - mean_x) * (y_vals[i] - mean_y) for i in range(n)) / n
+        var_x = sum((x_vals[i] - mean_x) ** 2 for i in range(n)) / n
+        var_y = sum((y_vals[i] - mean_y) ** 2 for i in range(n)) / n
+        
+        if var_x > 1e-12 and var_y > 1e-12:
+            correlation = cov_xy / (var_x ** 0.5 * var_y ** 0.5)
+        else:
+            correlation = 0.0
+    else:
+        correlation = 0.0
+    
+    return {
+        "feature": feature_names[feature_idx],
+        "feature_idx": feature_idx,
+        "x_values": x_vals,
+        "y_values": y_vals,
+        "correlation": round(correlation, 4),
+        "n_samples": n_samples,
+        "interpretation": (
+            f"Correlation between {feature_names[feature_idx]} value and its SHAP value: {correlation:.3f}. "
+            "Positive correlation: higher feature values increase prediction. "
+            "Negative correlation: higher feature values decrease prediction."
+        )
+    }
 
 
 # ─────────────────────────────────────────────────────────────────────────────

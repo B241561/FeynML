@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Explainability Center (SHAP){% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2>Explainability Center (SHAP)</h2>
+  <p class="text-muted">Generate global and local feature importance using SHAP values.</p>
+  
+  <div class="card p-4 shadow-sm">
+    <form method="post" action="{{ url_for('phase4.explainability_run') }}">
+      <div class="mb-3">
+        <label class="form-label">Select Dataset</label>
+        <select name="dataset_id" class="form-select">
+          {% for d in datasets %}
+          <option value="{{ d.id }}">{{ d.original_name }} ({{ d.uploaded_at.strftime('%Y-%m-%d') }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Target column (to explain)</label>
+        <input name="target_col" class="form-control" placeholder="e.g. churn, price, label" required />
+      </div>
+      <div class="alert alert-info">
+        <small>Note: If no model is provided, a baseline RandomForest will be trained automatically to demonstrate explainability.</small>
+      </div>
+      <button class="btn btn-indigo" type="submit">Run SHAP Analysis</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

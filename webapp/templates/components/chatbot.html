@@ -1,0 +1,225 @@
+<!-- FeynML Chatbot Component -->
+<div id="feyn-chatbot-container" class="d-print-none">
+    <!-- Floating Bubble Button -->
+    <button id="feyn-chat-bubble" class="btn btn-indigo rounded-circle shadow-lg d-flex align-items-center justify-content-center" style="position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 1050; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+        <i class="bi bi-chat-dots-fill fs-3 text-white"></i>
+    </button>
+
+    <!-- Chat Panel -->
+    <div id="feyn-chat-panel" class="bg-card shadow-lg border border-navy-700 rounded-4 d-none" style="position: fixed; bottom: 90px; right: 20px; width: 380px; height: 520px; z-index: 1050; display: flex; flex-direction: column; overflow: hidden; transform-origin: bottom right; transition: all 0.3s ease-in-out;">
+        <!-- Header -->
+        <div class="p-3 bg-navy-800 border-bottom border-navy-700 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="position-relative">
+                    <img src="{{ url_for('static', filename='images/richard_feynman.jpg') }}" alt="Feyn" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                    <span class="position-absolute bottom-0 end-0 bg-success border border-white rounded-circle" style="width: 10px; height: 10px;"></span>
+                </div>
+                <div>
+                    <h6 class="mb-0 fw-bold text-white">Feyn</h6>
+                    <small class="text-muted" style="font-size: 10px;">AI Investigation Assistant</small>
+                </div>
+            </div>
+            <button id="feyn-chat-close" class="btn btn-sm btn-link text-muted p-0 border-0">
+                <i class="bi bi-xl fs-5"></i>
+            </button>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="feyn-chat-messages" class="flex-grow-1 p-3 overflow-y-auto d-flex flex-column gap-3" style="background: rgba(15, 23, 42, 0.5);">
+            <!-- Starter Chips -->
+            <div class="d-flex flex-wrap gap-2 mb-2" id="feyn-starter-chips">
+                <button class="btn btn-sm btn-outline-navy-600 rounded-pill starter-chip" style="font-size: 11px;">What is data drift?</button>
+                <button class="btn btn-sm btn-outline-navy-600 rounded-pill starter-chip" style="font-size: 11px;">Explain my report</button>
+                <button class="btn btn-sm btn-outline-navy-600 rounded-pill starter-chip" style="font-size: 11px;">How to read PSI chart?</button>
+                <button class="btn btn-sm btn-outline-navy-600 rounded-pill starter-chip" style="font-size: 11px;">What is label noise?</button>
+                <button class="btn btn-sm btn-outline-navy-600 rounded-pill starter-chip" style="font-size: 11px;">What does HIGH severity mean?</button>
+            </div>
+        </div>
+
+        <!-- Typing Indicator (Hidden) -->
+        <div id="feyn-typing-indicator" class="px-3 py-2 d-none">
+            <div class="bg-navy-700 rounded-4 px-3 py-2 d-inline-flex align-items-center gap-1" style="max-width: 60px;">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-3 bg-navy-800 border-top border-navy-700">
+            <form id="feyn-chat-form" class="d-flex gap-2">
+                <input type="text" id="feyn-chat-input" class="form-control bg-navy-900 border-navy-600 text-white rounded-pill px-3 py-2" placeholder="Ask Feyn something..." autocomplete="off">
+                <button type="submit" class="btn btn-indigo rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; flex-shrink: 0;">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    #feyn-chat-panel.show {
+        display: flex !important;
+        animation: feynSlideUp 0.3s ease-out;
+    }
+    
+    @keyframes feynSlideUp {
+        from { opacity: 0; transform: translateY(20px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .typing-dot {
+        width: 4px;
+        height: 4px;
+        background: #94a3b8;
+        border-radius: 50%;
+        animation: typingBlink 1.4s infinite both;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typingBlink {
+        0%, 80%, 100% { opacity: 0; }
+        40% { opacity: 1; }
+    }
+
+    .feyn-msg {
+        max-width: 85%;
+        padding: 10px 14px;
+        font-size: 13.5px;
+        line-height: 1.5;
+    }
+    .feyn-msg-user {
+        align-self: flex-end;
+        background: #6366f1;
+        color: white;
+        border-radius: 18px 18px 2px 18px;
+    }
+    .feyn-msg-ai {
+        align-self: flex-start;
+        background: #1e293b;
+        color: #e2e8f0;
+        border-radius: 18px 18px 18px 2px;
+        border: 1px solid #334155;
+    }
+
+    .starter-chip:hover {
+        background: #6366f1 !important;
+        color: white !important;
+        border-color: #6366f1 !important;
+    }
+
+    #feyn-chat-messages::-webkit-scrollbar {
+        width: 4px;
+    }
+    #feyn-chat-messages::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 10px;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bubble = document.getElementById('feyn-chat-bubble');
+    const panel = document.getElementById('feyn-chat-panel');
+    const close = document.getElementById('feyn-chat-close');
+    const form = document.getElementById('feyn-chat-form');
+    const input = document.getElementById('feyn-chat-input');
+    const msgContainer = document.getElementById('feyn-chat-messages');
+    const typing = document.getElementById('feyn-typing-indicator');
+    const starterChips = document.querySelectorAll('.starter-chip');
+
+    let history = JSON.parse(sessionStorage.getItem('feyn_chat_history') || '[]');
+
+    // Initialize UI from history
+    if (history.length > 0) {
+        history.forEach(msg => appendMessage(msg.role === 'user' ? 'user' : 'ai', msg.content, false));
+    } else {
+        // Initial greeting
+        appendMessage('ai', "Hi! I'm **Feyn**, your ML failure engine tutor. How can I help you investigate your model today?", false);
+    }
+
+    bubble.addEventListener('click', () => {
+        panel.classList.toggle('d-none');
+        panel.classList.toggle('show');
+        if (panel.classList.contains('show')) {
+            input.focus();
+            scrollToBottom();
+        }
+    });
+
+    close.addEventListener('click', () => {
+        panel.classList.add('d-none');
+        panel.classList.remove('show');
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+        
+        await sendMessage(text);
+    });
+
+    starterChips.forEach(chip => {
+        chip.addEventListener('click', () => sendMessage(chip.textContent));
+    });
+
+    async function sendMessage(text) {
+        input.value = '';
+        appendMessage('user', text);
+        scrollToBottom();
+
+        // Show typing indicator
+        typing.classList.remove('d-none');
+        scrollToBottom();
+
+        try {
+            const context = document.body.innerText.substring(0, 1000); // Simple context capture
+            const response = await fetch('/api/chatbot/message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: text,
+                    history: history,
+                    context: context
+                })
+            });
+
+            const data = await response.json();
+            typing.classList.add('d-none');
+
+            if (data.reply) {
+                appendMessage('ai', data.reply);
+            } else {
+                appendMessage('ai', "Sorry, I'm having trouble connecting to my brain right now. Please try again later.");
+            }
+        } catch (err) {
+            typing.classList.add('d-none');
+            appendMessage('ai', "Error connecting to FeynML engine. Please check your connection.");
+        }
+        
+        scrollToBottom();
+    }
+
+    function appendMessage(role, content, save = true) {
+        const div = document.createElement('div');
+        div.className = `feyn-msg feyn-msg-${role}`;
+        
+        // Very basic markdown bolding
+        let formatted = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        div.innerHTML = formatted;
+        
+        msgContainer.appendChild(div);
+        
+        if (save) {
+            history.push({ role: role === 'user' ? 'user' : 'assistant', content: content });
+            sessionStorage.setItem('feyn_chat_history', JSON.stringify(history));
+        }
+    }
+
+    function scrollToBottom() {
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+    }
+});
+</script>

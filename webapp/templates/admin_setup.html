@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}First-Time Admin Setup | FeynML{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card p-5 shadow-lg border-0 bg-card">
+                <div class="text-center mb-4">
+                    <div class="mb-3">
+                        <i class="bi bi-shield-lock" style="font-size: 3rem; color: #6366f1;"></i>
+                    </div>
+                    <h2 class="fw-bold">First-Time Admin Setup</h2>
+                    <p class="text-muted">Create the single administrator account for FeynML</p>
+                </div>
+
+                {% if error %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Error:</strong> {{ error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
+
+                {% if get_flashes %}
+                    {% for category, message in get_flashes() %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'warning' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="POST" id="setup-form">
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Important:</strong> This setup creates the only administrator account that will ever exist. After setup, this page will be permanently disabled.
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase">Admin Username</label>
+                        <input 
+                            type="text" 
+                            name="username" 
+                            id="username"
+                            class="form-control bg-main border-color" 
+                            placeholder="Default: Feyn_admin" 
+                            value="Feyn_admin"
+                            readonly
+                            required>
+                        <small class="text-muted d-block mt-2">
+                            <i class="bi bi-lock me-1"></i> Fixed username for system security. Cannot be changed.
+                        </small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase">Admin Email</label>
+                        <input 
+                            type="email" 
+                            name="email" 
+                            id="email"
+                            class="form-control bg-main border-color" 
+                            placeholder="admin@yourdomain.com" 
+                            required 
+                            autofocus>
+                        <small class="text-muted d-block mt-2">
+                            <i class="bi bi-envelope me-1"></i> Used for OTP password recovery emails
+                        </small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase">Password</label>
+                        <div class="input-group">
+                            <input 
+                                type="password" 
+                                name="password" 
+                                id="password" 
+                                class="form-control bg-main border-color" 
+                                placeholder="Enter secure password" 
+                                minlength="8"
+                                required 
+                                onchange="validate_password()">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggle_password_visibility()">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-2" id="password-strength">
+                            Password strength: <span id="strength-indicator">Weak</span>
+                        </small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase">Confirm Password</label>
+                        <div class="input-group">
+                            <input 
+                                type="password" 
+                                name="password_confirm" 
+                                id="password_confirm" 
+                                class="form-control bg-main border-color" 
+                                placeholder="Confirm password" 
+                                minlength="8"
+                                required 
+                                onchange="validate_password()">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggle_password_confirm_visibility()">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-2" id="match-indicator">
+                            <i class="bi bi-x-circle me-1"></i>Passwords do not match
+                        </small>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong><i class="bi bi-info-circle me-2"></i>Password Requirements:</strong>
+                        <ul class="mb-0 small mt-2">
+                            <li>Minimum 8 characters</li>
+                            <li>Mix of uppercase and lowercase letters</li>
+                            <li>Include at least one number</li>
+                            <li>Include at least one special character (!@#$%^&*)</li>
+                        </ul>
+                    </div>
+
+                    <button type="submit" class="btn btn-indigo w-100 py-3 fw-bold mb-3" id="submit-btn" disabled>
+                        <i class="bi bi-shield-check me-2"></i>Create Admin Account
+                    </button>
+                </form>
+
+                <div class="text-center mt-4 small text-muted">
+                    <p>This is a one-time setup. The admin account cannot be recreated or deleted through the web interface.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggle_password_visibility() {
+        const field = document.getElementById('password');
+        const btn = event.target.closest('button');
+        if (field.type === 'password') {
+            field.type = 'text';
+            btn.innerHTML = '<i class="bi bi-eye-slash"></i>';
+        } else {
+            field.type = 'password';
+            btn.innerHTML = '<i class="bi bi-eye"></i>';
+        }
+    }
+
+    function toggle_password_confirm_visibility() {
+        const field = document.getElementById('password_confirm');
+        const btn = event.target.closest('button');
+        if (field.type === 'password') {
+            field.type = 'text';
+            btn.innerHTML = '<i class="bi bi-eye-slash"></i>';
+        } else {
+            field.type = 'password';
+            btn.innerHTML = '<i class="bi bi-eye"></i>';
+        }
+    }
+
+    function validate_password() {
+        const password = document.getElementById('password').value;
+        const confirm = document.getElementById('password_confirm').value;
+        const submitBtn = document.getElementById('submit-btn');
+        const matchIndicator = document.getElementById('match-indicator');
+        const strengthIndicator = document.getElementById('strength-indicator');
+
+        // Check strength
+        let strength = 'Weak';
+        let strengthClass = 'text-danger';
+        
+        if (password.length >= 8) {
+            let hasUpper = /[A-Z]/.test(password);
+            let hasLower = /[a-z]/.test(password);
+            let hasNumber = /[0-9]/.test(password);
+            let hasSpecial = /[!@#$%^&*]/.test(password);
+            
+            let criteriaCount = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+            
+            if (criteriaCount === 4) {
+                strength = 'Strong';
+                strengthClass = 'text-success';
+            } else if (criteriaCount >= 2) {
+                strength = 'Fair';
+                strengthClass = 'text-warning';
+            }
+        }
+
+        strengthIndicator.textContent = strength;
+        strengthIndicator.className = strengthClass;
+
+        // Check match
+        if (password === confirm && password.length >= 8) {
+            matchIndicator.innerHTML = '<i class="bi bi-check-circle me-1"></i> Passwords match';
+            matchIndicator.className = 'text-muted d-block mt-2 text-success';
+            submitBtn.disabled = false;
+        } else {
+            if (password && confirm && password !== confirm) {
+                matchIndicator.innerHTML = '<i class="bi bi-x-circle me-1"></i> Passwords do not match';
+                matchIndicator.className = 'text-muted d-block mt-2 text-danger';
+            } else if (!password || !confirm) {
+                matchIndicator.innerHTML = '<i class="bi bi-x-circle me-1"></i> Both passwords required';
+                matchIndicator.className = 'text-muted d-block mt-2 text-muted';
+            }
+            submitBtn.disabled = true;
+        }
+    }
+
+    // Initial validation check
+    document.addEventListener('DOMContentLoaded', function() {
+        validate_password();
+    });
+</script>
+{% endblock %}

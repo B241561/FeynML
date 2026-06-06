@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Settings | FeynML{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card p-5 shadow-lg border-0">
+                <div class="mb-4">
+                    <h2 class="fw-bold">Account Settings</h2>
+                    <p class="text-muted">Update your profile information, email, or password for FeynML access.</p>
+                </div>
+                <form method="POST" action="{{ url_for('settings') }}">
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase">Name</label>
+                        <input type="text" name="name" value="{{ current_user.name }}" class="form-control bg-main border-color" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase">Email</label>
+                        <input type="email" name="email" value="{{ current_user.email }}" class="form-control bg-main border-color" required>
+                    </div>
+                    <hr class="my-4 opacity-10">
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase">New Password</label>
+                        <input type="password" name="new_password" class="form-control bg-main border-color" placeholder="Leave blank to keep current password">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase">Confirm Password</label>
+                        <input type="password" name="confirm_password" class="form-control bg-main border-color" placeholder="Confirm new password">
+                    </div>
+                    <button type="submit" class="btn btn-indigo w-100 py-3 fw-bold">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

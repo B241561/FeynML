@@ -268,7 +268,172 @@ def chi2_test_categorical(reference_cats, current_cats, feature_name="feature", 
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 4. DOMAIN CLASSIFIER DRIFT DETECTOR (unsupervised)
+# 4. LABEL SHIFT DETECTION
+# ─────────────────────────────────────────────────────────────────────────────
+
+def label_shift_detection(y_train, y_current, alpha=0.05):
+    """
+    Detect label shift: P_train(Y) ≠ P_test(Y) while P(X|Y) unchanged.
+    
+    Uses chi-square test on label distributions.
+    
+    Args:
+        y_train: list of training labels
+        y_current: list of current/production labels
+        alpha: significance level
+    
+    Returns:
+        dict with label distribution comparison and shift detection result
+    """
+    from collections import Counter
+    
+    train_dist = Counter(y_train)
+    current_dist = Counter(y_current)
+    
+    all_labels = sorted(set(train_dist.keys()) | set(current_dist.keys()))
+    
+    n_train = len(y_train)
+    n_current = len(y_current)
+    
+    # Build contingency table
+    observed = []
+    expected = []
+    
+    chi2 = 0.0
+    details = []
+    
+    for label in all_labels:
+        train_count = train_dist.get(label, 0)
+        current_count = current_dist.get(label, 0)
+        
+        train_pct = train_count / n_train
+        current_pct = current_count / n_current
+        
+        # Expected under null hypothesis (no shift)
+        expected_train = (train_count + current_count) * n_train / (n_train + n_current)
+        expected_current = (train_count + current_count) * n_current / (n_train + n_current)
+        
+        if expected_train > 0:
+            chi2 += (train_count - expected_train) ** 2 / expected_train
+        if expected_current > 0:
+            chi2 += (current_count - expected_current) ** 2 / expected_current
+        
+        details.append({
+            "label": label,
+            "train_count": train_count,
+            "current_count": current_count,
+            "train_pct": round(train_pct, 4),
+            "current_pct": round(current_pct, 4),
+            "pct_diff": round(current_pct - train_pct, 4),
+        })
+    
+    df = len(all_labels) - 1
+    
+    try:
+        from scipy.stats import chi2 as chi2_dist
+        p_value = float(1 - chi2_dist.cdf(chi2, df))
+    except ImportError:
+        p_value = None
+    
+    shift_detected = (p_value < alpha) if p_value else None
+    
+    shift_level = (
+        "CRITICAL" if shift_detected and abs(sum(d["pct_diff"] for d in details)) > 0.3 else
+        "WARNING" if shift_detected else
+        "NONE"
+    )
+    
+    return {
+        "chi2_statistic": round(chi2, 4),
+        "df": df,
+        "p_value": round(p_value, 6) if p_value else "scipy required",
+        "shift_detected": shift_detected,
+        "shift_level": shift_level,
+        "label_details": details,
+        "n_train": n_train,
+        "n_current": n_current,
+        "interpretation": (
+            f"Label shift {'DETECTED' if shift_detected else 'NOT detected'}. "
+            f"Check if class priors changed significantly between training and production."
+        ),
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. EXPLICIT COVARIATE SHIFT DETECTION
+# ─────────────────────────────────────────────────────────────────────────────
+
+def covariate_shift_detection(X_train, X_current, feature_names=None, alpha=0.05):
+    """
+    Explicit covariate shift detection using importance weighting.
+    
+    Covariate shift: P_train(X) ≠ P_test(X) but P(Y|X) unchanged.
+    Uses density ratio estimation to detect which features shifted.
+    
+    Args:
+        X_train: list of training feature vectors
+        X_current: list of current/production feature vectors
+        feature_names: list of feature names
+        alpha: significance level
+    
+    Returns:
+        dict with per-feature covariate shift analysis
+    """
+    n_features = len(X_train[0]) if X_train else 0
+    if feature_names is None:
+        feature_names = [f"f{i}" for i in range(n_features)]
+    
+    feature_shifts = []
+    
+    for j, fname in enumerate(feature_names):
+        train_col = [X_train[i][j] for i in range(len(X_train))]
+        current_col = [X_current[i][j] for i in range(len(X_current))]
+        
+        # Use KS test for each feature
+        ks_result = ks_test(train_col, current_col, fname, alpha)
+        psi_result = psi(train_col, current_col)
+        
+        # Combined shift score
+        shift_score = ks_result["ks_statistic"] * 0.5 + psi_result["psi"] * 0.5
+        
+        feature_shifts.append({
+            "feature": fname,
+            "ks_statistic": ks_result["ks_statistic"],
+            "ks_pvalue": ks_result["p_value"],
+            "psi": psi_result["psi"],
+            "shift_score": round(shift_score, 4),
+            "shift_detected": ks_result["shift_detected"] or psi_result["shift_detected"],
+        })
+    
+    # Sort by shift score
+    feature_shifts.sort(key=lambda x: x["shift_score"], reverse=True)
+    
+    # Overall covariate shift assessment
+    n_shifted = sum(1 for fs in feature_shifts if fs["shift_detected"])
+    max_shift_score = max(fs["shift_score"] for fs in feature_shifts) if feature_shifts else 0.0
+    
+    overall_shift = (
+        "CRITICAL" if n_shifted > n_features * 0.5 or max_shift_score > 0.3 else
+        "WARNING" if n_shifted > 0 else
+        "NONE"
+    )
+    
+    return {
+        "feature_shifts": feature_shifts,
+        "n_features": n_features,
+        "n_shifted": n_shifted,
+        "max_shift_score": round(max_shift_score, 4),
+        "overall_shift": overall_shift,
+        "interpretation": (
+            f"Covariate shift {overall_shift}. "
+            f"{n_shifted}/{n_features} features show significant distribution change. "
+            "Consider reweighting or retraining if shift is severe."
+        ),
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. DOMAIN CLASSIFIER DRIFT DETECTOR (unsupervised)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def domain_classifier_drift(X_reference, X_current, feature_names=None):
@@ -335,6 +500,192 @@ def domain_classifier_drift(X_reference, X_current, feature_names=None):
         }
     except ImportError:
         return {"error": "sklearn required for domain classifier"}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 7. ENHANCED UNSUPERVISED DRIFT DETECTION
+# ─────────────────────────────────────────────────────────────────────────────
+
+def enhanced_unsupervised_drift_detection(X_reference, X_current, feature_names=None, 
+                                          alpha=0.05, use_pca=True):
+    """
+    Enhanced unsupervised drift detection combining multiple methods.
+    
+    Combines:
+    1. Domain classifier AUC
+    2. PCA-based reconstruction error
+    3. MMD (Maximum Mean Discrepancy) approximation
+    
+    Args:
+        X_reference: reference data
+        X_current: current data
+        feature_names: list of feature names
+        alpha: significance level
+        use_pca: whether to use PCA-based detection
+    
+    Returns:
+        dict with comprehensive drift assessment
+    """
+    results = {
+        "methods": {},
+        "overall_drift": "NONE",
+        "confidence": "LOW",
+    }
+    
+    # Method 1: Domain classifier
+    dc_result = domain_classifier_drift(X_reference, X_current, feature_names)
+    results["methods"]["domain_classifier"] = dc_result
+    
+    # Method 2: PCA reconstruction error
+    if use_pca:
+        pca_result = _pca_drift_detection(X_reference, X_current, feature_names)
+        results["methods"]["pca_reconstruction"] = pca_result
+    
+    # Method 3: MMD approximation
+    mmd_result = _mmd_approximation(X_reference, X_current)
+    results["methods"]["mmd"] = mmd_result
+    
+    # Aggregate results
+    drift_indicators = []
+    if "error" not in dc_result and dc_result.get("shift_detected"):
+        drift_indicators.append("domain_classifier")
+    if use_pca and "error" not in pca_result and pca_result.get("shift_detected"):
+        drift_indicators.append("pca")
+    if "error" not in mmd_result and mmd_result.get("shift_detected"):
+        drift_indicators.append("mmd")
+    
+    n_methods = len(drift_indicators)
+    
+    if n_methods >= 2:
+        results["overall_drift"] = "CRITICAL"
+        results["confidence"] = "HIGH"
+    elif n_methods == 1:
+        results["overall_drift"] = "WARNING"
+        results["confidence"] = "MEDIUM"
+    else:
+        results["overall_drift"] = "NONE"
+        results["confidence"] = "HIGH"
+    
+    results["drift_indicators"] = drift_indicators
+    results["n_methods_agreeing"] = n_methods
+    
+    return results
+
+
+def _pca_drift_detection(X_reference, X_current, feature_names=None):
+    """
+    PCA-based drift detection using reconstruction error.
+    
+    If reconstruction error on current data is significantly higher
+    than on reference data, drift is detected.
+    """
+    try:
+        from sklearn.decomposition import PCA
+        import numpy as np
+        
+        X_ref_np = np.array(X_reference)
+        X_cur_np = np.array(X_current)
+        
+        # Fit PCA on reference
+        n_components = min(5, X_ref_np.shape[1])
+        pca = PCA(n_components=n_components, random_state=42)
+        pca.fit(X_ref_np)
+        
+        # Reconstruction errors
+        ref_reconstructed = pca.inverse_transform(pca.transform(X_ref_np))
+        cur_reconstructed = pca.inverse_transform(pca.transform(X_cur_np))
+        
+        ref_error = np.mean((X_ref_np - ref_reconstructed) ** 2)
+        cur_error = np.mean((X_cur_np - cur_reconstructed) ** 2)
+        
+        error_ratio = cur_error / max(ref_error, 1e-12)
+        
+        shift_detected = error_ratio > 1.5  # 50% increase in reconstruction error
+        
+        return {
+            "method": "pca_reconstruction",
+            "ref_reconstruction_error": round(float(ref_error), 6),
+            "cur_reconstruction_error": round(float(cur_error), 6),
+            "error_ratio": round(error_ratio, 4),
+            "shift_detected": shift_detected,
+            "shift_level": "CRITICAL" if error_ratio > 2.0 else "WARNING" if error_ratio > 1.5 else "NONE",
+            "interpretation": (
+                f"Reconstruction error ratio: {error_ratio:.2f}. "
+                f"Current data is {'more difficult to reconstruct' if shift_detected else 'similar to reference'}."
+            ),
+        }
+    except ImportError:
+        return {"error": "sklearn required for PCA drift detection"}
+
+
+def _mmd_approximation(X_reference, X_current, kernel_bandwidth=1.0):
+    """
+    Maximum Mean Discrepancy (MMD) approximation for drift detection.
+    
+    MMD measures distance between two distributions in RKHS.
+    Large MMD indicates distribution shift.
+    """
+    import numpy as np
+    
+    X_ref = np.array(X_reference)
+    X_cur = np.array(X_current)
+    
+    def rbf_kernel(x, y, sigma=kernel_bandwidth):
+        n = x.shape[0]
+        m = y.shape[0]
+        xx = np.sum(x ** 2, axis=1).reshape((n, 1))
+        yy = np.sum(y ** 2, axis=1).reshape((m, 1))
+        xy = np.dot(x, y.T)
+        dist = xx + yy.T - 2 * xy
+        return np.exp(-dist / (2 * sigma ** 2))
+    
+    # Compute MMD
+    K_rr = rbf_kernel(X_ref, X_ref)
+    K_cc = rbf_kernel(X_cur, X_cur)
+    K_rc = rbf_kernel(X_ref, X_cur)
+    
+    n = X_ref.shape[0]
+    m = X_cur.shape[0]
+    
+    mmd_sq = (np.sum(K_rr) - np.trace(K_rr)) / (n * (n - 1)) + \
+             (np.sum(K_cc) - np.trace(K_cc)) / (m * (m - 1)) - \
+             2 * np.sum(K_rc) / (n * m)
+    
+    mmd = np.sqrt(max(mmd_sq, 0))
+    
+    # Bootstrap significance test
+    n_permutations = 100
+    combined = np.vstack([X_ref, X_cur])
+    n_combined = len(combined)
+    
+    mmd_permutations = []
+    for _ in range(n_permutations):
+        np.random.shuffle(combined)
+        perm_ref = combined[:n]
+        perm_cur = combined[n:]
+        
+        K_rr_perm = rbf_kernel(perm_ref, perm_ref)
+        K_cc_perm = rbf_kernel(perm_cur, perm_cur)
+        K_rc_perm = rbf_kernel(perm_ref, perm_cur)
+        
+        mmd_sq_perm = (np.sum(K_rr_perm) - np.trace(K_rr_perm)) / (n * (n - 1)) + \
+                      (np.sum(K_cc_perm) - np.trace(K_cc_perm)) / (m * (m - 1)) - \
+                      2 * np.sum(K_rc_perm) / (n * m)
+        mmd_permutations.append(np.sqrt(max(mmd_sq_perm, 0)))
+    
+    p_value = np.mean(mmd_permutations >= mmd)
+    
+    return {
+        "method": "mmd",
+        "mmd_statistic": round(float(mmd), 6),
+        "p_value": round(float(p_value), 6),
+        "shift_detected": p_value < 0.05,
+        "shift_level": "CRITICAL" if p_value < 0.01 else "WARNING" if p_value < 0.05 else "NONE",
+        "interpretation": (
+            f"MMD={mmd:.4f}, p={p_value:.4f}. "
+            f"Distribution shift {'DETECTED' if p_value < 0.05 else 'NOT detected'}."
+        ),
+    }
 
 
 # ─────────────────────────────────────────────────────────────────────────────

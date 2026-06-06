@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Causal Analysis{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2>Causal Analysis</h2>
+  <form method="post" action="{{ url_for('phase4.causal_run') }}">
+    <div class="mb-3">
+      <label class="form-label">Dataset</label>
+      <select name="dataset_id" class="form-select">
+        {% for d in datasets %}
+        <option value="{{ d.id }}">{{ d.original_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Treatment column</label>
+        <input name="treatment_col" class="form-control" />
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Outcome column</label>
+        <input name="outcome_col" class="form-control" />
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Nodes (text, e.g. A,B,C)</label>
+      <input name="nodes" class="form-control" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Edges (text, e.g. A->B,B->C)</label>
+      <input name="edges" class="form-control" />
+    </div>
+    <button class="btn btn-indigo" type="submit">Run Causal Analysis</button>
+  </form>
+</div>
+{% endblock %}

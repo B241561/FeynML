@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Missing Data Analysis{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2>Missing Data Analysis</h2>
+  <form method="post" action="{{ url_for('phase4.missing_data_run') }}">
+    <div class="mb-3">
+      <label class="form-label">Dataset</label>
+      <select name="dataset_id" class="form-select">
+        {% for d in datasets %}
+        <option value="{{ d.id }}">{{ d.original_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Target column (optional)</label>
+      <input name="target_col" class="form-control" />
+    </div>
+    <button class="btn btn-indigo" type="submit">Run Missingness Analysis</button>
+  </form>
+</div>
+{% endblock %}

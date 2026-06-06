@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up | FeynML{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-5">
+            <div class="card p-5 shadow-lg border-0">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold">Create your FeynML account</h2>
+                    <p class="text-muted">Join the SaaS platform for ML observability and keep your analytics history in one secure workspace.</p>
+                </div>
+                <form method="POST" action="{{ url_for('signup') }}">
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase">Name</label>
+                        <input type="text" name="name" class="form-control bg-main border-color" placeholder="Your full name" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase">Email</label>
+                        <input type="email" name="email" class="form-control bg-main border-color" placeholder="you@company.com" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase">Password</label>
+                        <input type="password" name="password" class="form-control bg-main border-color" placeholder="Create a password" required>
+                    </div>
+                    <button type="submit" class="btn btn-indigo w-100 py-3 fw-bold">Create Account</button>
+                </form>
+                <div class="text-center mt-4 small text-muted">
+                    Already have an account? <a href="{{ url_for('login') }}" class="text-indigo-200">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

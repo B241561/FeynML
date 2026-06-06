@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-10">
+      <div class="card p-3" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius);">
+        <div class="d-flex align-items-center mb-3">
+          <h4 class="mb-0">User Management</h4>
+          <span class="badge bg-secondary ms-3">Total: {{ total }}</span>
+          <form class="ms-auto d-flex" method="get" action="{{ url_for('admin_users') }}">
+            <input type="hidden" name="sort" value="{{ sort }}">
+            <div class="input-group">
+              <input name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search name or email" aria-label="Search users">
+              <button class="btn btn-sm btn-primary" type="submit">Search</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="mb-2 d-flex align-items-center">
+          <small class="text-muted">Sort by:</small>
+          <a class="btn btn-link btn-sm ms-2 {% if sort=='created_desc' %}fw-bold{% endif %}" href="{{ url_for('admin_users', q=q, sort='created_desc') }}">Newest</a>
+          <a class="btn btn-link btn-sm {% if sort=='created_asc' %}fw-bold{% endif %}" href="{{ url_for('admin_users', q=q, sort='created_asc') }}">Oldest</a>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-dark table-striped table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Joined</th>
+                <th scope="col">Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in users %}
+              <tr>
+                <td>{{ u.id }}</td>
+                <td>{{ u.name }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.joined_at }}</td>
+                <td>{{ u.created_at }}</td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="5" class="text-center py-4">No users found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

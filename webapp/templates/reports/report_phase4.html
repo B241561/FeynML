@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Phase 4 Report{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2>Phase 4 Report: {{ report_id }}</h2>
+  <p>Dataset: {{ data.dataset.name if data.dataset else 'Unknown' }}</p>
+  <p>Generated: {{ data.timestamp if data.timestamp else '' }}</p>
+
+  <h3>Results</h3>
+  <pre>{{ data.results | tojson(indent=2) }}</pre>
+
+  <a href="{{ url_for('export_json', report_id=report_id) }}" class="btn btn-outline-indigo">Download JSON</a>
+  <a href="{{ url_for('index') }}" class="btn btn-light">Back to Dashboard</a>
+</div>
+{% endblock %}

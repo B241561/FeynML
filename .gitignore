@@ -1,0 +1,35 @@
+# Virtual environments
+.venv311/
+venv/
+tmp_env/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+
+# Databases
+*.db
+
+# Generated reports
+reports/generated/
+
+# Flask instance
+instance/
+
+# Test/debug outputs
+*_output.txt
+debug_output.txt
+error.txt
+hello.txt
+check_deps.txt
+install_log.txt
+server_log.txt
+validation_output.txt
+verification_output*.txt
+
+# Rendered HTML
+rendered_*.html
+repro*.html

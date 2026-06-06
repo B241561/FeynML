@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Dataset Library | FeynML{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Dataset Library</h2>
+            <p class="text-muted mb-0">Manage your uploaded datasets and keep your analysis inputs organized.</p>
+        </div>
+        <a href="{{ url_for('index') }}" class="btn btn-indigo">Upload Dataset</a>
+    </div>
+
+    {% if datasets %}
+    <div class="row g-4">
+        {% for dataset in datasets %}
+        <div class="col-md-6">
+            <div class="card p-4 shadow-lg border-0">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="fw-bold mb-1">{{ dataset.original_name }}</h5>
+                        <div class="text-muted small">Uploaded {{ dataset.uploaded_at.strftime('%b %d, %Y') }}</div>
+                    </div>
+                    <span class="badge bg-indigo-50 text-indigo-600">{{ (dataset.size_bytes / 1024) | round(1) }} KB</span>
+                </div>
+                <p class="text-muted small mb-4">Stored file: <strong>{{ dataset.stored_name }}</strong></p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-indigo btn-sm">Use in Analysis</a>
+                    <a href="{{ url_for('delete_dataset', dataset_id=dataset.id) }}" class="btn btn-outline-danger btn-sm">Delete Dataset</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card p-5 shadow-lg border-0 text-center">
+        <h4 class="fw-bold">No datasets saved yet</h4>
+        <p class="text-muted">Upload a CSV or JSON file to start tracking your data library.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-indigo mt-3">Upload Dataset</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

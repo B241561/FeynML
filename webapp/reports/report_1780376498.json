@@ -1,0 +1,374 @@
+{
+    "calibration": {
+        "label": "model",
+        "n": 545,
+        "n_bins": 10,
+        "ece": 0.165323,
+        "mce": 0.336351,
+        "brier": 0.208182,
+        "bss": 0.167201,
+        "severity": "HIGH",
+        "curve": {
+            "bin_edges": [
+                [
+                    0.0,
+                    0.1
+                ],
+                [
+                    0.1,
+                    0.2
+                ],
+                [
+                    0.2,
+                    0.3
+                ],
+                [
+                    0.6,
+                    0.7
+                ],
+                [
+                    0.7,
+                    0.8
+                ],
+                [
+                    0.8,
+                    0.9
+                ],
+                [
+                    0.9,
+                    1.0
+                ]
+            ],
+            "mean_predicted": [
+                0.02536102188692294,
+                0.13323293884536874,
+                0.22599014453913382,
+                0.6636494490902908,
+                0.7650778638924697,
+                0.8569802065025137,
+                0.9598704159238818
+            ],
+            "fraction_pos": [
+                0.2145922746781116,
+                0.18518518518518517,
+                0.4,
+                1.0,
+                0.696969696969697,
+                0.8131868131868132,
+                0.726027397260274
+            ],
+            "counts": [
+                233,
+                27,
+                5,
+                10,
+                33,
+                91,
+                146
+            ]
+        },
+        "interpretation": "ECE > 10% \u2014 recalibration strongly recommended."
+    },
+    "drift": {
+        "module": "DriftEngine",
+        "timestamp": "2026-06-02T10:31:36",
+        "severity": "HIGH",
+        "passed": false,
+        "findings": {
+            "per_feature": [
+                {
+                    "feature": "area",
+                    "type": "numeric",
+                    "ks_stat": 0.512,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 1.4574,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "bedrooms",
+                    "type": "numeric",
+                    "ks_stat": 0.3073,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 0.5857,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "bathrooms",
+                    "type": "numeric",
+                    "ks_stat": 0.3239,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 0.6066,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "stories",
+                    "type": "numeric",
+                    "ks_stat": 0.2281,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 2.8502,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "parking",
+                    "type": "numeric",
+                    "ks_stat": 0.2659,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 0.3248,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                }
+            ],
+            "drifted": [
+                "area",
+                "bedrooms",
+                "bathrooms",
+                "stories",
+                "parking"
+            ],
+            "warned": [],
+            "domain_auc": 0.5,
+            "mean_psi": 1.1649,
+            "n_features": 12,
+            "num_drifted_features": 5,
+            "num_warned_features": 0,
+            "alerts": [
+                {
+                    "level": "CRITICAL",
+                    "message": "5 feature(s) show significant drift: ['area', 'bedrooms', 'bathrooms', 'stories', 'parking']. Model retraining recommended."
+                }
+            ]
+        },
+        "log": [
+            "[10:31:35] [INFO] [DriftEngine] Starting DriftEngine",
+            "[10:31:35] [INFO] [DriftEngine]   area: DRIFT (p=0.0000, psi=1.4574)",
+            "[10:31:35] [INFO] [DriftEngine]   bedrooms: DRIFT (p=0.0000, psi=0.5857)",
+            "[10:31:35] [INFO] [DriftEngine]   bathrooms: DRIFT (p=0.0000, psi=0.6066)",
+            "[10:31:35] [INFO] [DriftEngine]   stories: DRIFT (p=0.0000, psi=2.8502)",
+            "[10:31:35] [INFO] [DriftEngine]   parking: DRIFT (p=0.0000, psi=0.3248)",
+            "[10:31:36] [INFO] [DriftEngine] Domain classifier failed: \nAll the 3 fits failed.\nIt is very likely that your model is misconfigured.\nYou can try to debug the error by setting error_score='raise'.\n\nBelow are more details about the failures:\n--------------------------------------------------------------------------------\n3 fits failed with the following error:\nTraceback (most recent call last):\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\model_selection\\_validation.py\", line 833, in _fit_and_score\n    estimator.fit(X_train, y_train, **fit_params)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\base.py\", line 1336, in wrapper\n    return fit_method(estimator, *args, **kwargs)\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\ensemble\\_forest.py\", line 359, in fit\n    X, y = validate_data(\n           ~~~~~~~~~~~~~^\n        self,\n        ^^^^^\n    ...<5 lines>...\n        ensure_all_finite=False,\n        ^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\utils\\validation.py\", line 2919, in validate_data\n    X, y = check_X_y(X, y, **check_params)\n           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\utils\\validation.py\", line 1314, in check_X_y\n    X = check_array(\n        X,\n    ...<12 lines>...\n        input_name=\"X\",\n    )\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\utils\\validation.py\", line 1022, in check_array\n    array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\utils\\_array_api.py\", line 878, in _asarray_with_order\n    array = numpy.asarray(array, order=order, dtype=dtype)\nValueError: could not convert string to float: np.str_('yes')\n"
+        ]
+    },
+    "label_noise": {
+        "module": "LabelNoiseEngine",
+        "timestamp": "2026-06-02T10:31:36",
+        "severity": "MEDIUM",
+        "passed": false,
+        "findings": {
+            "num_errors_detected": 135,
+            "total_samples": 545,
+            "estimated_noise_fraction": 0.24770642201834864,
+            "is_asymmetric": false,
+            "noise_severity": 0.23208248579645085,
+            "avg_label_quality": 0.7289263619978024,
+            "error_indices": [
+                1,
+                7,
+                11,
+                12,
+                21,
+                33,
+                34,
+                35,
+                43,
+                49,
+                50,
+                52,
+                53,
+                55,
+                62,
+                63,
+                67,
+                69,
+                71,
+                73,
+                80,
+                88,
+                94,
+                104,
+                106,
+                112,
+                113,
+                115,
+                116,
+                118,
+                120,
+                121,
+                123,
+                126,
+                127,
+                134,
+                139,
+                140,
+                150,
+                154,
+                161,
+                165,
+                178,
+                182,
+                183,
+                186,
+                191,
+                192,
+                197,
+                198,
+                203,
+                219,
+                226,
+                227,
+                228,
+                240,
+                241,
+                242,
+                245,
+                247,
+                248,
+                249,
+                252,
+                256,
+                257,
+                258,
+                261,
+                264,
+                270,
+                271,
+                272,
+                273,
+                280,
+                292,
+                305,
+                313,
+                314,
+                324,
+                336,
+                351,
+                358,
+                364,
+                366,
+                367,
+                376,
+                378,
+                383,
+                385,
+                389,
+                390,
+                395,
+                396,
+                401,
+                403,
+                405,
+                408,
+                411,
+                412,
+                427,
+                437
+            ]
+        },
+        "log": [
+            "[10:31:36] [INFO] [LabelNoiseEngine] Starting LabelNoiseEngine",
+            "[10:31:36] [INFO] [LabelNoiseEngine] Starting Label Noise audit...",
+            "[10:31:36] [INFO] [LabelNoiseEngine] Audit complete. Detected 135 errors."
+        ]
+    },
+    "leakage": {
+        "module": "LeakageEngine",
+        "timestamp": "2026-06-02T10:31:38",
+        "severity": "HIGH",
+        "passed": false,
+        "findings": {
+            "summary": "Detected 1 potential leakage issues:\n- [HIGH] price: target_leakage (Score: 1.00)",
+            "num_suspects": 1,
+            "suspects": [
+                {
+                    "feature": "price",
+                    "score": 1.0,
+                    "type": "target_leakage",
+                    "severity": "HIGH"
+                }
+            ],
+            "full_report": {
+                "target_leakage": {
+                    "scores": {
+                        "price": 1.0,
+                        "area": 0.4594009126737828,
+                        "bedrooms": 0.2860815172554319,
+                        "bathrooms": 0.39824959279428135,
+                        "stories": 0.33097104535016014,
+                        "mainroad": 0.23219732112059652,
+                        "guestroom": 0.208219665737754,
+                        "basement": 0.14492954034718047,
+                        "hotwaterheating": 0.06843753877641026,
+                        "airconditioning": 0.35002545541730246,
+                        "parking": 0.31298566692449514,
+                        "prefarea": 0.2509759298750387,
+                        "furnishingstatus": 0.2448909304064849
+                    }
+                },
+                "temporal_leakage": {}
+            }
+        },
+        "log": [
+            "[10:31:36] [INFO] [LeakageEngine] Starting LeakageEngine",
+            "[10:31:36] [INFO] [LeakageEngine] Starting Leakage scan...",
+            "[10:31:38] [INFO] [LeakageEngine] Leakage scan complete. Found 1 suspects."
+        ]
+    },
+    "missing_data": {
+        "module": "MissingDataEngine",
+        "timestamp": "2026-06-02T10:31:38",
+        "severity": "NONE",
+        "passed": true,
+        "findings": {
+            "missingness_rates": {
+                "area": 0.0,
+                "bedrooms": 0.0,
+                "bathrooms": 0.0,
+                "stories": 0.0,
+                "mainroad": 0.0,
+                "guestroom": 0.0,
+                "basement": 0.0,
+                "hotwaterheating": 0.0,
+                "airconditioning": 0.0,
+                "parking": 0.0,
+                "prefarea": 0.0,
+                "furnishingstatus": 0.0
+            },
+            "mechanisms": {
+                "area": "NONE",
+                "bedrooms": "NONE",
+                "bathrooms": "NONE",
+                "stories": "NONE",
+                "mainroad": "NONE",
+                "guestroom": "NONE",
+                "basement": "NONE",
+                "hotwaterheating": "NONE",
+                "airconditioning": "NONE",
+                "parking": "NONE",
+                "prefarea": "NONE",
+                "furnishingstatus": "NONE"
+            },
+            "global_mcar": {
+                "statistic": 0.0,
+                "pvalue": 1.0,
+                "mcar_likely": true,
+                "df": 0,
+                "error": "Insufficient degrees of freedom"
+            },
+            "signal_strength": {},
+            "max_missing_rate": 0.0
+        },
+        "log": [
+            "[10:31:38] [INFO] [MissingDataEngine] Starting MissingDataEngine",
+            "[10:31:38] [INFO] [MissingDataEngine] Starting Missing Data audit...",
+            "[10:31:38] [INFO] [MissingDataEngine] Missing Data audit complete. Max rate: 0.00%"
+        ]
+    }
+}

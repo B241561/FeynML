@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Notes | FeynML{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/productivity.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="section-title mb-1">Productivity Workspace</h1>
+            <p class="section-subtitle">Capture ideas, keep notes, and reference them alongside your analysis work.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('notes') }}" class="btn btn-outline-indigo rounded-pill me-2">Notes</a>
+            <a href="{{ url_for('tasks') }}" class="btn btn-indigo rounded-pill">Tasks</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="glass-panel p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h3 class="mb-1">Note Editor</h3>
+                        <p class="text-muted mb-0">Write in Markdown and watch your preview update live.</p>
+                    </div>
+                    <button id="new-note" class="btn btn-outline-indigo btn-sm rounded-pill">New Note</button>
+                </div>
+
+                <form id="note-form" action="{{ url_for('save_note') }}" method="post" class="note-form">
+                    <input type="hidden" id="note_id" name="note_id" value="">
+                    <div class="mb-3">
+                        <label class="form-label text-secondary">Title</label>
+                        <input id="note-title" name="title" type="text" class="form-control form-control-dark" placeholder="Summary of the note" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary">Content</label>
+                        <textarea id="note-content" name="content" rows="8" class="form-control form-control-dark" placeholder="Use markdown to format your thought process..."></textarea>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-3 note-status-row">
+                        <div class="small text-muted" id="note-status">Autosave enabled</div>
+                        <button type="submit" class="btn btn-indigo rounded-pill px-4">Save Note</button>
+                    </div>
+                </form>
+
+                <div class="note-preview glass-card p-3 mt-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="fw-semibold">Preview</span>
+                        <span class="badge bg-secondary">Markdown</span>
+                    </div>
+                    <div id="note-preview-content" class="markdown-body"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="glass-panel p-4">
+                <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-start align-items-md-center mb-3">
+                    <div>
+                        <h3 class="mb-1">My Notes</h3>
+                        <p class="text-muted mb-0">Search and organize your notebook instantly.</p>
+                    </div>
+                    <div class="input-group w-100 w-md-auto note-search-group">
+                        <span class="input-group-text bg-surface text-muted border-0"><i class="bi bi-search"></i></span>
+                        <input id="note-search" type="search" class="form-control form-control-dark" placeholder="Search notes..." value="{{ q }}">
+                    </div>
+                </div>
+
+                <div id="notes-list" class="row g-3">
+                    {% if notes %}
+                        {% for note in notes %}
+                        <div class="col-12 note-card" data-note-id="{{ note.id }}" data-title="{{ note.title | e }}">
+                            <div class="glass-card p-3 h-100 d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-start mb-3 gap-3">
+                                    <div>
+                                        <h5 class="mb-1 note-title">{{ note.title }}</h5>
+                                        <div class="small text-muted">Updated {{ note.updated_at.strftime('%b %d, %Y %H:%M') }}</div>
+                                    </div>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary edit-note">Edit</button>
+                                        <button type="button" class="btn btn-sm btn-danger delete-note" data-note-id="{{ note.id }}">Delete</button>
+                                    </div>
+                                </div>
+                                <div class="note-excerpt text-secondary">{{ note.content[:180] | e }}{% if note.content|length > 180 %}...{% endif %}</div>
+                                <div class="note-full-content d-none">{{ note.content }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-12">
+                            <div class="glass-card p-4 text-center text-muted">
+                                <i class="bi bi-journal-text fs-1 mb-3"></i>
+                                <p class="mb-0">No notes yet. Start by writing a title and some content.</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/productivity.js') }}"></script>
+{% endblock %}

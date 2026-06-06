@@ -1,0 +1,302 @@
+{
+    "calibration": {
+        "label": "model",
+        "n": 100,
+        "n_bins": 10,
+        "ece": 0.1949,
+        "mce": 0.632943,
+        "brier": 0.327643,
+        "bss": -0.310571,
+        "severity": "HIGH",
+        "curve": {
+            "bin_edges": [
+                [
+                    0.0,
+                    0.1
+                ],
+                [
+                    0.1,
+                    0.2
+                ],
+                [
+                    0.2,
+                    0.3
+                ],
+                [
+                    0.3,
+                    0.4
+                ],
+                [
+                    0.4,
+                    0.5
+                ],
+                [
+                    0.5,
+                    0.6
+                ],
+                [
+                    0.6,
+                    0.7
+                ],
+                [
+                    0.7,
+                    0.8
+                ],
+                [
+                    0.8,
+                    0.9
+                ],
+                [
+                    0.9,
+                    1.0
+                ]
+            ],
+            "mean_predicted": [
+                0.0625937493905691,
+                0.14246976406452783,
+                0.2534660697239272,
+                0.35146743807342085,
+                0.4395820838261359,
+                0.5641297836095713,
+                0.6292988378684883,
+                0.7545580482403886,
+                0.8613991492459553,
+                0.9662760506209599
+            ],
+            "fraction_pos": [
+                0.6,
+                0.6666666666666666,
+                0.5555555555555556,
+                0.4117647058823529,
+                0.4,
+                0.5833333333333334,
+                0.6,
+                0.5,
+                0.4,
+                0.3333333333333333
+            ],
+            "counts": [
+                5,
+                6,
+                9,
+                17,
+                15,
+                12,
+                15,
+                10,
+                5,
+                6
+            ]
+        },
+        "interpretation": "ECE > 10% \u2014 recalibration strongly recommended.",
+        "prediction_source": "auto_generated",
+        "model_type": "RandomForestRegressor"
+    },
+    "drift": {
+        "module": "DriftEngine",
+        "timestamp": "2026-06-02T15:59:23",
+        "severity": "HIGH",
+        "passed": false,
+        "findings": {
+            "per_feature": [
+                {
+                    "feature": "PatientID",
+                    "type": "numeric",
+                    "ks_stat": 1.0,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 15.9548,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "Age",
+                    "type": "numeric",
+                    "ks_stat": 0.22,
+                    "pvalue": 0.17772,
+                    "pvalue_unavailable": false,
+                    "psi": 0.337,
+                    "significant_drift": false,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "StayDays",
+                    "type": "numeric",
+                    "ks_stat": 0.16,
+                    "pvalue": 0.54414,
+                    "pvalue_unavailable": false,
+                    "psi": 0.1665,
+                    "significant_drift": false,
+                    "status": "WARN"
+                }
+            ],
+            "drifted": [
+                "PatientID",
+                "Age"
+            ],
+            "warned": [
+                "StayDays"
+            ],
+            "domain_auc": 0.5,
+            "mean_psi": 5.4861,
+            "n_features": 4,
+            "num_drifted_features": 2,
+            "num_warned_features": 1,
+            "alerts": [
+                {
+                    "level": "HIGH",
+                    "message": "2 feature(s) show significant drift: ['PatientID', 'Age']. Model retraining recommended."
+                },
+                {
+                    "level": "MEDIUM",
+                    "message": "1 feature(s) show borderline drift: ['StayDays']. Monitor closely."
+                }
+            ]
+        },
+        "log": [
+            "[15:59:23] [INFO] [DriftEngine] Starting DriftEngine",
+            "[15:59:23] [INFO] [DriftEngine]   PatientID: DRIFT (p=0.0000, psi=15.9548)",
+            "[15:59:23] [INFO] [DriftEngine]   Age: DRIFT (p=0.1777, psi=0.3370)",
+            "[15:59:23] [INFO] [DriftEngine]   StayDays: WARN (p=0.5441, psi=0.1665)",
+            "[15:59:23] [INFO] [DriftEngine] Domain classifier failed: \nAll the 3 fits failed.\nIt is very likely that your model is misconfigured.\nYou can try to debug the error by setting error_score='raise'.\n\nBelow are more details about the failures:\n--------------------------------------------------------------------------------\n3 fits failed with the following error:\nTraceback (most recent call last):\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\model_selection\\_validation.py\", line 833, in _fit_and_score\n    estimator.fit(X_train, y_train, **fit_params)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\base.py\", line 1336, in wrapper\n    return fit_method(estimator, *args, **kwargs)\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\ensemble\\_forest.py\", line 359, in fit\n    X, y = validate_data(\n           ~~~~~~~~~~~~~^\n        self,\n        ^^^^^\n    ...<5 lines>...\n        ensure_all_finite=False,\n        ^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\utils\\validation.py\", line 2919, in validate_data\n    X, y = check_X_y(X, y, **check_params)\n           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\utils\\validation.py\", line 1314, in check_X_y\n    X = check_array(\n        X,\n    ...<12 lines>...\n        input_name=\"X\",\n    )\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\utils\\validation.py\", line 1022, in check_array\n    array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\utils\\_array_api.py\", line 878, in _asarray_with_order\n    array = numpy.asarray(array, order=order, dtype=dtype)\nValueError: could not convert string to float: np.str_('Orthopedic')\n"
+        ]
+    },
+    "label_noise": {
+        "module": "LabelNoiseEngine",
+        "timestamp": "2026-06-02T15:59:23",
+        "severity": "HIGH",
+        "passed": false,
+        "findings": {
+            "num_errors_detected": 48,
+            "total_samples": 100,
+            "estimated_noise_fraction": 0.48,
+            "is_asymmetric": false,
+            "noise_severity": 0.4799679487179487,
+            "avg_label_quality": 0.4792194419154939,
+            "error_indices": [
+                1,
+                2,
+                8,
+                9,
+                10,
+                11,
+                14,
+                18,
+                20,
+                25,
+                27,
+                28,
+                32,
+                33,
+                36,
+                39,
+                40,
+                42,
+                45,
+                50,
+                52,
+                55,
+                56,
+                57,
+                58,
+                59,
+                62,
+                63,
+                65,
+                67,
+                71,
+                72,
+                73,
+                74,
+                75,
+                78,
+                79,
+                80,
+                81,
+                82,
+                87,
+                88,
+                89,
+                92,
+                93,
+                94,
+                95,
+                97
+            ]
+        },
+        "log": [
+            "[15:59:23] [INFO] [LabelNoiseEngine] Starting LabelNoiseEngine",
+            "[15:59:23] [INFO] [LabelNoiseEngine] Starting Label Noise audit...",
+            "[15:59:23] [INFO] [LabelNoiseEngine] Audit complete. Detected 48 errors."
+        ]
+    },
+    "leakage": {
+        "module": "LeakageEngine",
+        "timestamp": "2026-06-02T15:59:23",
+        "severity": "HIGH",
+        "passed": false,
+        "findings": {
+            "summary": "Detected 1 potential leakage issues:\n- [HIGH] BillAmount: target_leakage (Score: 1.00)",
+            "num_suspects": 1,
+            "suspects": [
+                {
+                    "feature": "BillAmount",
+                    "score": 1.0,
+                    "type": "target_leakage",
+                    "severity": "HIGH"
+                }
+            ],
+            "full_report": {
+                "target_leakage": {
+                    "scores": {
+                        "PatientID": 0.07537971105142915,
+                        "Age": 0.010522772087713874,
+                        "Department": 0.030805361283535986,
+                        "BillAmount": 1.0,
+                        "StayDays": 0.07817532973419286
+                    }
+                },
+                "temporal_leakage": {}
+            }
+        },
+        "log": [
+            "[15:59:23] [INFO] [LeakageEngine] Starting LeakageEngine",
+            "[15:59:23] [INFO] [LeakageEngine] Starting Leakage scan...",
+            "[15:59:23] [INFO] [LeakageEngine] Leakage scan complete. Found 1 suspects."
+        ]
+    },
+    "missing_data": {
+        "module": "MissingDataEngine",
+        "timestamp": "2026-06-02T15:59:23",
+        "severity": "NONE",
+        "passed": true,
+        "findings": {
+            "missingness_rates": {
+                "PatientID": 0.0,
+                "Age": 0.0,
+                "Department": 0.0,
+                "StayDays": 0.0
+            },
+            "mechanisms": {
+                "PatientID": "NONE",
+                "Age": "NONE",
+                "Department": "NONE",
+                "StayDays": "NONE"
+            },
+            "global_mcar": {
+                "statistic": 0.0,
+                "pvalue": 1.0,
+                "mcar_likely": true,
+                "df": 0,
+                "error": "Insufficient degrees of freedom"
+            },
+            "signal_strength": {},
+            "max_missing_rate": 0.0
+        },
+        "log": [
+            "[15:59:23] [INFO] [MissingDataEngine] Starting MissingDataEngine",
+            "[15:59:23] [INFO] [MissingDataEngine] Starting Missing Data audit...",
+            "[15:59:23] [INFO] [MissingDataEngine] Missing Data audit complete. Max rate: 0.00%"
+        ]
+    }
+}

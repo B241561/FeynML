@@ -1,0 +1,1232 @@
+{% extends "base.html" %}
+
+{% block title %}Visual Explorer - FeynML{% endblock %}
+
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  
+  html, body,
+  .container, .container-fluid,
+  .row, .col, [class*="col-"],
+  .main-content, .content-area,
+  .page-content, #content {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+  }
+
+  .card, .chart-builder-card,
+  .chart-preview-card {
+    background-color: #1e293b !important;
+    border: 1px solid #2d3748 !important;
+    color: #e2e8f0 !important;
+  }
+
+  .card-header, [class*="card-header"] {
+    background-color: #1e293b !important;
+    border-bottom: 1px solid #2d3748 !important;
+    color: #ffffff !important;
+  }
+
+  select, input, .form-control, .form-select {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #334155 !important;
+  }
+  
+  select option {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+  }
+
+html, body {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+.visual-explorer-page,
+.main-content,
+.content-wrapper,
+#main,
+.page-wrapper {
+    background-color: #0f172a !important;
+}
+
+h1, h2 {
+    color: #ffffff !important;
+}
+
+p.subtitle {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode {
+    background-color: #0f172a;
+    color: #e2e8f0;
+}
+body.dark-mode .visual-explorer-panel {
+    background-color: #1e293b;
+    border: 1px solid #2d3748;
+    border-radius: 0.75rem;
+    color: #e2e8f0;
+}
+body.dark-mode .visual-explorer-panel .form-select,
+body.dark-mode .visual-explorer-panel .form-control,
+body.dark-mode .visual-explorer-panel .form-select:focus,
+body.dark-mode .visual-explorer-panel .form-control:focus {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #334155 !important;
+    border-radius: 0.5rem !important;
+    box-shadow: none !important;
+}
+body.dark-mode .visual-explorer-label {
+    color: #64748b;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+body.dark-mode .visual-explorer-heading {
+    color: #ffffff;
+}
+body.dark-mode .visual-explorer-subtitle {
+    color: #94a3b8;
+}
+body.dark-mode .visual-explorer-panel .card-header {
+    background-color: #1e293b;
+    border-bottom: 1px solid #2d3748;
+}
+body.dark-mode .visual-explorer-panel .btn-outline-secondary,
+body.dark-mode .visual-explorer-panel .btn-outline-indigo,
+body.dark-mode .visual-explorer-panel .btn-indigo {
+    color: #e2e8f0;
+    border-color: #334155;
+}
+body.dark-mode .visual-explorer-panel .btn-outline-indigo {
+    background: transparent;
+    border: 1px solid #334155;
+    color: #94a3b8;
+}
+body.dark-mode #downloadPngBtn {
+    background-color: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+    border-radius: 0.5rem !important;
+    padding: 0.25rem 0.75rem !important;
+}
+body.dark-mode #downloadPngBtn:hover {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+}
+
+.chart-pill {
+  padding: 0.28rem 0.85rem;
+  border-radius: 999px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+.chart-pill.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+.chart-pill:hover:not(.active) {
+  border-color: #3b82f6;
+  color: #e2e8f0;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background-color: #0f172a; min-height: 100vh;">
+    <!-- Hidden Report ID for JS -->
+    <input type="hidden" id="report-id-hidden" value="{{ report_id }}">
+    
+    <!-- Page Header -->
+    <div class="mb-4">
+        <h1 class="display-5 fw-bold mb-2 visual-explorer-heading">
+            <i class="bi bi-graph-up text-indigo-400"></i> Visual Explorer
+        </h1>
+        <p class="lead visual-explorer-subtitle">Build custom charts to explore your dataset</p>
+    </div>
+
+    <!-- Main Layout: Left Panel + Right Panel -->
+    <div class="row g-4">
+        <!-- LEFT PANEL: Chart Builder -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100 bg-card visual-explorer-panel">
+                <div class="card-header border-0 py-3" style="background-color: #1e293b; border-bottom: 1px solid #2d3748;">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-sliders"></i> Chart Builder
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form id="chartBuilderForm">
+                        <!-- Dimensions panel -->
+                        <div class="field-section mb-4">
+                            <label class="form-label fw-semibold visual-explorer-label">DIMENSIONS</label>
+                            <div id="dimensions-chips" class="d-flex flex-wrap gap-2"></div>
+                        </div>
+                        <div class="field-section mb-4">
+                            <label class="form-label fw-semibold visual-explorer-label">MEASURES</label>
+                            <div id="measures-chips" class="d-flex flex-wrap gap-2"></div>
+                        </div>
+
+                        <!-- X Axis -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold visual-explorer-label">X Axis</label>
+                            <select class="form-select bg-main border-subtle rounded" id="xAxis" name="x_axis" required>
+                                <option value="">Select column...</option>
+                                {% for col in columns %}
+                                <option value="{{ col }}">{{ col }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Y Axis -->
+                        <div class="mb-4" id="yAxisContainer">
+                            <label class="form-label fw-semibold visual-explorer-label">Y Axis</label>
+                            <select class="form-select bg-main border-subtle rounded" id="yAxis" name="y_axis" required>
+                                <option value="">Select column...</option>
+                                {% for col in columns %}
+                                <option value="{{ col }}">{{ col }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Chart Type -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold visual-explorer-label">Chart Type</label>
+                            <div class="d-flex flex-wrap gap-2 mb-2" id="chartTypeSelector">
+                                <button type="button" class="chart-pill active" data-value="scatter">Scatter</button>
+                                <button type="button" class="chart-pill" data-value="bar">Bar</button>
+                                <button type="button" class="chart-pill" data-value="histogram">Histogram</button>
+                                <button type="button" class="chart-pill" data-value="box">Box Plot</button>
+                                <button type="button" class="chart-pill" data-value="line">Line</button>
+                                <button type="button" class="chart-pill" data-value="heatmap">Heatmap</button>
+                                <button type="button" class="chart-pill" data-value="violin">Violin</button>
+                            </div>
+                            <input type="hidden" id="chartType" name="chart_type" value="scatter" />
+                            <small class="d-block text-muted" id="chartTypeHelper" style="color: #64748b !important;">Compare two numeric columns</small>
+                        </div>
+
+                        <!-- Color By -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold visual-explorer-label">Color By (Optional)</label>
+                            <select class="form-select bg-main border-subtle rounded" id="colorBy" name="color_by">
+                                <option value="">None</option>
+                                {% for col in columns %}
+                                <option value="{{ col }}">{{ col }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-4 d-flex align-items-center justify-content-between">
+                            <label class="form-label fw-semibold visual-explorer-label mb-0">Show Legend</label>
+                            <div class="form-check form-switch m-0">
+                                <input class="form-check-input" type="checkbox" id="showLegendToggle" checked>
+                            </div>
+                        </div>
+
+                        <!-- Filter Section -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold visual-explorer-label">Filter (Optional)</label>
+                            <div id="filterContainer"></div>
+                            <button type="button" class="btn btn-sm btn-outline-indigo mt-2" id="addFilterBtn">
+                                <i class="bi bi-plus"></i> Add Filter
+                            </button>
+                        </div>
+
+                        
+
+                        <!-- Generate Button -->
+                        <button type="button" class="btn btn-indigo w-100 py-2 fw-semibold" id="generateChartBtn">
+                            <i class="bi bi-lightning-charge"></i> Generate Chart
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Chart Output -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100 bg-card visual-explorer-panel">
+                <div class="card-header border-0 py-3 d-flex justify-content-between align-items-center" style="background-color: #1e293b; border-bottom: 1px solid #2d3748;">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-bar-chart"></i> Chart Preview
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" id="downloadPngBtn" style="display:none;">
+                            <i class="bi bi-download"></i> PNG
+                        </button>
+                    </div>
+                </div>
+                <div id="chart-toolbar" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; background: #162032; border-bottom: 1px solid #2d3748; border-radius: 0.75rem 0.75rem 0 0; width: 100%;">
+                    <button type="button" onclick="chartZoomIn()" title="Zoom In" class="tb-btn">🔍+</button>
+                    <button type="button" onclick="chartZoomOut()" title="Zoom Out" class="tb-btn">🔍−</button>
+                    <button type="button" onclick="chartPan()" title="Pan / Move" class="tb-btn" id="btn-pan">✋</button>
+                    <button type="button" onclick="chartReset()" title="Reset View" class="tb-btn">⟳</button>
+                    <div style="width:1px; height:24px; background:#2d3748; margin:0 0.25rem;"></div>
+                    <button type="button" onclick="chartDownload()" title="Download PNG" class="tb-btn">⬇ PNG</button>
+                </div>
+                <div class="card-body p-4">
+                    <div id="chartContainer" class="chart-preview">
+                        <div id="chartLoading" class="chart-loading">
+                            <i class="bi bi-graph-up fs-1 opacity-25"></i>
+                            <p class="mt-3">Select columns and click "Generate Chart" to visualize your data</p>
+                        </div>
+                        <div id="chartPlot" class="chart-plot" role="img" aria-label="Chart preview"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUGGESTED CHARTS SECTION -->
+    <div class="mt-5" style="background-color: #0f172a !important;">
+        <h2 class="fw-bold mb-4" style="color: #e2e8f0;">
+            <i class="bi bi-lightbulb"></i> Suggested Charts
+        </h2>
+        <div class="row g-4">
+            {% for suggestion in suggestions %}
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm bg-card h-100 suggestion-card" 
+                    data-x-axis="{{ suggestion.x_axis }}" 
+                    data-y-axis="{{ suggestion.y_axis }}"
+                    data-chart-type="{{ suggestion.chart_type.split(' ')[0] | lower }}"
+                    data-color-by="{{ suggestion.color_by or '' }}">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-primary">{{ suggestion.title }}</h5>
+                        <p class="card-text small text-muted">{{ suggestion.description }}</p>
+                        <div class="badge bg-indigo-100 text-indigo-700 mb-3">{{ suggestion.chart_type }}</div>
+                        <button class="btn btn-sm btn-indigo w-100 generate-suggestion-btn">
+                            <i class="bi bi-lightning-charge"></i> Generate
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <section class="guide-section" style="
+      margin-top: 3rem;
+      padding: 2rem;
+      background: #1e293b;
+      border-radius: 1rem;
+      border: 1px solid #2d3748;">
+
+      <h2 style="color:#fff; font-size:1.25rem; 
+                 font-weight:700; margin-bottom:0.25rem;">
+        How to Use Visual Explorer
+      </h2>
+      <p style="color:#64748b; font-size:0.85rem; 
+                margin-bottom:2rem;">
+        Build, explore, and export custom charts from your dataset.
+      </p>
+
+      <div style="display:grid; 
+                  grid-template-columns: repeat(3,1fr); 
+                  gap:1rem;">
+
+        <div class="guide-card">
+          <span class="guide-icon">📐</span>
+          <h4>Dimensions</h4>
+          <p>Categorical columns like mainroad, furnishingstatus. 
+          Use on X Axis for grouping. Click chip to auto-fill 
+          X Axis field.</p>
+        </div>
+
+        <div class="guide-card">
+          <span class="guide-icon">📏</span>
+          <h4>Measures</h4>
+          <p>Numeric columns like price, area. Use on Y Axis 
+          for values. Click chip to auto-fill Y Axis field.</p>
+        </div>
+
+        <div class="guide-card">
+          <span class="guide-icon">📊</span>
+          <h4>Chart Types</h4>
+          <p>
+            <b>Scatter</b> — relationship between two numbers<br>
+            <b>Bar</b> — compare categories<br>
+            <b>Histogram</b> — distribution of one column<br>
+            <b>Box Plot</b> — spread and outliers<br>
+            <b>Line</b> — trend over sorted X<br>
+            <b>Heatmap</b> — correlation matrix<br>
+            <b>Violin</b> — distribution shape by category
+          </p>
+        </div>
+
+        <div class="guide-card">
+          <span class="guide-icon">🎨</span>
+          <h4>Color By</h4>
+          <p>Split chart by a third column using color. 
+          Best used with a Dimension (categorical column). 
+          Creates automatic legend per unique value.</p>
+        </div>
+
+        <div class="guide-card">
+          <span class="guide-icon">🏷️</span>
+          <h4>Legend</h4>
+          <p>Auto-appears when Color By is set. Click legend 
+          items to show/hide specific groups. Toggle Show Legend 
+          off for cleaner single-color charts.</p>
+        </div>
+
+        <div class="guide-card">
+          <span class="guide-icon">🔍</span>
+          <h4>Filters</h4>
+          <p>Narrow your data before plotting. Example: 
+          bedrooms > 2 shows only houses with more than 
+          2 bedrooms. Add multiple filters to combine conditions.
+          </p>
+        </div>
+
+        <div class="guide-card">
+          <span class="guide-icon">🛠️</span>
+          <h4>Chart Toolbar</h4>
+          <p>
+            <b>Zoom</b> — drag to zoom into any region<br>
+            <b>Pan</b> — move around zoomed chart<br>
+            <b>Reset Axes</b> — return to full view<br>
+            <b>Download PNG</b> — save full resolution image
+          </p>
+        </div>
+
+        <div class="guide-card">
+          <span class="guide-icon">💡</span>
+          <h4>Suggested Charts</h4>
+          <p>Auto-recommended charts based on your dataset's 
+          drift results and noise findings. One click to 
+          generate without manual axis selection.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- My Visualizations Section (for future use) -->
+    <div class="mt-5" id="myVisualizationsSection" style="display:none; background-color: #0f172a !important;">
+        <h2 class="fw-bold mb-4">
+            <i class="bi bi-collection"></i> My Visualizations
+        </h2>
+        <div class="row g-4" id="visualizationsGrid"></div>
+    </div>
+</div>
+
+<!-- Toast for notifications -->
+<div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
+
+<script>
+const GLOBAL_REPORT_ID = {{ report_id | tojson }};
+const columns = {{ columns | tojson }};
+const columnMeta = {{ column_meta | tojson }};
+
+// Chart type descriptions
+const chartTypeDescriptions = {
+    scatter: 'Compare two numeric columns',
+    bar: 'Categorical X, numeric Y',
+    histogram: 'Distribution of one column',
+    box: 'Spread and outliers by category',
+    line: 'Trends over ordered values',
+    heatmap: 'Two-way frequency table',
+    violin: 'Distribution shape and density'
+};
+
+// Chart pill selector (uses data-value slugs)
+document.querySelectorAll('.chart-pill').forEach(pill => {
+    pill.addEventListener('click', function () {
+        document.querySelectorAll('.chart-pill').forEach(p => p.classList.remove('active'));
+        this.classList.add('active');
+        // Update hidden input
+        document.getElementById('chartType').value = this.getAttribute('data-value');
+        // Hide Y-axis field when histogram or heatmap selected (they don't need it)
+        const yField = document.getElementById('yAxisContainer');
+        if (yField) {
+            const val = this.getAttribute('data-value');
+            yField.style.display = (val === 'histogram' || val === 'heatmap') ? 'none' : 'block';
+        }
+        // Update helper text
+        const helperKey = this.getAttribute('data-value');
+        if (chartTypeDescriptions[helperKey]) {
+            document.getElementById('chartTypeHelper').textContent = chartTypeDescriptions[helperKey];
+        }
+    });
+});
+
+function createChip(label, isDimension) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = `chip ${isDimension ? 'dimensions-chip' : 'measures-chip'}`;
+    chip.textContent = label;
+    chip.dataset.column = label;
+    chip.draggable = true;
+    chip.addEventListener('click', () => handleChipClick(label));
+    chip.addEventListener('dragstart', event => {
+        event.dataTransfer.setData('text/plain', label);
+    });
+    return chip;
+}
+
+function populateColumnChips() {
+    const dimensions = document.getElementById('dimensions-chips');
+    const measures = document.getElementById('measures-chips');
+    dimensions.innerHTML = '';
+    measures.innerHTML = '';
+
+    Object.entries(columnMeta).forEach(([col, meta]) => {
+        const dtype = meta.dtype.toLowerCase();
+        const isNumeric = /int|float|double|number/.test(dtype);
+        const isDimension = !isNumeric || meta.nunique < 20;
+        const chip = createChip(col, isDimension);
+        if (isDimension) {
+            dimensions.appendChild(chip);
+        } else {
+            measures.appendChild(chip);
+        }
+    });
+}
+
+function handleChipClick(column) {
+    const xAxis = document.getElementById('xAxis');
+    const yAxis = document.getElementById('yAxis');
+    const chartType = document.getElementById('chartType').value;
+    const hideYAxisTypes = ['histogram'];
+
+    if (hideYAxisTypes.includes(chartType)) {
+        xAxis.value = column;
+        return;
+    }
+
+    if (!xAxis.value) {
+        xAxis.value = column;
+        return;
+    }
+
+    if (!yAxis.value) {
+        yAxis.value = column;
+        return;
+    }
+
+    xAxis.value = column;
+    yAxis.value = '';
+}
+
+populateColumnChips();
+
+// Helper function to show errors
+function showError(message) {
+    showToast(message, 'warning');
+}
+
+// Initialize filter container
+function updateFilterUI() {
+    const container = document.getElementById('filterContainer');
+    const filters = JSON.parse(sessionStorage.getItem('filters') || '[]');
+    
+    if (filters.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = filters.map((filter, idx) => `
+        <div class="mb-2 d-flex gap-2 align-items-end">
+            <select class="form-select form-select-sm bg-main border-subtle rounded flex-grow-1" 
+                    onchange="updateFilter(${idx}, 'column', this.value)">
+                <option value="">Column</option>
+                ${columns.map(col => `<option value="${col}" ${filter.column === col ? 'selected' : ''}>${col}</option>`).join('')}
+            </select>
+            <select class="form-select form-select-sm bg-main border-subtle rounded" style="width:80px;"
+                    onchange="updateFilter(${idx}, 'operator', this.value)">
+                <option value=">" ${filter.operator === '>' ? 'selected' : ''}>&gt;</option>
+                <option value="<" ${filter.operator === '<' ? 'selected' : ''}>&lt;</option>
+                <option value="==" ${filter.operator === '==' ? 'selected' : ''}>=</option>
+            </select>
+            <input type="text" class="form-control form-control-sm bg-main border-subtle rounded" 
+                   style="width:80px;" placeholder="Value"
+                   value="${filter.value}" 
+                   onchange="updateFilter(${idx}, 'value', this.value)">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFilter(${idx})">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function updateFilter(idx, field, value) {
+    const filters = JSON.parse(sessionStorage.getItem('filters') || '[]');
+    if (filters[idx]) {
+        filters[idx][field] = value;
+        sessionStorage.setItem('filters', JSON.stringify(filters));
+        updateFilterUI();
+    }
+}
+
+function removeFilter(idx) {
+    const filters = JSON.parse(sessionStorage.getItem('filters') || '[]');
+    filters.splice(idx, 1);
+    sessionStorage.setItem('filters', JSON.stringify(filters));
+    updateFilterUI();
+}
+
+const addFilterButton = document.getElementById('addFilterBtn');
+if (addFilterButton) {
+  addFilterButton.addEventListener('click', function() {
+      const filters = JSON.parse(sessionStorage.getItem('filters') || '[]');
+      filters.push({ column: '', operator: '>', value: '' });
+      sessionStorage.setItem('filters', JSON.stringify(filters));
+      updateFilterUI();
+  });
+}
+
+// ── generateChart() ─ complete replacement ────────────────────────
+function generateChart() {
+  console.log('=== generateChart() CALLED ===');
+
+  const activePill = document.querySelector('.chart-pill.active');
+  if (!activePill) { showChartError('Select a chart type first.'); return; }
+
+  const chartType = activePill.getAttribute('data-value');  // always a clean slug
+  const xAxis     = (document.getElementById('xAxis')?.value  || '').trim();
+  const yAxis     = (document.getElementById('yAxis')?.value  || '').trim();
+  const colorBy   = (document.getElementById('colorBy')?.value || '').trim();
+
+  // Resolve report_id — prefer hidden input, fallback to global var
+  const reportId  = document.getElementById('report-id-hidden')?.value
+                 || GLOBAL_REPORT_ID
+                 || '';
+
+  console.log('Report ID:', reportId);
+  console.log('X:', xAxis);
+  console.log('Y:', yAxis);
+  console.log('Chart:', chartType);
+
+  console.log('=== REPORT DEBUG ===');
+  console.log('GLOBAL_REPORT_ID:', GLOBAL_REPORT_ID);
+  console.log('Hidden Report ID:', document.getElementById('report-id-hidden')?.value);
+  console.log('Final Report ID:', reportId);
+  console.log('===================');
+
+  if (!reportId) {
+    showChartError('Missing report ID. Open Visual Explorer from a saved report.');
+    return;
+  }
+
+  // Client-side validation (mirrors backend)
+  if (!xAxis) { showChartError('Please select an X Axis column.'); return; }
+  const needsY = ['scatter', 'bar', 'box', 'line', 'violin'];
+  if (needsY.includes(chartType) && !yAxis) {
+    showChartError(chartType.charAt(0).toUpperCase() + chartType.slice(1) + ' chart requires a Y Axis column.'); return;
+  }
+  if (needsY.includes(chartType) && xAxis === yAxis) {
+    showChartError('X and Y axis must be different columns.'); return;
+  }
+
+  showChartLoading('Loading chart...');
+  clearChartPlot();
+
+  const payload = {
+    report_id:  reportId,
+    x_axis:     xAxis,
+    y_axis:     yAxis,
+    chart_type: chartType,
+    color_by:   colorBy || null
+  };
+
+  console.log('Payload:', payload);
+
+  fetch('/api/generate-chart', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(async response => {
+      console.log('Fetch started');
+      console.log('HTTP Status:', response.status);
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch (parseError) {
+        throw new Error(`Invalid JSON response from server: ${parseError.message}`);
+      }
+
+      console.log('Response:', data);
+      if (!response.ok) {
+        throw new Error(data?.error || `Server returned status ${response.status}`);
+      }
+      return data;
+    })
+    .then(data => {
+      if (!data) {
+        showChartError('No response body from server.');
+        return;
+      }
+      if (data.error) {
+        showChartError('⚠ ' + data.error);
+        return;
+      }
+
+      console.log('Chart Data Received');
+      const chartPlot = getChartPlotDiv();
+      const payloadData = data.chart_json || data.chart;
+
+      console.log('Chart Container:', chartPlot);
+      console.log('Plotly:', typeof Plotly);
+
+      if (payloadData && chartPlot) {
+        const fig = JSON.parse(payloadData);
+        console.log('Rendering Plot...');
+        try {
+          const plotPromise = Plotly.react(chartPlot, fig.data, fig.layout, {
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['toImage', 'sendDataToCloud'],
+            displaylogo: false
+          });
+
+          Promise.resolve(plotPromise).then(() => {
+            console.log('Plot Render Complete');
+            resizeChartPlot();
+            hideChartLoading();
+          }).catch(plotError => {
+            console.error('Plotly render error:', plotError);
+            hideChartLoading();
+            showChartError('Plotly render failed — see console.');
+          });
+        } catch (plotError) {
+          console.error('Plotly render exception:', plotError);
+          hideChartLoading();
+          showChartError('Plotly render failed — see console.');
+        }
+        return;
+      }
+
+      showChartError('No chart data returned from server.');
+    })
+    .catch(error => {
+      console.error('Fetch Error:', error);
+      hideChartLoading();
+      showChartError('Request failed — see console: ' + error.message);
+    });
+}
+
+function showChartError(msg) {
+  const chartPlot = document.getElementById('chartPlot');
+  const chartLoading = document.getElementById('chartLoading');
+  hideChartLoading();
+  if (chartPlot) {
+    chartPlot.innerHTML = `<div style="color: #ef4444; font-size: 0.95rem; text-align: center; padding: 2rem; background: #1e293b; border-radius: 0.5rem; border: 1px solid #7f1d1d;">${msg}</div>`;
+  }
+  if (chartLoading) {
+    chartLoading.style.display = 'none';
+  }
+}
+
+function getChartPlotDiv() {
+  return document.getElementById('chartPlot');
+}
+
+function showChartLoading(message = 'Loading chart...') {
+  const chartLoading = document.getElementById('chartLoading');
+  const chartPlot = getChartPlotDiv();
+  if (chartPlot) {
+    chartPlot.innerHTML = '';
+  }
+  if (chartLoading) {
+    chartLoading.innerHTML = `<i class="bi bi-graph-up fs-1 opacity-25"></i><p class="mt-3">${message}</p>`;
+    chartLoading.classList.remove('hidden');
+    chartLoading.style.display = 'flex';
+  }
+}
+
+function hideChartLoading() {
+  const chartLoading = document.getElementById('chartLoading');
+  if (chartLoading) {
+    chartLoading.classList.add('hidden');
+    chartLoading.style.display = 'none';
+  }
+}
+
+function clearChartPlot() {
+  const chartPlot = getChartPlotDiv();
+  if (chartPlot) {
+    if (window.Plotly) {
+      try {
+        Plotly.purge(chartPlot);
+      } catch (e) {
+        console.warn('Unable to purge existing Plotly chart', e);
+      }
+    }
+    chartPlot.innerHTML = '';
+  }
+}
+
+function resizeChartPlot() {
+  const chartPlot = getChartPlotDiv();
+  if (chartPlot && window.Plotly) {
+    Plotly.Plots.resize(chartPlot);
+  }
+}
+
+window.addEventListener('resize', resizeChartPlot);
+
+// Generate Chart
+const generateButton = document.getElementById('generateChartBtn');
+if (generateButton) {
+  generateButton.addEventListener('click', generateChart);
+} else {
+  console.error('Generate Chart button not found: generateChartBtn');
+}
+
+// Generate from Suggestion
+document.querySelectorAll('.generate-suggestion-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const card = this.closest('.suggestion-card');
+        const chartType = card.dataset.chartType;
+        
+        document.getElementById('xAxis').value = card.dataset.xAxis;
+        document.getElementById('yAxis').value = card.dataset.yAxis;
+        document.getElementById('chartType').value = chartType;
+        document.getElementById('colorBy').value = card.dataset.colorBy;
+        
+        // Update pill selector styling
+        document.querySelectorAll('.chart-pill').forEach(p => p.classList.remove('active'));
+        const activeSuggestionPill = document.querySelector(`.chart-pill[data-value="${chartType}"]`);
+        if (activeSuggestionPill) {
+            activeSuggestionPill.classList.add('active');
+        }
+        
+        // Update helper text
+        document.getElementById('chartTypeHelper').textContent = chartTypeDescriptions[chartType];
+        
+        // Show/hide Y Axis
+        const yAxisContainer = document.getElementById('yAxisContainer');
+        const histogramTypes = ['histogram'];
+        if (histogramTypes.includes(chartType)) {
+            yAxisContainer.style.display = 'none';
+            document.getElementById('yAxis').removeAttribute('required');
+        } else {
+            yAxisContainer.style.display = 'block';
+            document.getElementById('yAxis').setAttribute('required', 'required');
+        }
+        
+        sessionStorage.setItem('filters', '[]');
+        updateFilterUI();
+        generateChart();
+    });
+});
+
+// Download PNG
+const downloadPngButton = document.getElementById('downloadPngBtn');
+if (downloadPngButton) {
+  downloadPngButton.addEventListener('click', async function() {
+      try {
+          const chartPlot = getChartPlotDiv();
+          await Plotly.downloadImage(chartPlot, {
+              format: 'png',
+              width: 1200,
+              height: 600,
+              filename: 'feynml_chart'
+          });
+          showToast('Chart downloaded!', 'success');
+      } catch (error) {
+          showToast('Error downloading chart: ' + error.message, 'danger');
+      }
+  });
+}
+
+function chartZoom(scale = 0.8) {
+    const chartDiv = getChartPlotDiv();
+    if (!chartDiv || !chartDiv.layout) return;
+    const update = {};
+    const xRange = chartDiv.layout.xaxis && chartDiv.layout.xaxis.range;
+    const yRange = chartDiv.layout.yaxis && chartDiv.layout.yaxis.range;
+
+    if (xRange && xRange.length === 2) {
+        const center = (xRange[0] + xRange[1]) / 2;
+        const half = (xRange[1] - xRange[0]) * scale / 2;
+        update['xaxis.range'] = [center - half, center + half];
+    }
+    if (yRange && yRange.length === 2) {
+        const center = (yRange[0] + yRange[1]) / 2;
+        const half = (yRange[1] - yRange[0]) * scale / 2;
+        update['yaxis.range'] = [center - half, center + half];
+    }
+    if (Object.keys(update).length) {
+        Plotly.relayout(chartDiv, update);
+    }
+}
+
+function chartZoomIn() {
+    chartZoom(0.8);
+}
+
+function chartZoomOut() {
+    chartZoom(1.25);
+}
+
+function chartPan() {
+    const chartDiv = getChartPlotDiv();
+    Plotly.relayout(chartDiv, { dragmode: 'pan' });
+    showToast('Pan mode enabled. Drag inside the chart to move.', 'info');
+}
+
+function chartReset() {
+    const chartDiv = getChartPlotDiv();
+    Plotly.relayout(chartDiv, {
+        'xaxis.autorange': true,
+        'yaxis.autorange': true,
+        dragmode: 'zoom'
+    });
+    showToast('Chart view reset.', 'success');
+}
+
+function chartDownload() {
+    const chartDiv = getChartPlotDiv();
+    Plotly.downloadImage(chartDiv, {
+        format: 'png',
+        filename: 'feynml_chart',
+        width: 1200,
+        height: 600,
+        scale: 2
+    }).catch(error => showToast('Error downloading chart: ' + error.message, 'danger'));
+}
+
+
+
+// Toast notification helper
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'danger' ? 'danger' : type === 'warning' ? 'warning' : 'info'} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    container.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    toast.addEventListener('hidden.bs.toast', () => toast.remove());
+}
+
+// Initialize
+updateFilterUI();
+
+// Initialize Y Axis visibility based on default chart type
+const defaultChartType = 'scatter';
+const yAxisContainer = document.getElementById('yAxisContainer');
+const histogramTypes = ['histogram'];
+if (!histogramTypes.includes(defaultChartType)) {
+    yAxisContainer.style.display = 'block';
+}
+</script>
+
+<style>
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton-chart {
+    width: 100%;
+    height: 400px;
+    background: linear-gradient(90deg, #1e293b 25%, #2d3748 50%, #1e293b 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 0.5rem;
+}
+
+.suggestion-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid #2d3748;
+    background-color: #1e293b !important;
+    border-radius: 0.75rem !important;
+    color: #e2e8f0 !important;
+}
+
+.suggestion-card:hover {
+    transform: translateY(-4px);
+    border-color: #6366f1;
+    box-shadow: 0 12px 24px rgba(99, 102, 241, 0.15) !important;
+}
+
+.suggestion-card .card-title {
+    color: #e2e8f0 !important;
+}
+
+.suggestion-card .card-text {
+    color: #94a3b8 !important;
+}
+
+#chartContainer {
+    position: relative;
+    width: 100%;
+    height: 700px;
+    overflow: hidden;
+    background: transparent;
+}
+
+#chartPlot {
+    width: 100%;
+    height: 100%;
+}
+
+.chart-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    text-align: center;
+    background: rgba(15, 23, 42, 0.95);
+    color: #cbd5e1;
+    z-index: 2;
+}
+
+.chart-loading.hidden {
+    display: none;
+}
+
+.chart-plot {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 520px;
+}
+
+.form-select.bg-main,
+.form-control.bg-main {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+    border-radius: 0.5rem !important;
+}
+
+.form-select.bg-main:focus,
+.form-control.bg-main:focus {
+    background-color: #0f172a !important;
+    border-color: #6366f1 !important;
+    color: #e2e8f0 !important;
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25) !important;
+}
+
+/* Chart pill styles */
+.chart-pill {
+    padding: 0.28rem 0.85rem;
+    border-radius: 999px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+.chart-pill.active {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: #ffffff;
+}
+.chart-pill:hover:not(.active) {
+    border-color: #3b82f6;
+    color: #e2e8f0;
+}
+
+.guide-card {
+  background: #0f172a;
+  border: 1px solid #2d3748;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.guide-card h4 {
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.guide-card .guide-icon {
+  font-size: 1.25rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.guide-card b {
+  color: #93c5fd;
+}
+
+@media (max-width: 768px) {
+  .guide-section > div {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Dimension chips */
+#dimensions-chips .chip,
+.dimension-chip,
+.dimensions-chip {
+  display: inline-block;
+  padding: 0.25rem 0.85rem;
+  border-radius: 999px !important;
+  background-color: #1e3a5f !important;
+  color: #93c5fd !important;
+  border: 1px solid #3b82f6 !important;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 0.2rem;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+/* Measure chips */
+#measures-chips .chip,
+.measure-chip,
+.measures-chip {
+  display: inline-block;
+  padding: 0.25rem 0.85rem;
+  border-radius: 999px !important;
+  background-color: #1a3a2a !important;
+  color: #6ee7b7 !important;
+  border: 1px solid #10b981 !important;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 0.2rem;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.dimension-chip:hover,
+.dimensions-chip:hover {
+  background-color: #1d4ed8 !important;
+}
+
+.measure-chip:hover,
+.measures-chip:hover {
+  background-color: #065f46 !important;
+}
+
+html[data-theme="light"] .form-select.bg-main,
+html[data-theme="light"] .form-control.bg-main {
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
+    color: #1e293b;
+}
+
+.modebar {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  background: rgba(15,23,42,0.85) !important;
+  border-radius: 6px !important;
+  padding: 2px 4px !important;
+}
+
+.modebar-btn path {
+  fill: #94a3b8 !important;
+}
+
+.modebar-btn:hover path {
+  fill: #ffffff !important;
+}
+
+#chart-toolbar {
+  position: relative;
+  z-index: 1;
+}
+
+.tb-btn {
+  background: #0f172a;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.6rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tb-btn:hover {
+  background: #1e293b;
+  border-color: #475569;
+}
+
+@media (max-width: 992px) {
+  #chart-toolbar {
+    flex-wrap: wrap;
+  }
+}
+
+html[data-theme="light"] .form-select.bg-main:focus,
+html[data-theme="light"] .form-control.bg-main:focus {
+    background-color: #ffffff;
+    border-color: #6366f1;
+    color: #1e293b;
+}
+
+html[data-theme="light"] .bg-indigo-50 {
+    background-color: #eef2ff !important;
+}
+
+html[data-theme="light"] .text-indigo-700 {
+    color: #4f46e5 !important;
+}
+
+html[data-theme="light"] .badge.bg-indigo-100 {
+    background-color: #e0e7ff !important;
+}
+
+.chart-type-pill {
+    padding: 0.5rem 1rem;
+    border: 1px solid #334155;
+    background-color: #1e293b;
+    color: #94a3b8;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.chart-type-pill:hover {
+    background-color: #334155;
+    color: #cbd5e1;
+    border-color: #475569;
+}
+
+.chart-type-pill.active {
+    background-color: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+</style>
+{% endblock %}

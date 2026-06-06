@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ML Failure Engine{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-2.33.0.min.js"></script>
+    {% block head %}{% endblock %}
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{{ body_class or '' }}">
+    <div class="d-flex flex-column min-vh-100">
+        <!-- Top Navigation (SaaS Style) -->
+        <nav class="navbar navbar-expand-lg sticky-top d-print-none">
+            <div class="container-fluid px-4">
+                <a class="navbar-brand d-flex align-items-center fw-bold text-primary" href="{{ url_for('landing') }}">
+                    <i class="bi bi-shield-fill-exclamation text-indigo-600 me-2 fs-4"></i>
+                    <span>FeynML</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4 gap-2">
+                        <li class="nav-item">
+                            <a class="nav-link {{ 'active' if request.endpoint == 'features' }}" href="{{ url_for('features') }}">Features</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ 'active' if request.endpoint == 'about' }}" href="{{ url_for('about') }}">About</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ 'active' if request.endpoint == 'faq' }}" href="{{ url_for('faq') }}">FAQ</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ 'active' if request.endpoint == 'contact' }}" href="{{ url_for('contact') }}">Contact</a>
+                        </li>
+                    </ul>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="d-flex align-items-center gap-3 me-2">
+                            <a href="https://github.com/B241561" target="_blank" class="text-muted fs-5 hover-indigo"><i class="fa-brands fa-github"></i></a>
+                            <a href="https://www.linkedin.com/in/arman-kaushik-29b5b6370/" target="_blank" class="text-muted fs-5 hover-indigo"><i class="fa-brands fa-linkedin"></i></a>
+                        </div>
+                        <div class="form-check form-switch me-2">
+                            <input class="form-check-input" type="checkbox" id="themeToggle">
+                            <label class="form-check-label text-muted small" for="themeToggle"><i class="bi bi-moon-stars"></i></label>
+                        </div>
+                        {% if current_user.is_authenticated %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-indigo dropdown-toggle rounded-pill" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle me-2"></i>{{ current_user.name or current_user.email }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 bg-card">
+                                <li><a class="dropdown-item" href="{{ url_for('profile') }}">Profile</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('saved_reports') }}">Reports</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('datasets') }}">Datasets</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('usage_dashboard') }}">Usage</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">Logout</a></li>
+                            </ul>
+                        </div>
+                        {% else %}
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-indigo px-4 rounded-pill fw-semibold">Login</a>
+                        <a href="{{ url_for('signup') }}" class="btn btn-indigo px-4 rounded-pill fw-semibold">Sign Up</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="d-flex flex-grow-1">
+            <!-- Sidebar (Only for App Views) -->
+            {% if request.endpoint in ['index', 'configure_schema', 'analysis_progress', 'view_dashboard', 'view_report', 'visual_explorer', 'notes', 'tasks', 'admin'] %}
+            <nav class="sidebar shadow d-print-none">
+                <div class="brand d-lg-none">
+                    <h4 class="text-white mb-0">FeynML</h4>
+                </div>
+                <ul class="nav flex-column mt-3">
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'index' }}" href="{{ url_for('index') }}">
+                            <i class="bi bi-grid-1x2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'datasets' }}" href="{{ url_for('datasets') }}">
+                            <i class="bi bi-binoculars"></i> Data Explorer
+                        </a>
+                    </li>
+                    {% if report_id %}
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'visual_explorer' }}" href="{{ url_for('visual_explorer', report_id=report_id) }}">
+                            <i class="bi bi-pie-chart"></i> Visual Explorer
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'notes' }}" href="{{ url_for('notes') }}">
+                            <i class="bi bi-journal-text"></i> Notes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'tasks' }}" href="{{ url_for('tasks') }}">
+                            <i class="bi bi-list-task"></i> Tasks
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'saved_reports' }}" href="{{ url_for('saved_reports') }}">
+                            <i class="bi bi-folder2-open"></i> Reports
+                        </a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <div class="px-3 small text-muted text-uppercase fw-bold opacity-50">Advanced Diagnostics</div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'phase4.explainability' }}" href="{{ url_for('phase4.explainability') }}">
+                            <i class="bi bi-brain"></i> XAI Center
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'phase4.root_cause' }}" href="{{ url_for('phase4.root_cause') }}">
+                            <i class="bi bi-search"></i> Root Cause
+                        </a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <div class="px-3 small text-muted text-uppercase fw-bold opacity-50">System</div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'admin' }}" href="{{ url_for('admin') }}">
+                            <i class="bi bi-shield-lock"></i> Admin
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="mt-auto p-4 border-top border-navy-700">
+                    <div class="d-flex align-items-center">
+                        <div class="pulse-dot me-2"></div>
+                        <div>
+                            <div class="small fw-bold text-primary">FeynML v1.0.2</div>
+                            <div class="text-secondary small mb-0">System Healthy</div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            {% endif %}
+
+            <!-- Main Content -->
+            <main class="main-content w-100 {{ 'no-padding' if request.endpoint in ['landing', 'features', 'about', 'faq', 'contact'] }}">
+                {% with messages = get_flashed_messages() %}
+                  {% if messages %}
+                    {% for message in messages %}
+                      <div class="alert alert-info alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+                
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+
+        <!-- Global Footer -->
+        <footer class="footer d-print-none">
+            <div class="container px-4">
+                <div class="footer-wrapper">
+                    <div class="footer-grid">
+                        <div class="footer-column footer-branding">
+                            <a href="{{ url_for('index') }}" class="footer-logo d-inline-flex align-items-center gap-2 text-decoration-none">
+                                <span class="footer-logo-mark">F</span>
+                                <span class="footer-logo-text">FeynML</span>
+                            </a>
+                            <p class="footer-copy mt-3 mb-3">AI-Powered ML Failure Investigation Platform</p>
+                            <p class="footer-copy footer-copy-muted">Detect drift, leakage, calibration issues and model failures with explainable diagnostics.</p>
+                        </div>
+                        <div class="footer-column footer-links-column">
+                            <h6 class="footer-title">Platform</h6>
+                            <ul class="footer-links">
+                                <li><a href="{{ url_for('features') }}" class="footer-link">Features</a></li>
+                                <li><a href="{{ url_for('index') }}" class="footer-link">Dashboard</a></li>
+                                <li><a href="#" class="footer-link">Reports</a></li>
+                                <li><a href="{{ url_for('admin') }}" class="footer-link">Admin Console</a></li>
+                            </ul>
+                        </div>
+                        <div class="footer-column footer-links-column">
+                            <h6 class="footer-title">Resources</h6>
+                            <ul class="footer-links">
+                                <li><a href="{{ url_for('about') }}" class="footer-link">About</a></li>
+                                <li><a href="{{ url_for('faq') }}" class="footer-link">FAQ</a></li>
+                                <li><a href="#" class="footer-link">Documentation</a></li>
+                                <li><a href="{{ url_for('contact') }}" class="footer-link">Contact</a></li>
+                            </ul>
+                        </div>
+                        <div class="footer-column footer-connect-column">
+                            <div class="footer-connect-card">
+                                <h6 class="footer-title">Connect</h6>
+                                <div class="footer-connect-buttons">
+                                    <a href="https://www.linkedin.com/in/arman-kaushik-29b5b6370/" target="_blank" rel="noopener noreferrer" class="footer-connect-button footer-connect-btn-linkedin">
+                                        <i class="fa-brands fa-linkedin me-2"></i>LinkedIn
+                                    </a>
+                                    <a href="https://github.com/B241561" target="_blank" rel="noopener noreferrer" class="footer-connect-button footer-connect-btn-github">
+                                        <i class="fa-brands fa-github me-2"></i>GitHub
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer-bottom">
+                        <div class="footer-divider"></div>
+                        <p class="footer-bottom-copy">&copy; 2026 FeynML<br>Understanding Why Models Fail</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Dark Mode Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const currentTheme = localStorage.getItem('theme');
+        const defaultTheme = currentTheme || 'dark';
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const isDark = theme === 'dark';
+            
+            if (window.Plotly) {
+                const charts = document.querySelectorAll('.js-plotly-plot');
+                charts.forEach(chart => {
+                    const layout_update = {
+                        paper_bgcolor: 'rgba(0,0,0,0)',
+                        plot_bgcolor: 'rgba(0,0,0,0)',
+                        font: { 
+                            color: isDark ? '#f8fafc' : '#0f172a',
+                            family: "Inter, sans-serif"
+                        },
+                        xaxis: {
+                            gridcolor: isDark ? '#334155' : '#e2e8f0',
+                            zerolinecolor: isDark ? '#334155' : '#e2e8f0',
+                            tickfont: { color: isDark ? '#94a3b8' : '#64748b' },
+                            titlefont: { color: isDark ? '#f8fafc' : '#0f172a' }
+                        },
+                        yaxis: {
+                            gridcolor: isDark ? '#334155' : '#e2e8f0',
+                            zerolinecolor: isDark ? '#334155' : '#e2e8f0',
+                            tickfont: { color: isDark ? '#94a3b8' : '#64748b' },
+                            titlefont: { color: isDark ? '#f8fafc' : '#0f172a' }
+                        }
+                    };
+                    Plotly.relayout(chart, layout_update);
+                });
+            }
+        }
+
+        applyTheme(defaultTheme);
+        themeToggle.checked = defaultTheme === 'dark';
+
+        themeToggle.addEventListener('change', function(e) {
+            const theme = e.target.checked ? 'dark' : 'light';
+            applyTheme(theme);
+            localStorage.setItem('theme', theme);
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggle = document.getElementById('sidebarToggle');
+            if (!toggle) return;
+
+            const body = document.body;
+            const storageKey = 'sidebarCollapsed';
+
+            if (localStorage.getItem(storageKey) === 'true') {
+                body.classList.add('sidebar-collapsed');
+            }
+
+            toggle.addEventListener('click', function() {
+                const collapsed = body.classList.toggle('sidebar-collapsed');
+                localStorage.setItem(storageKey, collapsed);
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.location.pathname !== '/admin') {
+                return;
+            }
+
+            const headerGroup = document.querySelector('.container.py-5 .d-flex.gap-2');
+            if (!headerGroup) {
+                return;
+            }
+
+            const analyticsLinkExists = headerGroup.querySelector('a[href="/admin/analytics"]');
+            if (analyticsLinkExists) {
+                return;
+            }
+
+            const analyticsButton = document.createElement('a');
+            analyticsButton.href = '/admin/analytics';
+            analyticsButton.className = 'btn btn-outline-indigo btn-sm rounded-pill';
+            analyticsButton.innerHTML = '<i class="bi bi-bar-chart-line me-2"></i>Analytics';
+
+            const settingsButton = headerGroup.querySelector('a[href="/admin/settings"]');
+            headerGroup.insertBefore(analyticsButton, settingsButton || null);
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+    {% include 'components/chatbot.html' %}
+</body>
+</html>

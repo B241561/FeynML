@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Profile | FeynML{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row g-4">
+        <div class="col-xl-4">
+            <div class="card p-4 shadow-lg border-0">
+                <div class="mb-4">
+                    <span class="badge bg-indigo-50 text-indigo-600">Member since {{ current_user.join_date }}</span>
+                </div>
+                <h3 class="fw-bold mb-2">{{ current_user.name }}</h3>
+                <p class="text-muted mb-4">{{ current_user.email }}</p>
+                <div class="stats-grid">
+                    <div>
+                        <div class="h3 fw-bold mb-1">{{ current_user.total_analyses }}</div>
+                        <div class="text-muted small">Analyses Completed</div>
+                    </div>
+                    <div>
+                        <div class="h3 fw-bold mb-1">{{ current_user.datasets_uploaded }}</div>
+                        <div class="text-muted small">Datasets Uploaded</div>
+                    </div>
+                    <div>
+                        <div class="h3 fw-bold mb-1">{{ current_user.reports_generated }}</div>
+                        <div class="text-muted small">Reports Generated</div>
+                    </div>
+                    <div>
+                        <div class="h3 fw-bold mb-1">{{ (current_user.storage_used / 1024 / 1024) | round(2) }} MB</div>
+                        <div class="text-muted small">Storage Used</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card p-4 mt-4 shadow-lg border-0">
+                <h5 class="fw-bold mb-3">Quick links</h5>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('saved_reports') }}" class="list-group-item list-group-item-action bg-main border-color rounded-3 mb-2">Saved Reports</a>
+                    <a href="{{ url_for('datasets') }}" class="list-group-item list-group-item-action bg-main border-color rounded-3 mb-2">Dataset Library</a>
+                    <a href="{{ url_for('usage_dashboard') }}" class="list-group-item list-group-item-action bg-main border-color rounded-3">Usage Analytics</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-8">
+            <div class="card p-4 shadow-lg border-0">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold">Profile Overview</h4>
+                        <p class="text-muted mb-0">Manage your account details and SaaS workspace settings.</p>
+                    </div>
+                    <a href="{{ url_for('settings') }}" class="btn btn-outline-indigo">Edit Settings</a>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="label text-muted small text-uppercase mb-2">Name</div>
+                        <div class="fw-semibold">{{ current_user.name }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="label text-muted small text-uppercase mb-2">Email</div>
+                        <div class="fw-semibold">{{ current_user.email }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="label text-muted small text-uppercase mb-2">Member Since</div>
+                        <div class="fw-semibold">{{ current_user.join_date }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="label text-muted small text-uppercase mb-2">Active Workspace</div>
+                        <div class="fw-semibold">FeynML Workspace</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

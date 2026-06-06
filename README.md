@@ -1,145 +1,83 @@
-# ML Failure Investigation Engine
+# FeynML: ML Failure Investigation Engine
 
-A complete, from-scratch implementation of the ML Failure Investigation syllabus.
-Every algorithm is built without high-level ML libraries in core implementations,
-then verified against scikit-learn.
+Understanding Why Models Fail
 
----
+![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
+![Flask](https://img.shields.io/badge/flask-2.0+-green.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-## 📁 Folder Structure
+**FeynML** is a professional-grade ML observability and diagnostic platform designed to automate the investigation of model failures. It provides a multi-phase audit of datasets and models, covering everything from calibration and fairness to distribution drift and root-cause data integrity issues.
 
-```
-ml_failure_engine/
-│
-├── scratch/                        ← Learning implementations (from scratch)
-│   ├── phase0/                     ← Prerequisites: Math & Python foundations
-│   │   ├── linear_algebra.py       Vector ops, matrix ops, Gaussian elimination,
-│   │   │                           eigenvectors (power iteration), covariance matrix
-│   │   ├── calculus_optimization.py Derivatives, gradient descent, chain rule,
-│   │   │                           Adam optimizer, numerical differentiation
-│   │   ├── probability_statistics.py Distributions, Bayes theorem, hypothesis testing,
-│   │   │                           t-test, chi-squared, MLE from scratch
-│   │   └── statistics.py           Descriptive stats, correlation, confidence intervals,
-│   │                               bootstrapping, effect sizes
-│   │
-│   ├── phase1/                     ← Core ML Algorithms (all from scratch)
-│   │   ├── linear_regression.py    OLS, gradient descent, normal equation,
-│   │   │                           Ridge (L2), Lasso (L1 coordinate descent)
-│   │   ├── logistic_regression.py  Sigmoid (log-odds derivation), BCE loss (MLE),
-│   │   │                           binary + L2 regularized + softmax multiclass
-│   │   ├── decision_tree.py        CART, Gini & entropy, recursive splitting,
-│   │   │                           classifier + regressor, feature importance
-│   │   ├── ensemble_models.py      Random Forest (bagging + OOB score),
-│   │   │                           Gradient Boosting (residual fitting),
-│   │   │                           AdaBoost (sample reweighting)
-│   │   ├── kmeans_pca.py           K-Means++ init, elbow method, silhouette score,
-│   │   │                           PCA via eigendecomposition + deflation
-│   │   └── run_phase1.py           ← Run all Phase 1 verifications
-│   │
-│   └── phase2/                     ← Model Evaluation & Failure Analysis
-│       ├── classification_metrics.py Confusion matrix, precision/recall/F1,
-│       │                            ROC-AUC, PR-AUC, calibration, ECE
-│       ├── regression_metrics.py   MSE, RMSE, MAE, MAPE, SMAPE, R², adj-R²,
-│       │                           residual analysis, bias detection
-│       ├── validation_strategy.py  K-fold CV, stratified CV, nested CV,
-│       │                           leakage detection, temporal split
-│       ├── statistical_significance.py McNemar's test, bootstrap CI, permutation test,
-│       │                           effect sizes, multiple testing correction
-│       ├── compas_case_study.py    Full COMPAS fairness investigation:
-│       │                           disparate FPR, calibration, impossibility theorem
-│       └── (fairness_audit.py)     ← Covered inside compas_case_study.py
-│
-├── engine/                         ← Production pipeline modules
-│   ├── failure_report_generator.py Automated HTML report generator
-│   └── modules/                    ← Pluggable analysis modules
-│       └── (metric_dashboard.py)   ← Add your Streamlit dashboard here
-│
-├── reports/                        ← Generated outputs
-│   ├── compas_findings.json        Structured findings (machine-readable)
-│   └── compas_investigation_report.html  Full HTML investigation report
-│
-├── tests/                          ← Unit tests
-│   └── (add test_phase1.py, test_phase2.py here)
-│
-├── requirements.txt                ← All dependencies
-└── README.md                       ← This file
+## 🚀 Key Features
+
+*   **Automated Diagnostic Pipeline**: Executes a 4-phase audit (Diagnostics, Observability, Root Cause, Integrity).
+*   **Feature Drift Detection**: Statistical monitoring using KS-tests and PSI to identify data distribution shifts.
+*   **Model Calibration Audit**: Visualizes reliability diagrams and calculates Expected Calibration Error (ECE).
+*   **Label Noise Analysis**: Identifies potential mislabeling in training data using automated integrity checks.
+*   **Leakage & Missingness Detection**: Flags target leakage and analyzes missing data mechanisms (MCAR/MAR/MNAR).
+*   **Professional Analytics Dashboard**: Interactive Plotly visualizations and high-density KPI monitoring.
+*   **Multi-Format Export**: Export findings as raw JSON, summary CSV, or professional print-ready PDF reports.
+
+## 🏗️ Architecture
+
+The project follows a modular "Engine" architecture, separating statistical logic from the web presentation layer:
+
+*   **`engine/modules/`**: Core diagnostic engines (Drift, Calibration, Fairness, etc.).
+*   **`webapp/`**: Flask-based application layer with Plotly integration.
+*   **`scratch/`**: Pure statistical implementation of underlying ML tests.
+*   **`services/`**: Orchestration layer for running parallelized analysis.
+
+## 📁 Repository Structure
+
+```text
+.
+├── engine/                 # Core ML Diagnostic Logic
+│   ├── modules/            # Specialized Engines (Drift, Leakage, etc.)
+│   └── base_module.py      # Abstract Base for all Engines
+├── webapp/                 # Flask Presentation Layer
+│   ├── static/             # "FeynML" CSS & Design System
+│   ├── templates/          # Responsive HTML (Dashboard, Reports)
+│   ├── services/           # Analysis Runner & Orchestration
+│   └── app.py              # Application Entry Point & Export Routes
+├── tests/                  # Unit tests for Engine reliability
+└── requirements.txt        # Project Dependencies
 ```
 
----
+## 🛠️ Installation
 
-## 🚀 Quick Start
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/yourusername/feynml-ml-engine.git
+    cd feynml-ml-engine
+    ```
 
-```bash
-# 1. Install dependencies
-pip install -r requirements.txt
+2.  **Install dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-# 2. Run Phase 0 (math foundations)
-python scratch/phase0/linear_algebra.py
-python scratch/phase0/calculus_optimization.py
-python scratch/phase0/statistics.py
-python scratch/phase0/probability_statistics.py
+3.  **Run the application**:
+    ```bash
+    cd webapp
+    python app.py
+    ```
 
-# 3. Run Phase 1 (all ML algorithms)
-python scratch/phase1/run_phase1.py
+4.  **Access the Dashboard**: Open `http://localhost:5000` in your browser.
 
-# 4. Run Phase 2 (evaluation & fairness)
-python scratch/phase2/classification_metrics.py
-python scratch/phase2/compas_case_study.py
+## 📊 Example Workflow
 
-# 5. Generate COMPAS investigation report
-python engine/failure_report_generator.py
-```
+1.  **Upload**: Provide a CSV/Parquet dataset and model predictions.
+2.  **Map**: Define Target, Predictions, and Sensitive attributes via the UI.
+3.  **Analyze**: FeynML executes parallelized audits across all four phases.
+4.  **Investigate**: Use the interactive dashboard to identify the "Weakest Link" in your ML pipeline.
+5.  **Export**: Generate a PDF report for stakeholder review or a CSV summary for further automated processing.
 
----
+## 💻 Technologies Used
 
-## 📚 Phase Descriptions
-
-### Phase 0 — Prerequisites
-Pure Python/NumPy implementations of all required math:
-- **linear_algebra.py** — vectors, matrices, Gaussian elimination, eigendecomposition
-- **calculus_optimization.py** — derivatives, gradient descent variants (SGD, Adam, RMSProp)
-- **statistics.py** — descriptive stats, correlation, confidence intervals, bootstrapping
-- **probability_statistics.py** — distributions, Bayes, t-test, chi-squared from scratch
-
-### Phase 1 — Core ML Algorithms
-Every algorithm built from scratch, verified against scikit-learn:
-- **linear_regression.py** — OLS, GD, Normal Equation, Ridge, Lasso
-- **logistic_regression.py** — sigmoid from log-odds, BCE from MLE, softmax
-- **decision_tree.py** — full CART implementation, Gini, entropy, feature importance
-- **ensemble_models.py** — Random Forest with OOB, Gradient Boosting, AdaBoost
-- **kmeans_pca.py** — K-Means++ with silhouette, PCA via eigendecomposition
-
-### Phase 2 — Model Evaluation & Failure Investigation
-Complete evaluation framework:
-- **classification_metrics.py** — all classification metrics, ROC/PR curves, calibration
-- **regression_metrics.py** — all regression metrics, residual analysis
-- **validation_strategy.py** — cross-validation, leakage detection, temporal splits
-- **statistical_significance.py** — hypothesis tests, bootstrap CI, McNemar's test
-- **compas_case_study.py** — real-world fairness investigation (COMPAS model)
+*   **Backend**: Python, Flask, Pandas, Scikit-learn, SciPy
+*   **Frontend**: HTML5, "FeynML" CSS (Custom Design System), Bootstrap 5
+*   **Visualization**: Plotly.js
+*   **Export**: xhtml2pdf, CSV/JSON Serializers
 
 ---
-
-## 🏗️ Design Principles
-
-1. **From scratch first** — understand before abstracting
-2. **Verify always** — every implementation checked against sklearn
-3. **Intuition comments** — every non-obvious step explained geometrically
-4. **Fail explicitly** — edge cases handled, errors meaningful
-5. **Production-ready** — engine/ modules follow software engineering best practices
-
----
-
-## 📊 Key Outputs
-
-After running the full pipeline:
-- `reports/compas_findings.json` — structured fairness findings
-- `reports/compas_investigation_report.html` — open in browser for full visual report
-
----
-
-## ⚠️ Important Notes
-
-- This uses a **synthetic COMPAS dataset** for educational purposes only
-- The real COMPAS dataset raises serious ethical concerns documented by ProPublica (2016)
-- The fairness impossibility theorem (Chouldechova 2017) applies: you cannot simultaneously
-  achieve equal TPR, FPR, and PPV across groups when base rates differ
+*Developed as a high-fidelity ML Observability solution for data-driven teams.*

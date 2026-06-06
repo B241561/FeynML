@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+@media print {
+    .sidebar, .navbar, .btn, .dropdown-menu, .d-print-none { display: none !important; }
+    body { background: #fff !important; color: #000 !important; }
+    .card, .footer, .main-content { box-shadow: none !important; border: 1px solid #eee !important; }
+    .page-break { page-break-after: always; }
+    
+    /* Ensure charts have enough space and background is white for printing */
+    [id^="chart-"] {
+        background: white !important;
+        page-break-inside: avoid;
+        margin-bottom: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-end mb-5 d-print-none animate-up">
+                <div>
+                    <h1 class="fw-bold mb-1">Full Investigation Report</h1>
+                    <p class="text-muted mb-0">Analysis ID: {{ report_id }}</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('view_dashboard', report_id=report_id) }}" class="btn btn-outline-indigo rounded-pill">
+                        <i class="bi bi-arrow-left me-2"></i>Back
+                    </a>
+                    <button class="btn btn-indigo px-4 rounded-pill" onclick="window.print()">
+                        <i class="bi bi-printer me-2"></i>Print PDF
+                    </button>
+                </div>
+            </div>
+
+        <!-- PDF-only Header (Visible only when printing) -->
+        <div class="d-none d-print-block mb-5">
+            <h1 class="fw-bold">ML Failure Investigation Report</h1>
+            <p>Generated for Session ID: {{ report_id }} | Status: {{ risk_level }} Risk</p>
+            <hr>
+        </div>
+
+        <!-- Executive Summary -->
+        <div class="exec-summary mb-5 shadow-sm">
+            <div class="row g-4 align-items-center">
+                <div class="col-md-3">
+                    <div class="risk-level-box bg-{{ 'critical' if risk_level == 'CRITICAL' else 'high' if risk_level == 'HIGH' else 'medium' if risk_level == 'MEDIUM' else 'low' if risk_level == 'LOW' else 'none' }}-bg">
+                        <div class="text-muted small fw-bold text-uppercase mb-1">Global Risk</div>
+                        {% set r_color = 'critical' if risk_level == 'CRITICAL' else 'high' if risk_level == 'HIGH' else 'medium' if risk_level == 'MEDIUM' else 'low' if risk_level == 'LOW' else 'none' %}
+                        <h2 class="text-{{ r_color }}">{{ risk_level }}</h2>
+                    </div>
+                </div>
+                <div class="col-md-9 border-start ps-md-5">
+                    <h5 class="fw-bold mb-3">Audit Conclusion</h5>
+                    <p class="text-muted">The ML Failure Investigation Engine has completed its audit across diagnostics, observability, and root cause analysis. The primary findings indicate a <strong>{{ risk_level }} risk</strong> profile for this model/dataset pair.</p>
+                    <div class="row g-3">
+                        <div class="col-auto">
+                            {% set drift_findings = data.get('drift', {}).get('findings', {}) %}
+                            {% set num_drifted = drift_findings.get('num_drifted_features', drift_findings.get('n_drifted', 0)) %}
+                            <span class="badge-pill badge-{{ 'high' if num_drifted > 0 else 'none' }}">Drifted Features: {{ num_drifted }}</span>
+                        </div>
+                        <div class="col-auto">
+                            {% set ln_findings = data.get('label_noise', {}).get('findings', {}) %}
+                            {% set ln_errors = ln_findings.get('num_errors_detected', 0) %}
+                            <span class="badge-pill badge-{{ 'critical' if ln_errors > 0 else 'none' }}">Label Noise: {{ "Detected" if ln_errors > 0 else "Clean" }}</span>
+                        </div>
+                        <div class="col-auto">
+                            {% set leakage_findings = data.get('leakage', {}).get('findings', {}) %}
+                            {% set lk_suspects = leakage_findings.get('num_suspects', 0) %}
+                            <span class="badge-pill badge-{{ 'critical' if lk_suspects > 0 else 'none' }}">Leakage: {{ "Suspects Found" if lk_suspects > 0 else "No Suspects" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase 2: Calibration & Fairness -->
+        <div class="card mb-5">
+            <div class="card-header">Phase 2: Model Diagnostics</div>
+            <div class="card-body p-4 border-bottom">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-uppercase small text-muted mb-3">Calibration Audit</h6>
+                        {% if not data.get('calibration') or data.calibration.get('status') == 'SKIPPED' %}
+                            <div class="h3 fw-bold mb-1 text-muted">SKIPPED</div>
+                            <p class="small text-muted mb-0">Reason: No prediction column supplied.</p>
+                        {% else %}
+                            {% set ece = data.calibration.get('ece', data.calibration.get('findings', {}).get('ece', 0)) %}
+                            <div class="h3 fw-bold mb-1">{{ (ece * 100) | round(2) }}%</div>
+                            <p class="small text-muted mb-2">Expected Calibration Error (ECE)</p>
+                            
+                            {% if data.calibration.get('prediction_source') == 'auto_generated' %}
+                            <div class="mt-2 p-2 bg-light rounded border">
+                                <span class="badge bg-indigo-600 mb-1">AUTO MODEL</span>
+                                <div class="small text-muted text-xxs">
+                                    <strong>Source:</strong> Auto-generated baseline model<br>
+                                    <strong>Type:</strong> {{ data.calibration.get('model_type', 'Baseline') }}
+                                </div>
+                            </div>
+                            {% else %}
+                            <p class="small text-muted mb-0"><strong>Source:</strong> User-supplied predictions</p>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 border-start">
+                        <h6 class="fw-bold text-uppercase small text-muted mb-3">Fairness Audit</h6>
+                        {% set fair_findings = data.get('fairness', {}).get('findings', {}) %}
+                        {% if data.get('fairness') and data.fairness.get('status') != 'SKIPPED' and fair_findings %}
+                            <div class="h3 fw-bold mb-1">{{ fair_findings.get('max_disparity', 0) | round(4) if fair_findings.get('max_disparity') is number else 'N/A' }}</div>
+                            <p class="small text-muted mb-0">Max Demographic Disparity</p>
+                        {% else %}
+                            <p class="text-fairness-muted fst-italic mb-0">Fairness audit not configured.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Calibration Visualizations -->
+            {% if charts.get('prediction_dist') or charts.get('residuals') %}
+            <div class="card-body p-4 border-top">
+                <h6 class="fw-bold text-uppercase small text-muted mb-4">Calibration Visualizations</h6>
+                <div class="row g-4">
+                    {% if charts.get('prediction_dist') %}
+                    <div class="col-lg-6">
+                        <div id="chart-prediction-dist" style="width:100%; height:350px;"></div>
+                    </div>
+                    {% endif %}
+                    {% if charts.get('residuals') %}
+                    <div class="col-lg-6">
+                        <div id="chart-residuals" style="width:100%; height:350px;"></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Phase 3: Observability -->
+        <div class="card mb-5">
+            <div class="card-header">Phase 3: Observability (Feature Drift)</div>
+            <div class="card-body p-4 border-bottom">
+                {% set drift_findings = data.get('drift', {}).get('findings', {}) %}
+                {% set num_drifted = drift_findings.get('num_drifted_features', drift_findings.get('n_drifted', 0)) %}
+                <p class="mb-0">The audit detected significant distribution drift in <strong>{{ num_drifted }}</strong> features.</p>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Type</th>
+                                <th>KS Statistic</th>
+                                <th>P-Value</th>
+                                <th>PSI</th>
+                                <th class="text-end">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if drift_findings.get('per_feature') is iterable and drift_findings.per_feature is not string %}
+                                {% for feat in drift_findings.per_feature %}
+                                {% if feat is mapping %}
+                                <tr>
+                                    <td class="fw-bold">{{ feat.feature }}</td>
+                                    <td><span class="text-muted small text-uppercase">{{ feat.type }}</span></td>
+                                    <td>{{ feat.ks_stat | round(4) if feat.ks_stat is number else 'N/A' }}</td>
+                                    <td>{{ feat.pvalue | round(4) if feat.pvalue is number else '0.000' }}</td>
+                                    <td>{{ feat.psi | round(4) if feat.psi is number else 'N/A' }}</td>
+                                    <td class="text-end">
+                                        <span class="badge-pill badge-{{ 'high' if feat.status == 'DRIFT' else 'medium' if feat.status == 'WARN' else 'none' }}">
+                                            {{ feat.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Drift Visualizations -->
+            {% if charts.get('psi_heatmap') or charts.get('ks_ranked') %}
+            <div class="card-body p-4 border-top">
+                <h6 class="fw-bold text-uppercase small text-muted mb-4">Drift Visualizations</h6>
+                <div class="row g-4">
+                    {% if charts.get('psi_heatmap') %}
+                    <div class="col-lg-12">
+                        <div id="chart-psi-heatmap" style="width:100%; height:250px;"></div>
+                    </div>
+                    {% endif %}
+                    {% if charts.get('ks_ranked') %}
+                    <div class="col-lg-12">
+                        <div id="chart-ks-ranked" style="width:100%; height:350px;"></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Phase 4: Root Cause Analysis -->
+        <h5 class="fw-bold text-uppercase small text-muted mb-4">Phase 4: Root Cause Analysis</h5>
+        
+        <!-- Label Noise Section -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header">Label Noise Scan</div>
+                    <div class="card-body p-4">
+                        {% set ln_findings = data.get('label_noise', {}).get('findings', {}) %}
+                        {% if ln_findings.get('num_errors_detected') is defined %}
+                            <div class="d-flex align-items-center mb-4">
+                                <div class="h2 fw-bold mb-0 me-3">{{ ln_findings.num_errors_detected }}</div>
+                                <div class="text-muted small">Suspicious labels detected in dataset.</div>
+                            </div>
+                            
+                            <h6 class="fw-bold small text-muted text-uppercase mb-3">Detection Summary</h6>
+                            <ul class="list-group list-group-flush small">
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span>Clean Count</span>
+                                    <strong>{{ ln_findings.get('total_samples', 0) - ln_findings.num_errors_detected }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span>Estimated Noise</span>
+                                    <strong>{{ (ln_findings.estimated_noise_fraction * 100) | round(2) }}%</strong>
+                                </li>
+                            </ul>
+                        {% else %}
+                            <p class="text-muted italic">Label noise analysis skipped or unavailable.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                {% if charts.get('noise_score_dist') %}
+                <div class="card h-100">
+                    <div class="card-header">Noise Score Distribution</div>
+                    <div class="card-body p-4">
+                        <div id="chart-noise-score-dist" style="width:100%; height:350px;"></div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="card h-100 bg-light border-0 d-flex align-items-center justify-content-center">
+                    <p class="text-muted small mb-0">Noise visualization not available.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Leakage Section -->
+        <div class="row g-4 mb-5">
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header">Feature Leakage Scan</div>
+                    <div class="card-body p-4">
+                        {% set leakage_findings = data.get('leakage', {}).get('findings', {}) %}
+                        {% if leakage_findings.get('num_suspects') is defined %}
+                            <div class="d-flex align-items-center mb-4">
+                                <div class="h2 fw-bold mb-0 me-3 text-{{ 'critical' if leakage_findings.num_suspects > 0 else 'success' }}">{{ leakage_findings.num_suspects }}</div>
+                                <div class="text-muted small">Columns identified as potential leakage sources.</div>
+                            </div>
+
+                            <h6 class="fw-bold small text-muted text-uppercase mb-3">Leakage Suspects</h6>
+                            {% if leakage_findings.get('suspects') is iterable and leakage_findings.suspects is not string and leakage_findings.suspects | length > 0 %}
+                                <div class="list-group list-group-flush small">
+                                    {% for suspect in leakage_findings.suspects %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                        <span class="fw-bold">{{ suspect.feature }}</span>
+                                        <span class="badge bg-danger-soft text-danger">{{ suspect.score | round(4) }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="p-3 bg-light rounded text-center small text-success">
+                                    <i class="bi bi-check-circle-fill me-2"></i>No feature leakage detected.
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-muted italic">Feature leakage scan skipped or unavailable.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                {% if charts.get('correlation_heatmap') or charts.get('leakage_scores') %}
+                <div class="card h-100">
+                    <div class="card-header">Leakage Analysis</div>
+                    <div class="card-body p-4">
+                        {% if charts.get('leakage_scores') %}
+                        <div id="chart-leakage-scores" style="width:100%; height:350px;"></div>
+                        {% elif charts.get('correlation_heatmap') %}
+                        <div id="chart-correlation-heatmap" style="width:100%; height:350px;"></div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="card h-100 bg-light border-0 d-flex align-items-center justify-content-center">
+                    <p class="text-muted small mb-0">Leakage visualization not available.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Additional Visualizations -->
+        <div class="row g-4 mb-5">
+            <!-- Top 20 Suspicious Samples Table -->
+            {% if suspicious_samples %}
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header">Top 20 Suspicious Samples</div>
+                    <div class="card-body p-4">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Index</th>
+                                        <th>Actual Label</th>
+                                        <th>Confidence Score</th>
+                                        <th>Noise Indicator</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for sample in suspicious_samples %}
+                                    <tr>
+                                        <td class="fw-bold">{{ sample.get('index', 'N/A') }}</td>
+                                        <td>{{ sample.get('actual_label', 'N/A') }}</td>
+                                        <td>
+                                            <span class="text-muted">{{ (sample.get('confidence_score', 0) * 100) | round(2) }}%</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-warning-soft text-warning">{{ sample.get('noise_score', 0) | round(3) }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Feature Correlation Heatmap (Full Width if available) -->
+            {% if charts.get('correlation_heatmap') %}
+            <div class="col-lg-12 mt-4">
+                <div class="card">
+                    <div class="card-header">Feature Correlation Matrix</div>
+                    <div class="card-body p-4">
+                        <div id="chart-correlation-heatmap-full" style="width:100%; height:500px;"></div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+
+
+        <!-- Recommendations -->
+        <div class="card border-indigo-500 mb-5 shadow-lg">
+            <div class="card-header bg-indigo-500 text-white">Strategic Recommendations</div>
+            <div class="card-body p-4">
+                <div class="row g-4">
+                    {% if data.label_noise is mapping and data.label_noise.severity != 'NONE' %}
+                    <div class="col-md-4">
+                        <div class="fw-bold mb-1"><i class="bi bi-eraser-fill me-2"></i>Data Cleaning</div>
+                        <p class="small text-muted">High noise detected. Review indices identified in Phase 4 for manual relabeling.</p>
+                    </div>
+                    {% endif %}
+                    {% if data.drift is mapping and data.drift.severity != 'NONE' %}
+                    <div class="col-md-4">
+                        <div class="fw-bold mb-1"><i class="bi bi-arrow-repeat me-2"></i>Model Retraining</div>
+                        <p class="small text-muted">Significant drift in key features. Model weights are likely stale and require refresh.</p>
+                    </div>
+                    {% endif %}
+                    <div class="col-md-4">
+                        <div class="fw-bold mb-1"><i class="bi bi-shield-check me-2"></i>Governance</div>
+                        <p class="small text-muted">Establish continuous monitoring baseline for the identified high-risk features.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+
+{% if charts %}
+<script>
+        window.addEventListener('load', function() {
+            console.log("--- Plotly Report Debugger ---");
+            console.log("Plotly status:", typeof Plotly);
+            if (typeof Plotly === 'undefined') {
+                console.error("CRITICAL: Plotly.js failed to load!");
+                return;
+            }
+
+            const chartConfig = { responsive: true, displayModeBar: false };
+
+            function safeNewPlot(divId, chartData, customLayout = {}) {
+                const element = document.getElementById(divId);
+                if (!element) {
+                    console.warn(`Container #${divId} not found.`);
+                    return;
+                }
+                
+                if (!chartData) {
+                    console.warn(`Missing data for #${divId}`);
+                    return;
+                }
+
+                // Check for Plotly's internal bdata encoding
+                const jsonStr = JSON.stringify(chartData);
+                if (jsonStr.includes('"bdata"')) {
+                    console.error(`CRITICAL: #${divId} data contains 'bdata' (binary encoding)! Plotly.js will not render this.`);
+                    element.innerHTML = '<div class="alert alert-danger small">Serialization Error: Binary data detected.</div>';
+                    return;
+                }
+                
+                try {
+                    // Use the layout directly from the chart data (already correctly styled by backend)
+                    const data = chartData.data;
+                    let layout = Object.assign({}, chartData.layout || {}, customLayout);
+                    
+                    // PDF/Print specific overrides
+                    if (window.matchMedia('print').matches || {{ 'true' if is_pdf else 'false' }}) {
+                        layout.font = Object.assign({}, layout.font || {}, { color: '#000000' });
+                        layout.paper_bgcolor = '#ffffff';
+                        layout.plot_bgcolor = '#ffffff';
+                    }
+
+                    console.log(`Rendering #${divId}...`, { data, layout });
+                    Plotly.newPlot(divId, data, layout, chartConfig);
+                } catch (e) {
+                    console.error(`Failed to render #${divId}:`, e);
+                    element.innerHTML = `<div class="alert alert-danger small">Render Error: ${e.message}</div>`;
+                }
+            }
+
+            // 1. Calibration Charts
+            {% if charts.get('prediction_dist') %}
+                safeNewPlot('chart-prediction-dist', {{ charts.prediction_dist | safe }});
+            {% endif %}
+            
+            {% if charts.get('residuals') %}
+                safeNewPlot('chart-residuals', {{ charts.residuals | safe }});
+            {% endif %}
+
+            // 2. Drift Charts
+            {% if charts.get('psi_heatmap') %}
+                safeNewPlot('chart-psi-heatmap', {{ charts.psi_heatmap | safe }});
+            {% endif %}
+
+            {% if charts.get('ks_ranked') %}
+                safeNewPlot('chart-ks-ranked', {{ charts.ks_ranked | safe }});
+            {% endif %}
+
+            // 3. Label Noise Charts
+            {% if charts.get('noise_score_dist') %}
+                safeNewPlot('chart-noise-score-dist', {{ charts.noise_score_dist | safe }});
+            {% endif %}
+            
+            {% if charts.get('label_noise') %}
+                safeNewPlot('chart-label-noise', {{ charts.label_noise | safe }});
+            {% endif %}
+
+            // 4. Leakage Charts
+            {% if charts.get('leakage_scores') %}
+                safeNewPlot('chart-leakage-scores', {{ charts.leakage_scores | safe }});
+            {% endif %}
+
+            {% if charts.get('correlation_heatmap') %}
+                safeNewPlot('chart-correlation-heatmap', {{ charts.correlation_heatmap | safe }});
+                // Full width matrix
+                safeNewPlot('chart-correlation-heatmap-full', {{ charts.correlation_heatmap | safe }}, { height: 500 });
+            {% endif %}
+
+            // 5. Missing Data Chart
+            {% if charts.get('missing_data') %}
+                safeNewPlot('chart-missing-data', {{ charts.missing_data | safe }});
+            {% endif %}
+        });
+    </script>
+{% else %}
+    {% if print_on_load %}
+<script>
+    window.onload = function() {
+        window.print();
+    }
+</script>
+    {% endif %}
+{% endif %}
+{% endblock %}

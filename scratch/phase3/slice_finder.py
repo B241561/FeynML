@@ -342,7 +342,153 @@ class SliceFinder:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 5. DISCRETIZER — for numeric features
+# 5. MANUAL SLICE DISCOVERY INTERFACE
+# ─────────────────────────────────────────────────────────────────────────────
+
+class ManualSliceExplorer:
+    """
+    Interactive interface for manual slice discovery.
+    
+    Allows users to:
+    - Define custom slice predicates
+    - Evaluate slice performance
+    - Compare slices against overall performance
+    - Explore slice combinations
+    """
+    
+    def __init__(self, data_rows, per_sample_losses, feature_cols):
+        """
+        Args:
+            data_rows: list of dicts, one per validation sample
+            per_sample_losses: list of per-sample loss values
+            feature_cols: list of feature names to slice on
+        """
+        assert len(data_rows) == len(per_sample_losses)
+        self.data = data_rows
+        self.losses = per_sample_losses
+        self.features = feature_cols
+        self.n = len(data_rows)
+        self.overall_loss = sum(per_sample_losses) / max(len(per_sample_losses), 1)
+        
+        # Pre-compute feature value catalogue
+        self.feature_values = defaultdict(set)
+        for row in data_rows:
+            for feat in feature_cols:
+                if feat in row:
+                    self.feature_values[feat].add(row[feat])
+    
+    def evaluate_slice(self, predicates):
+        """
+        Evaluate a manually defined slice.
+        
+        Args:
+            predicates: dict of {feature: value} or {feature: [values]} for multiple values
+        
+        Returns:
+            dict with slice statistics
+        """
+        # Build slice object
+        pred_list = []
+        for feat, val in predicates.items():
+            if isinstance(val, list):
+                for v in val:
+                    pred_list.append((feat, v))
+            else:
+                pred_list.append((feat, val))
+        
+        sl = Slice(pred_list)
+        
+        # Get slice losses
+        in_slice = [i for i, row in enumerate(self.data) if sl.matches(row)]
+        out_slice = [i for i in range(self.n) if i not in set(in_slice)]
+        
+        slice_losses = [self.losses[i] for i in in_slice]
+        counterpart_losses = [self.losses[i] for i in out_slice]
+        
+        slice_size = len(in_slice)
+        
+        if slice_size < 5:
+            return {
+                "predicates": predicates,
+                "size": slice_size,
+                "error": "Slice too small (min 5 samples)",
+                "slice_loss": None,
+                "effect_size": None,
+            }
+        
+        slice_loss = sum(slice_losses) / slice_size
+        counterpart_loss = sum(counterpart_losses) / max(len(counterpart_losses), 1)
+        
+        # Compute effect size
+        eff = compute_effect_size(slice_losses, counterpart_losses)
+        
+        return {
+            "predicates": predicates,
+            "description": str(sl),
+            "size": slice_size,
+            "slice_loss": round(slice_loss, 5),
+            "rest_loss": round(counterpart_loss, 5),
+            "overall_loss": round(self.overall_loss, 5),
+            "effect_size": round(eff, 4),
+            "loss_gap": round(slice_loss - self.overall_loss, 5),
+            "interpretation": (
+                f"Slice has {slice_size} samples with loss {slice_loss:.4f} "
+                f"vs overall {self.overall_loss:.4f}. "
+                f"Effect size: {eff:.3f}."
+            ),
+        }
+    
+    def suggest_slices(self, max_slices=10, effect_threshold=0.2):
+        """
+        Suggest potential slices based on single-feature analysis.
+        
+        Returns list of promising single-feature slices to explore.
+        """
+        suggestions = []
+        
+        for feat in self.features:
+            for val in sorted(self.feature_values[feat]):
+                result = self.evaluate_slice({feat: val})
+                if "error" not in result and result["effect_size"] >= effect_threshold:
+                    suggestions.append(result)
+        
+        suggestions.sort(key=lambda x: x["effect_size"], reverse=True)
+        return suggestions[:max_slices]
+    
+    def explore_combinations(self, base_predicates, max_combinations=5):
+        """
+        Explore combinations with a base slice.
+        
+        Args:
+            base_predicates: dict of base predicates
+            max_combinations: max number of combinations to return
+        
+        Returns:
+            list of refined slices by adding one more predicate
+        """
+        base_result = self.evaluate_slice(base_predicates)
+        
+        if "error" in base_result:
+            return [base_result]
+        
+        # Get features not in base predicates
+        used_feats = set(base_predicates.keys())
+        available_feats = [f for f in self.features if f not in used_feats]
+        
+        combinations = []
+        for feat in available_feats[:3]:  # Limit to avoid explosion
+            for val in sorted(self.feature_values[feat]):
+                new_pred = {**base_predicates, feat: val}
+                result = self.evaluate_slice(new_pred)
+                if "error" not in result:
+                    combinations.append(result)
+        
+        combinations.sort(key=lambda x: x["effect_size"], reverse=True)
+        return combinations[:max_combinations]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. DISCRETIZER — for numeric features
 # ─────────────────────────────────────────────────────────────────────────────
 
 def discretize_numeric_features(data_rows, numeric_cols, n_bins=4):

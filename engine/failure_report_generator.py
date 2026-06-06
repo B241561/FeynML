@@ -124,6 +124,8 @@ class FailureReportGenerator:
         self.fairness_df: Optional[pd.DataFrame] = None
         self.significance_results: Dict[str, Any] = {}
         self.calibration_df: Optional[pd.DataFrame] = None
+        self.explainability_results: Dict[str, Any] = {}
+        self.root_cause_results: Dict[str, Any] = {}
         self.additional_sections: List[Dict] = []
 
     # ── Data Ingestion ────────────────────────────────────────────────────────
@@ -153,6 +155,16 @@ class FailureReportGenerator:
         """Add calibration analysis DataFrame."""
         self.calibration_df = cal_df
         self._check_calibration_findings()
+        return self
+
+    def add_explainability(self, results: Dict[str, Any]) -> "FailureReportGenerator":
+        """Add SHAP/LIME explainability results."""
+        self.explainability_results = results
+        return self
+
+    def add_root_cause(self, results: Dict[str, Any]) -> "FailureReportGenerator":
+        """Add Root Cause Analysis results."""
+        self.root_cause_results = results
         return self
 
     def add_finding(self, finding: Finding) -> "FailureReportGenerator":
@@ -648,6 +660,86 @@ class FailureReportGenerator:
 </div>
 """
 
+    def _html_explainability_section(self) -> str:
+        if not self.explainability_results:
+            return ""
+        
+        r = self.explainability_results
+        global_imp = r.get("global_importance", [])
+        global_rows = "".join(f"<li>{item['feature']}: {item['mean_abs_importance']:.4f}</li>" for item in global_imp)
+        
+        pos = r.get("positive_contributors", [])
+        neg = r.get("negative_contributors", [])
+        
+        pos_list = "".join(f"<li>+ {item['feature']} ({item['value']:.4f})</li>" for item in pos)
+        neg_list = "".join(f"<li>- {item['feature']} ({item['value']:.4f})</li>" for item in neg)
+        
+        return f"""
+<div class="card">
+  <h2>🧠 Explainability Center (SHAP)</h2>
+  <div style="display: flex; gap: 24px;">
+    <div style="flex: 1;">
+      <h3>Global Feature Importance</h3>
+      <ol>{global_rows}</ol>
+    </div>
+    <div style="flex: 1;">
+      <h3>Local Explanation (Individual Prediction)</h3>
+      <p><strong>Top Contributors:</strong></p>
+      <ul style="color: #27ae60; list-style: none;">{pos_list}</ul>
+      <p><strong>Negative Contributors:</strong></p>
+      <ul style="color: #e74c3c; list-style: none;">{neg_list}</ul>
+    </div>
+  </div>
+  <p style="margin-top: 16px; font-size: 13px; color: #666;">
+    <em>Executive Summary:</em> {global_imp[0]['feature'] if global_imp else 'N/A'} is the strongest driver of model decisions.
+  </p>
+</div>
+"""
+
+    def _html_root_cause_section(self) -> str:
+        if not self.root_cause_results:
+            return ""
+        
+        r = self.root_cause_results
+        scored = r.get("scored_causes", [])
+        cause_rows = "".join(f"""
+            <tr>
+                <td>{c['cause']}</td>
+                <td><div style="background:#eee; border-radius:4px; overflow:hidden;">
+                    <div style="background:#3498db; width:{c['confidence']}%; padding:2px 8px; color:white; font-size:10px;">{c['confidence']}%</div>
+                </div></td>
+                <td>{c['impact']}</td>
+            </tr>
+        """ for c in scored)
+        
+        recs = r.get("recommendations", [])
+        rec_list = "".join(f"<li>{rec}</li>" for rec in recs)
+        
+        timeline = r.get("timeline", [])
+        timeline_items = "".join(f"<div>↓ {t['event']}</div>" for t in timeline)
+
+        return f"""
+<div class="card">
+  <h2>🕵️ Root Cause Intelligence Center</h2>
+  <h3>Identified Root Causes & Confidence</h3>
+  <table>
+    <thead><tr><th>Root Cause</th><th>Confidence</th><th>Impact</th></tr></thead>
+    <tbody>{cause_rows}</tbody>
+  </table>
+  
+  <div style="margin-top: 20px; display: flex; gap: 24px;">
+    <div style="flex: 1;">
+      <h3>Investigation Timeline</h3>
+      <div style="font-family: monospace; font-size: 13px;">{timeline_items}</div>
+    </div>
+    <div style="flex: 1;">
+      <h3>AI Recommendations</h3>
+      <ul>{rec_list}</ul>
+    </div>
+  </div>
+</div>
+"""
+
     def _html_additional_sections(self) -> str:
         out = ""
         for sec in self.additional_sections:
@@ -720,6 +812,8 @@ class FailureReportGenerator:
             + self._html_severity_summary()
             + self._html_metrics_section()
             + self._html_findings_section()
+            + self._html_explainability_section()
+            + self._html_root_cause_section()
             + self._html_fairness_section()
             + self._html_calibration_section()
             + self._html_significance_section()

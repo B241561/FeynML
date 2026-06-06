@@ -1,0 +1,13 @@
+Order_ID,Order_Date,Region,Category,Sales,Profit,Country
+1001,01-05-2025,East,Furniture,5000,800,India
+1002,01-10-2025,West,Technology,7000,1200,India
+1003,02-02-2025,East,Office Supplies,2500,400,China
+1004,02-10-2025,South,Furniture,6000,900,India
+1005,03-01-2025,North,Technology,9000,1500,India
+1006,3/15/2025,West,Office Supplies,3000,500,Nepal
+1007,04-01-2025,South,Furniture,5500,850,India
+1008,04-12-2025,East,Technology,8500,1400,Nepal
+1009,05-05-2025,North,Office Supplies,2800,450,Bangladesh
+1010,5/20/2025,West,Furniture,6200,950,Bangladesh
+1011,6/21/2025,West,Furniture,2000,500,Bhutan
+1012,6/21/2025,West,Furniture,1000,500,Bhutan

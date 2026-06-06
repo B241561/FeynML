@@ -76,6 +76,78 @@ class SlicerGateError(GateError):
     pass
 
 
+def _matrix_to_data_rows(X, feature_names):
+    """Convert list[list] feature matrix to list[dict] for slice_finder."""
+    return [
+        {feature_names[j]: X[i][j] for j in range(len(feature_names))}
+        for i in range(len(X))
+    ]
+
+
+def _prepare_slice_rows(X, feature_names, n_bins):
+    """
+    Build categorical string rows + feature column list for SliceFinder.
+
+    Numeric columns are discretized via scratch discretize_numeric_features
+    (expects list[dict]); slice predicates use '{name}_binned' columns.
+    """
+    n = len(X)
+    data_rows = _matrix_to_data_rows(X, feature_names)
+
+    numeric_names = []
+    for j, fname in enumerate(feature_names):
+        col = [X[i][j] for i in range(n)]
+        if col and all(isinstance(v, (int, float)) for v in col):
+            numeric_names.append(fname)
+
+    if numeric_names:
+        data_rows, _bin_maps = discretize_numeric_features(
+            data_rows, numeric_names, n_bins=n_bins
+        )
+        feature_cols = [
+            f"{fname}_binned" if fname in numeric_names else fname
+            for fname in feature_names
+        ]
+    else:
+        feature_cols = list(feature_names)
+
+    for row in data_rows:
+        for fname in feature_cols:
+            if fname in row:
+                row[fname] = str(row[fname])
+
+    return data_rows, feature_cols
+
+
+def _counterpart_mean_loss(slice_loss, slice_size, overall_loss, n_samples):
+    """Mean loss on samples outside the slice (from dataset overall mean)."""
+    if slice_size <= 0 or slice_size >= n_samples:
+        return overall_loss
+    total = overall_loss * n_samples
+    rest_size = n_samples - slice_size
+    return (total - slice_loss * slice_size) / rest_size
+
+
+def _format_slice_entry(raw, n_samples):
+    """Map find_slices() entry to engine findings dict."""
+    sl = raw.get("slice")
+    predicate = dict(sl.predicates) if sl is not None else {}
+    slice_loss = raw.get("slice_loss", 0.0)
+    overall_loss = raw.get("overall_loss", 0.0)
+    slice_size = raw.get("slice_size", 0)
+    return {
+        "predicate":   predicate,
+        "description": raw.get("description", str(sl) if sl else ""),
+        "size":        slice_size,
+        "effect_size": round(raw.get("effect_size", 0.0), 4),
+        "slice_loss":  round(slice_loss, 5),
+        "rest_loss":   round(
+            _counterpart_mean_loss(slice_loss, slice_size, overall_loss, n_samples), 5
+        ),
+        "p_value":     round(raw.get("p_value", 1.0), 5),
+    }
+
+
 class SlicerEngine(BaseModule):
     """
     Automated data slicing for model validation.
@@ -147,42 +219,28 @@ class SlicerEngine(BaseModule):
         overall_loss = sum(losses) / max(len(losses), 1)
         self._log(f"Overall {task} loss: {overall_loss:.4f}")
 
-        # ── Discretize numeric features ───────────────────────────────────
-        # Detect numeric columns (all values are numeric)
-        numeric_cols = []
-        for j in range(n_features):
-            col = [X[i][j] for i in range(n)]
-            if all(isinstance(v, (int, float)) for v in col):
-                numeric_cols.append(j)
-
+        # ── Discretize & build categorical rows ───────────────────────────
         try:
-            X_disc, disc_names = discretize_numeric_features(
-                X, numeric_cols, n_bins=self.n_bins
+            data_rows, feature_cols = _prepare_slice_rows(
+                X, feature_names, self.n_bins
             )
         except Exception as ex:
-            self._log(f"Discretization failed: {ex}. Using raw X.")
-            X_disc = [[str(v) for v in row] for row in X]
-            disc_names = feature_names
-
-        # Rebuild all features as strings (SliceFinder expects categorical)
-        data_rows = []
-        for i in range(n):
-            row = {}
-            for j, fname in enumerate(disc_names if disc_names else feature_names):
-                row[fname] = str(X_disc[i][j]) if X_disc else str(X[i][j])
-            data_rows.append(row)
+            self._log(f"Discretization failed: {ex}. Using stringified raw X.")
+            data_rows = _matrix_to_data_rows(X, feature_names)
+            feature_cols = list(feature_names)
+            for row in data_rows:
+                for fname in feature_cols:
+                    row[fname] = str(row[fname])
 
         # ── Run SliceFinder ───────────────────────────────────────────────
         try:
-            sf = SliceFinder(
-                data=data_rows,
-                losses=losses,
+            sf = SliceFinder(data_rows, losses, feature_cols)
+            slice_result = sf.find_slices(
                 k=self.k,
-                effect_size_threshold=self.effect_size_threshold,
+                effect_threshold=self.effect_size_threshold,
                 alpha=self.alpha,
             )
-            sf.find()
-            slices_raw = sf.get_results()
+            slices_raw = slice_result.get("slices", [])
         except Exception as ex:
             self._log(f"SliceFinder failed: {ex}")
             return self._result(
@@ -193,16 +251,9 @@ class SlicerEngine(BaseModule):
         # ── Format results ────────────────────────────────────────────────
         slices_out = []
         for s in slices_raw:
-            slices_out.append({
-                "predicate":   s.get("predicate", {}),
-                "description": s.get("description", ""),
-                "size":        s.get("size", 0),
-                "effect_size": round(s.get("effect_size", 0.0), 4),
-                "slice_loss":  round(s.get("slice_loss", 0.0), 5),
-                "rest_loss":   round(s.get("rest_loss", 0.0), 5),
-                "p_value":     round(s.get("p_value", 1.0), 5),
-                "severity":    self._slice_severity(s.get("effect_size", 0.0)),
-            })
+            entry = _format_slice_entry(s, n)
+            entry["severity"] = self._slice_severity(entry["effect_size"])
+            slices_out.append(entry)
 
         # Sort by effect size
         slices_out.sort(key=lambda s: s["effect_size"], reverse=True)
@@ -230,7 +281,8 @@ class SlicerEngine(BaseModule):
             "recommendations":  self._build_recs(slices_out),
         }
 
-        self._log(f"Found {len(slices_out)} slices. Worst effect={worst['effect_size'] if worst else 0:.3f}")
+        worst_eff = worst["effect_size"] if worst else 0.0
+        self._log(f"Found {len(slices_out)} slices. Worst effect={worst_eff:.3f}")
         return self._result(findings, severity=sev, module_name="SlicerEngine")
 
     def _slice_severity(self, effect_size):

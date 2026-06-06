@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+{% block title %}Phase 4 Report: {{ data.results.module }}{% endblock %}
+
+{% block scripts %}
+{% if data.results.module == 'ExplainabilityEngine' %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const barData = {{ data.results.findings.plotly_charts.bar | tojson }};
+        const waterfallData = {{ data.results.findings.plotly_charts.waterfall | tojson }};
+        
+        const layout = {
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            font: { color: '#fff', size: 10 },
+            margin: { l: 80, r: 20, t: 30, b: 30 },
+            xaxis: { gridcolor: '#333' },
+            yaxis: { gridcolor: '#333' }
+        };
+
+        Plotly.newPlot('shap-bar-chart', [barData], {
+            ...layout,
+            title: 'Top Features (Mean |SHAP|)'
+        });
+        
+        Plotly.newPlot('shap-waterfall-chart', [waterfallData], {
+            ...layout,
+            title: 'Prediction Drivers (Waterfall)'
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Card -->
+    <div class="card bg-card border-0 shadow rounded-4 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="h3 mb-0 text-white fw-bold">
+                    <i class="bi bi-file-earmark-bar-graph text-indigo-600 me-2"></i>
+                    {{ data.results.module }} Report
+                </h1>
+                <div class="d-flex gap-2">
+                    {% set sev = data.results.severity %}
+                    <span class="badge rounded-pill {% if sev == 'CRITICAL' %}bg-danger{% elif sev == 'HIGH' %}bg-warning text-dark{% elif sev == 'MEDIUM' or sev == 'WARNING' %}bg-info text-dark{% else %}bg-success{% endif %}">
+                        Severity: {{ sev }}
+                    </span>
+                    <span class="badge rounded-pill {% if data.results.passed %}bg-success{% else %}bg-danger{% endif %}">
+                        Status: {{ 'PASSED' if data.results.passed else 'FAILED' }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="row text-muted small">
+                <div class="col-md-4">
+                    <i class="bi bi-clock me-1"></i> <strong>Generated:</strong> {{ data.results.timestamp }}
+                </div>
+                <div class="col-md-4">
+                    <i class="bi bi-database me-1"></i> <strong>Dataset:</strong> {{ data.dataset.name or 'Unknown' }}
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <strong>Report ID:</strong> {{ report_id }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Section -->
+    {% if data.results.findings is defined and data.results.findings and (data.results.findings.summary or (data.results.findings.classification and data.results.findings.classification.summary)) %}
+    <div class="card bg-card border-0 shadow rounded-4 mb-4">
+        <div class="card-header bg-transparent border-0 pt-4 px-4">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle text-indigo-500 me-2"></i>Summary</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="alert bg-indigo-900 border-indigo-500 text-indigo-100 mb-0 p-4 rounded-3 shadow-sm">
+                {% if data.results.findings.summary %}
+                    <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit; font-size: 1.05rem; line-height: 1.6;">{{ data.results.findings.summary.summary_text }}</pre>
+                {% elif data.results.findings.classification and data.results.findings.classification.summary %}
+                    <div class="row">
+                        {% for k, v in data.results.findings.classification.summary.items() %}
+                        <div class="col-md-4 mb-2">
+                            <strong>{{ k | replace('_', ' ') | title }}:</strong> {{ v }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Detailed Findings Section -->
+    <div class="card bg-card border-0 shadow rounded-4 mb-4">
+        <div class="card-header bg-transparent border-0 pt-4 px-4">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-search text-indigo-500 me-2"></i>Detailed Findings</h5>
+        </div>
+        <div class="card-body p-4">
+            <!-- Label Noise Module -->
+            {% if data.results.module == 'LabelNoiseAnalyzer' and data.results.findings is defined and data.results.findings %}
+                {% if data.results.findings.label_issues and data.results.findings.label_issues.label_issues_df %}
+                <div class="table-responsive rounded-3 overflow-hidden">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead class="table-indigo">
+                            <tr>
+                                <th class="px-4 py-3">Sample Idx</th>
+                                <th class="py-3">Actual Value</th>
+                                <th class="py-3">Predicted Value</th>
+                                <th class="py-3">Residual/Conf</th>
+                                <th class="px-4 py-3">Is Issue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in data.results.findings.label_issues.label_issues_df %}
+                            <tr class="{% if row.is_issue %}table-danger-dark{% endif %}">
+                                <td class="px-4">{{ row.sample_idx }}</td>
+                                <td>{{ row.actual_value if row.actual_value is defined else row.given_label }}</td>
+                                <td>{{ row.predicted_value if row.predicted_value is defined else row.predicted_label }}</td>
+                                <td>
+                                    {% if row.residual is defined %}
+                                        <span class="badge bg-indigo-100 text-indigo-900">{{ "%.4f"|format(row.residual) }}</span>
+                                    {% elif row.confidence_score is defined %}
+                                        <span class="badge bg-indigo-100 text-indigo-900">{{ "%.4f"|format(row.confidence_score) }}</span>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4">
+                                    {% if row.is_issue %}
+                                        <span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> YES</span>
+                                    {% else %}
+                                        <span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i> NO</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    <p class="text-muted">No specific label issues to display.</p>
+                {% endif %}
+
+            <!-- Leakage Module -->
+            {% elif data.results.module == 'LeakageDetector' and data.results.findings is defined and data.results.findings %}
+                {% set leakage = data.results.findings.target_leakage %}
+                <div class="mb-4">
+                    <h6 class="text-indigo-400 mb-3 small text-uppercase fw-bold">Target Leakage Suspects</h6>
+                    {% if leakage and leakage.leakage_suspects %}
+                    <div class="table-responsive rounded-3 overflow-hidden">
+                        <table class="table table-dark table-hover align-middle mb-0">
+                            <thead class="table-indigo">
+                                <tr>
+                                    <th class="px-4 py-3">Feature</th>
+                                    <th class="py-3">Mutual Info</th>
+                                    <th class="py-3">Correlation</th>
+                                    <th class="px-4 py-3">Risk</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in leakage.leakage_suspects %}
+                                <tr>
+                                    <td class="px-4">{{ s.feature }}</td>
+                                    <td>{{ "%.4f"|format(s.mutual_info) if s.mutual_info else 'N/A' }}</td>
+                                    <td>{{ "%.4f"|format(s.correlation) if s.correlation else 'N/A' }}</td>
+                                    <td class="px-4"><span class="badge {% if s.leakage_risk == 'CRITICAL' %}bg-danger{% else %}bg-warning text-dark{% endif %}">{{ s.leakage_risk }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                        <p class="text-success small"><i class="bi bi-check-circle me-1"></i> No immediate target leakage suspects found.</p>
+                    {% endif %}
+                </div>
+
+            <!-- Missing Data Module -->
+            {% elif data.results.module == 'MissingDataAnalyzer' and data.results.findings is defined and data.results.findings %}
+                {% set miss = data.results.findings.classification %}
+                <div class="mb-4">
+                    <h6 class="text-indigo-400 mb-3 small text-uppercase fw-bold">Missingness by Column</h6>
+                    <div class="row g-3">
+                        {% for col, rate in miss.missing_rate_by_column.items() %}
+                        <div class="col-md-4">
+                            <div class="bg-dark p-3 rounded border border-secondary shadow-sm">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-white small fw-bold">{{ col }}</span>
+                                    <span class="badge {% if rate > 0.3 %}bg-danger{% elif rate > 0.1 %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                        {{ "%.1f"|format(rate * 100) }}%
+                                    </span>
+                                </div>
+                                <div class="progress mt-2" style="height: 6px;">
+                                    <div class="progress-bar bg-indigo-500" style="width: {{ rate * 100 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            <!-- Causal Analysis Module -->
+            {% elif data.results.module == 'CausalInferenceEngine' and data.results.findings is defined and data.results.findings %}
+                {% set ate = data.results.findings.ate %}
+                {% set att = data.results.findings.att %}
+                <div class="mb-4">
+                    <h6 class="text-indigo-400 mb-3 small text-uppercase fw-bold">Average Treatment Effect (ATE)</h6>
+                    <div class="bg-dark p-4 rounded-3 border border-secondary mb-4">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="text-muted small text-uppercase">Estimate</div>
+                                <div class="h4 mb-0 fw-bold text-white">{{ "%.4f"|format(ate.ate_estimate) }}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-muted small text-uppercase">Method</div>
+                                <div class="h4 mb-0 fw-bold text-indigo-400">{{ ate.method | upper }}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-muted small text-uppercase">95% Confidence Interval</div>
+                                <div class="h4 mb-0 fw-bold text-white">[{{ "%.3f"|format(ate.confidence_interval[0]) }}, {{ "%.3f"|format(ate.confidence_interval[1]) }}]</div>
+                            </div>
+                        </div>
+                        <div class="mt-4 p-3 bg-indigo-900 border-indigo-500 rounded text-indigo-100 small">
+                            <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ ate.interpretation }}</pre>
+                        </div>
+                    </div>
+
+                    {% if att %}
+                    <h6 class="text-indigo-400 mb-3 small text-uppercase fw-bold">Treatment Effect on Treated (ATT)</h6>
+                    <div class="bg-dark p-4 rounded-3 border border-secondary">
+                        <div class="row text-center">
+                            <div class="col-md-6">
+                                <div class="text-muted small text-uppercase">ATT Estimate</div>
+                                <div class="h4 mb-0 fw-bold text-white">{{ "%.4f"|format(att.att_estimate) }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="text-muted small text-uppercase">95% Confidence Interval</div>
+                                <div class="h4 mb-0 fw-bold text-white">[{{ "%.3f"|format(att.confidence_interval[0]) }}, {{ "%.3f"|format(att.confidence_interval[1]) }}]</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+            <!-- Explainability Module -->
+            {% elif data.results.module == 'ExplainabilityEngine' %}
+                {% if data.results.findings.error or data.results.findings.shap_error or data.results.findings.lime_error %}
+                <div class="alert alert-danger border-0 shadow-sm rounded-3 mb-4">
+                    <h6 class="fw-bold mb-2"><i class="bi bi-exclamation-octagon-fill me-2"></i>Analysis Issues Detected</h6>
+                    <p class="mb-0 small">{{ data.results.findings.error or data.results.findings.shap_error or data.results.findings.lime_error }}</p>
+                </div>
+                {% endif %}
+
+                {% if data.results.findings.business_explanation %}
+                <div class="card bg-indigo-900 border-indigo-500 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <h6 class="text-indigo-400 mb-2 small text-uppercase fw-bold"><i class="bi bi-briefcase me-2"></i>Business Explanation</h6>
+                        <p class="text-indigo-100 mb-0" style="font-size: 1.1rem; line-height: 1.6;">
+                            {{ data.results.findings.business_explanation }}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h6 class="text-indigo-400 mb-3 small text-uppercase fw-bold">Global Feature Importance</h6>
+                        <div class="table-responsive rounded-3 overflow-hidden">
+                            <table class="table table-dark table-hover align-middle mb-0">
+                                <thead class="table-indigo">
+                                    <tr>
+                                        <th class="px-4">Feature</th>
+                                        <th>Importance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in data.results.findings.global_importance %}
+                                    <tr>
+                                        <td class="px-4">{{ item.feature }}</td>
+                                        <td>{{ "%.4f"|format(item.mean_abs_importance) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-indigo-400 mb-3 small text-uppercase fw-bold">Local Explanation (Instance)</h6>
+                        <div class="bg-dark p-4 rounded-3 border border-secondary">
+                            <p class="text-success mb-2 small fw-bold"><i class="bi bi-plus-circle me-1"></i> Positive Contributors</p>
+                            <ul class="list-unstyled mb-3">
+                                {% for item in data.results.findings.positive_contributors %}
+                                <li class="text-white small mb-1">{{ item.feature }}: +{{ "%.4f"|format(item.value) }}</li>
+                                {% endfor %}
+                            </ul>
+                            <p class="text-danger mb-2 small fw-bold"><i class="bi bi-dash-circle me-1"></i> Negative Contributors</p>
+                            <ul class="list-unstyled mb-0">
+                                {% for item in data.results.findings.negative_contributors %}
+                                <li class="text-white small mb-1">{{ item.feature }}: {{ "%.4f"|format(item.value) }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-4">
+                        <h6 class="text-indigo-400 mb-3 small text-uppercase fw-bold">SHAP Visualizations</h6>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="bg-dark p-3 rounded border border-secondary">
+                                    <div id="shap-bar-chart" style="height: 350px;"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="bg-dark p-3 rounded border border-secondary">
+                                    <div id="shap-waterfall-chart" style="height: 350px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            <!-- Root Cause Module -->
+            {% elif data.results.module == 'RootCauseEngine' %}
+                <div class="mb-4">
+                    <h6 class="text-indigo-400 mb-3 small text-uppercase fw-bold">Identified Root Causes</h6>
+                    <div class="table-responsive rounded-3 overflow-hidden mb-4">
+                        <table class="table table-dark table-hover align-middle mb-0">
+                            <thead class="table-indigo">
+                                <tr>
+                                    <th class="px-4">Root Cause</th>
+                                    <th>Confidence</th>
+                                    <th>Impact</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in data.results.findings.scored_causes %}
+                                <tr>
+                                    <td class="px-4">{{ c.cause }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 12px; background: #333;">
+                                            <div class="progress-bar bg-indigo-500" style="width: {{ c.confidence }}%">{{ c.confidence }}%</div>
+                                        </div>
+                                    </td>
+                                    <td>{{ c.impact }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h6 class="text-indigo-400 mb-3 small text-uppercase fw-bold">Investigation Timeline</h6>
+                            <div class="bg-dark p-4 rounded-3 border border-secondary">
+                                <div class="timeline small">
+                                    {% for item in data.results.findings.timeline %}
+                                    <div class="mb-2 text-white">
+                                        <span class="text-indigo-400 fw-bold me-2">↓</span> {{ item.event }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-indigo-400 mb-3 small text-uppercase fw-bold">AI Recommendations</h6>
+                            <div class="bg-dark p-4 rounded-3 border border-secondary">
+                                <ul class="mb-0 text-white small">
+                                    {% for rec in data.results.findings.recommendations %}
+                                    <li class="mb-2">{{ rec }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            <!-- Fallback for others -->
+            {% else %}
+                <div class="bg-dark p-4 rounded-3">
+                    <h6 class="text-indigo-400 mb-3 small text-uppercase fw-bold">Raw Findings Data</h6>
+                    <pre class="mb-0 text-muted small" style="max-height: 400px; overflow-y: auto;">{% if data.results.findings is defined and data.results.findings %}{{ data.results.findings | tojson(indent=2) }}{% else %}{}{% endif %}</pre>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Logs Section -->
+    <div class="card bg-card border-0 shadow rounded-4 mb-4">
+        <div class="card-header bg-transparent border-0 pt-4 px-4">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-terminal text-indigo-500 me-2"></i>Execution Logs</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="bg-dark p-3 rounded-3 border border-secondary" style="max-height: 300px; overflow-y: auto;">
+                <ul class="list-unstyled mb-0 font-monospace small">
+                    {% for log_line in data.results.log %}
+                    <li class="mb-1 text-muted border-bottom border-secondary pb-1 last-child-no-border" style="font-size: 0.85rem;">{{ log_line }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex gap-3 mb-5 mt-4">
+        <a href="{{ url_for('saved_reports') }}" class="btn btn-outline-indigo px-4 rounded-pill fw-semibold shadow-sm">
+            <i class="bi bi-arrow-left me-2"></i>Back to Reports
+        </a>
+        <button onclick="window.print()" class="btn btn-indigo px-4 rounded-pill fw-semibold shadow-sm">
+            <i class="bi bi-printer me-2"></i>Print Report
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table-indigo {
+        background-color: var(--indigo-600) !important;
+        color: white !important;
+    }
+    .table-indigo th {
+        background-color: var(--indigo-600) !important;
+        color: white !important;
+        border-bottom: none;
+    }
+    .table-danger-dark {
+        background-color: rgba(220, 53, 69, 0.08) !important;
+    }
+    .bg-indigo-900 {
+        background-color: rgba(49, 46, 129, 0.2);
+    }
+    .border-indigo-500 {
+        border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    }
+    .text-indigo-100 {
+        color: #e0e7ff;
+    }
+    .bg-indigo-100 {
+        background-color: #e0e7ff;
+    }
+    .text-indigo-900 {
+        color: #1e1b4b;
+    }
+    .text-indigo-400 {
+        color: #818cf8;
+    }
+    .last-child-no-border:last-child {
+        border-bottom: none !important;
+    }
+    @media print {
+        .btn, .navbar, .sidebar {
+            display: none !important;
+        }
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #eee !important;
+        }
+    }
+</style>
+{% endblock %}

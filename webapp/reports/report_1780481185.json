@@ -1,0 +1,397 @@
+{
+    "calibration": {
+        "label": "model",
+        "n": 545,
+        "n_bins": 10,
+        "ece": 0.142197,
+        "mce": 0.339196,
+        "brier": 0.210771,
+        "bss": 0.156846,
+        "severity": "HIGH",
+        "curve": {
+            "bin_edges": [
+                [
+                    0.0,
+                    0.1
+                ],
+                [
+                    0.1,
+                    0.2
+                ],
+                [
+                    0.2,
+                    0.3
+                ],
+                [
+                    0.3,
+                    0.4
+                ],
+                [
+                    0.4,
+                    0.5
+                ],
+                [
+                    0.5,
+                    0.6
+                ],
+                [
+                    0.6,
+                    0.7
+                ],
+                [
+                    0.7,
+                    0.8
+                ],
+                [
+                    0.8,
+                    0.9
+                ],
+                [
+                    0.9,
+                    1.0
+                ]
+            ],
+            "mean_predicted": [
+                0.056433573013390914,
+                0.1736334039996578,
+                0.24883841634829118,
+                0.34584290349726593,
+                0.4516295510809568,
+                0.5335311779093219,
+                0.653328528990882,
+                0.7450001264300644,
+                0.8395596862286754,
+                0.9609022049403249
+            ],
+            "fraction_pos": [
+                0.10714285714285714,
+                0.17567567567567569,
+                0.30656934306569344,
+                0.4528301886792453,
+                0.7551020408163265,
+                0.8727272727272727,
+                0.875,
+                0.875,
+                1.0,
+                1.0
+            ],
+            "counts": [
+                28,
+                74,
+                137,
+                106,
+                98,
+                55,
+                24,
+                16,
+                5,
+                2
+            ]
+        },
+        "interpretation": "ECE > 10% \u2014 recalibration strongly recommended.",
+        "prediction_source": "auto_generated",
+        "model_type": "RandomForestRegressor"
+    },
+    "drift": {
+        "module": "DriftEngine",
+        "timestamp": "2026-06-03T15:36:25",
+        "severity": "HIGH",
+        "passed": false,
+        "findings": {
+            "per_feature": [
+                {
+                    "feature": "area",
+                    "type": "numeric",
+                    "ks_stat": 0.512,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 1.4574,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "bedrooms",
+                    "type": "numeric",
+                    "ks_stat": 0.3073,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 0.5857,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "bathrooms",
+                    "type": "numeric",
+                    "ks_stat": 0.3239,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 0.6066,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "stories",
+                    "type": "numeric",
+                    "ks_stat": 0.2281,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 2.8502,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "parking",
+                    "type": "numeric",
+                    "ks_stat": 0.2659,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 0.3248,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                }
+            ],
+            "drifted": [
+                "area",
+                "bedrooms",
+                "bathrooms",
+                "stories",
+                "parking"
+            ],
+            "warned": [],
+            "domain_auc": 0.5,
+            "mean_psi": 1.1649,
+            "n_features": 12,
+            "num_drifted_features": 5,
+            "num_warned_features": 0,
+            "alerts": [
+                {
+                    "level": "CRITICAL",
+                    "message": "5 feature(s) show significant drift: ['area', 'bedrooms', 'bathrooms', 'stories', 'parking']. Model retraining recommended."
+                }
+            ]
+        },
+        "log": [
+            "[15:36:25] [INFO] [DriftEngine] Starting DriftEngine",
+            "[15:36:25] [INFO] [DriftEngine]   area: DRIFT (p=0.0000, psi=1.4574)",
+            "[15:36:25] [INFO] [DriftEngine]   bedrooms: DRIFT (p=0.0000, psi=0.5857)",
+            "[15:36:25] [INFO] [DriftEngine]   bathrooms: DRIFT (p=0.0000, psi=0.6066)",
+            "[15:36:25] [INFO] [DriftEngine]   stories: DRIFT (p=0.0000, psi=2.8502)",
+            "[15:36:25] [INFO] [DriftEngine]   parking: DRIFT (p=0.0000, psi=0.3248)",
+            "[15:36:25] [INFO] [DriftEngine] Domain classifier failed: \nAll the 3 fits failed.\nIt is very likely that your model is misconfigured.\nYou can try to debug the error by setting error_score='raise'.\n\nBelow are more details about the failures:\n--------------------------------------------------------------------------------\n3 fits failed with the following error:\nTraceback (most recent call last):\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\model_selection\\_validation.py\", line 833, in _fit_and_score\n    estimator.fit(X_train, y_train, **fit_params)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\base.py\", line 1336, in wrapper\n    return fit_method(estimator, *args, **kwargs)\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\ensemble\\_forest.py\", line 359, in fit\n    X, y = validate_data(\n           ~~~~~~~~~~~~~^\n        self,\n        ^^^^^\n    ...<5 lines>...\n        ensure_all_finite=False,\n        ^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\utils\\validation.py\", line 2919, in validate_data\n    X, y = check_X_y(X, y, **check_params)\n           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\utils\\validation.py\", line 1314, in check_X_y\n    X = check_array(\n        X,\n    ...<12 lines>...\n        input_name=\"X\",\n    )\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\utils\\validation.py\", line 1022, in check_array\n    array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)\n  File \"C:\\Users\\arman\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\sklearn\\utils\\_array_api.py\", line 878, in _asarray_with_order\n    array = numpy.asarray(array, order=order, dtype=dtype)\nValueError: could not convert string to float: np.str_('yes')\n"
+        ]
+    },
+    "label_noise": {
+        "module": "LabelNoiseEngine",
+        "timestamp": "2026-06-03T15:36:25",
+        "severity": "HIGH",
+        "passed": false,
+        "findings": {
+            "num_errors_detected": 254,
+            "total_samples": 545,
+            "estimated_noise_fraction": 0.46605504587155966,
+            "is_asymmetric": false,
+            "noise_severity": 0.17401913257061596,
+            "avg_label_quality": 0.5902576607573029,
+            "error_indices": [
+                3,
+                4,
+                7,
+                11,
+                13,
+                15,
+                18,
+                20,
+                21,
+                22,
+                23,
+                27,
+                28,
+                32,
+                33,
+                34,
+                47,
+                48,
+                53,
+                55,
+                60,
+                61,
+                65,
+                66,
+                67,
+                68,
+                70,
+                74,
+                75,
+                80,
+                81,
+                84,
+                87,
+                89,
+                90,
+                92,
+                93,
+                95,
+                99,
+                101,
+                104,
+                105,
+                108,
+                112,
+                117,
+                128,
+                130,
+                131,
+                132,
+                133,
+                137,
+                144,
+                146,
+                150,
+                151,
+                152,
+                153,
+                154,
+                157,
+                158,
+                159,
+                167,
+                168,
+                171,
+                174,
+                179,
+                180,
+                182,
+                183,
+                184,
+                185,
+                188,
+                189,
+                191,
+                193,
+                195,
+                196,
+                197,
+                199,
+                200,
+                201,
+                202,
+                203,
+                204,
+                206,
+                207,
+                208,
+                209,
+                210,
+                211,
+                213,
+                214,
+                215,
+                218,
+                219,
+                221,
+                225,
+                228,
+                230,
+                231
+            ]
+        },
+        "log": [
+            "[15:36:25] [INFO] [LabelNoiseEngine] Starting LabelNoiseEngine",
+            "[15:36:25] [INFO] [LabelNoiseEngine] Starting Label Noise audit...",
+            "[15:36:25] [INFO] [LabelNoiseEngine] Audit complete. Detected 254 errors."
+        ]
+    },
+    "leakage": {
+        "module": "LeakageEngine",
+        "timestamp": "2026-06-03T15:36:25",
+        "severity": "HIGH",
+        "passed": false,
+        "findings": {
+            "summary": "Detected 1 potential leakage issues:\n- [HIGH] price: target_leakage (Score: 1.00)",
+            "num_suspects": 1,
+            "suspects": [
+                {
+                    "feature": "price",
+                    "score": 1.0,
+                    "type": "target_leakage",
+                    "severity": "HIGH"
+                }
+            ],
+            "full_report": {
+                "target_leakage": {
+                    "scores": {
+                        "price": 1.0,
+                        "area": 0.4594009126737828,
+                        "bedrooms": 0.2860815172554319,
+                        "bathrooms": 0.39824959279428135,
+                        "stories": 0.33097104535016014,
+                        "mainroad": 0.23219732112059652,
+                        "guestroom": 0.208219665737754,
+                        "basement": 0.14492954034718047,
+                        "hotwaterheating": 0.06843753877641026,
+                        "airconditioning": 0.35002545541730246,
+                        "parking": 0.31298566692449514,
+                        "prefarea": 0.2509759298750387,
+                        "furnishingstatus": 0.2448909304064849
+                    }
+                },
+                "temporal_leakage": {}
+            }
+        },
+        "log": [
+            "[15:36:25] [INFO] [LeakageEngine] Starting LeakageEngine",
+            "[15:36:25] [INFO] [LeakageEngine] Starting Leakage scan...",
+            "[15:36:25] [INFO] [LeakageEngine] Leakage scan complete. Found 1 suspects."
+        ]
+    },
+    "missing_data": {
+        "module": "MissingDataEngine",
+        "timestamp": "2026-06-03T15:36:25",
+        "severity": "NONE",
+        "passed": true,
+        "findings": {
+            "missingness_rates": {
+                "area": 0.0,
+                "bedrooms": 0.0,
+                "bathrooms": 0.0,
+                "stories": 0.0,
+                "mainroad": 0.0,
+                "guestroom": 0.0,
+                "basement": 0.0,
+                "hotwaterheating": 0.0,
+                "airconditioning": 0.0,
+                "parking": 0.0,
+                "prefarea": 0.0,
+                "furnishingstatus": 0.0
+            },
+            "mechanisms": {
+                "area": "NONE",
+                "bedrooms": "NONE",
+                "bathrooms": "NONE",
+                "stories": "NONE",
+                "mainroad": "NONE",
+                "guestroom": "NONE",
+                "basement": "NONE",
+                "hotwaterheating": "NONE",
+                "airconditioning": "NONE",
+                "parking": "NONE",
+                "prefarea": "NONE",
+                "furnishingstatus": "NONE"
+            },
+            "global_mcar": {
+                "statistic": 0.0,
+                "pvalue": 1.0,
+                "mcar_likely": true,
+                "df": 0,
+                "error": "Insufficient degrees of freedom"
+            },
+            "signal_strength": {},
+            "max_missing_rate": 0.0
+        },
+        "log": [
+            "[15:36:25] [INFO] [MissingDataEngine] Starting MissingDataEngine",
+            "[15:36:25] [INFO] [MissingDataEngine] Starting Missing Data audit...",
+            "[15:36:25] [INFO] [MissingDataEngine] Missing Data audit complete. Max rate: 0.00%"
+        ]
+    }
+}

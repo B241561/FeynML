@@ -1,0 +1,793 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-gradient">
+    <div class="container py-5 mt-5">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6 animate-up hero-copy">
+                <h1 class="display-3 fw-bold mb-4">
+                    Debug your ML models <br>
+                    <span class="text-gradient">with precision.</span>
+                </h1>
+                <p class="lead text-muted mb-5 fs-4">
+                    FeynML is the professional standard for ML failure investigation. 
+                    Detect drift, audit calibration, and identify root causes in seconds.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('index') }}" class="btn btn-indigo btn-lg px-5 rounded-pill shadow">
+                        Launch Engine
+                    </a>
+                    <a href="{{ url_for('features') }}" class="btn btn-outline-indigo btn-lg px-5 rounded-pill">
+                        Explore Features
+                    </a>
+                </div>
+                <div class="mt-5 d-flex align-items-center gap-4 text-muted small">
+                    <div><i class="bi bi-check2-circle text-success me-2"></i>No-code Analysis</div>
+                    <div><i class="bi bi-check2-circle text-success me-2"></i>Statistical Rigor</div>
+                    <div><i class="bi bi-check2-circle text-success me-2"></i>SaaS Optimized</div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 animate-up" style="animation-delay: 0.2s;">
+                <div class="position-relative">
+                    <div class="bg-indigo-600 rounded-4 shadow-lg overflow-hidden p-2">
+
+                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1000"
+                             class="img-fluid rounded-3 opacity-90"
+                             alt="Dashboard Preview">
+
+                    </div>
+
+                    <!-- Floating Stat Cards -->
+                    <div class="position-absolute top-0 start-0 translate-middle-y mt-5 ms-n4 glass-card p-3 rounded-3 shadow animate-up" style="animation-delay: 0.4s;">
+                        <div class="small text-muted mb-1">Drift Detected</div>
+                        <div class="h5 mb-0 text-danger fw-bold">8 Features</div>
+                    </div>
+
+                    <div class="position-absolute bottom-0 end-0 mb-5 me-n4 glass-card p-3 rounded-3 shadow animate-up" style="animation-delay: 0.6s;">
+                        <div class="small text-muted mb-1">Audit Score</div>
+                        <div class="h5 mb-0 text-success fw-bold">98.4%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+/* ───────────────────────────────────────────────────
+   HERO SECTION BALANCE FIX
+─────────────────────────────────────────────────── */
+
+.hero-gradient {
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-gradient::before,
+.hero-gradient::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.5;
+    z-index: 0;
+    animation: orb-drift 8s ease-in-out infinite alternate;
+}
+
+.hero-gradient::before {
+    width: 600px;
+    height: 600px;
+    top: -180px;
+    left: -160px;
+    background: radial-gradient(circle at center, rgba(26, 58, 110, 0.55) 0%, transparent 70%);
+    filter: blur(120px);
+}
+
+.hero-gradient::after {
+    width: 500px;
+    height: 500px;
+    bottom: -120px;
+    right: -100px;
+    background: radial-gradient(circle at center, rgba(13, 79, 60, 0.45) 0%, transparent 70%);
+    filter: blur(100px);
+    opacity: 0.4;
+    animation-delay: 0.6s;
+}
+
+@keyframes orb-drift {
+    from { transform: translate(0, 0); }
+    to { transform: translate(14px, -14px); }
+}
+
+.hero-gradient > .container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+}
+
+/* ───────────────────────────────────────────────────
+   LEFT CONTENT PANEL
+─────────────────────────────────────────────────── */
+
+.hero-copy {
+    flex: 0 0 45%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 3rem 2.5rem;
+    border-radius: 1.25rem;
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.hero-copy h1.display-3 {
+    font-family: var(--font-heading);
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    max-width: 14ch;
+    margin-bottom: 24px;
+}
+
+.hero-copy h1 .text-gradient {
+    background: linear-gradient(135deg, #4fc3f7, #00e5ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-copy p.lead {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 600px;
+}
+
+.hero-copy .d-flex {
+    margin-top: 32px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.hero-copy .btn-indigo {
+    background: linear-gradient(135deg, #1565c0, #0288d1);
+    border: none;
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    box-shadow: 0 4px 20px rgba(2, 136, 209, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    color: #fff;
+}
+
+.hero-copy .btn-indigo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(2, 136, 209, 0.55);
+}
+
+.hero-copy .btn-outline-indigo {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.85);
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.hero-copy .btn-outline-indigo:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateY(-2px);
+}
+
+/* ───────────────────────────────────────────────────
+   RIGHT DASHBOARD PREVIEW
+─────────────────────────────────────────────────── */
+
+.hero-gradient > .container > .row {
+    display: contents;
+}
+
+.hero-gradient > .container > .row > .col-lg-6:last-child {
+    flex: 0 0 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.hero-gradient > .container > .row > .col-lg-6:last-child .position-relative {
+    width: 100%;
+    height: auto;
+    max-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.hero-gradient > .container > .row > .col-lg-6:last-child .bg-indigo-600 {
+    width: 100%;
+    height: 100%;
+    border-radius: 1.25rem;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.hero-gradient > .container > .row > .col-lg-6:last-child img.img-fluid {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    display: block;
+}
+
+/* ───────────────────────────────────────────────────
+   RESPONSIVE
+─────────────────────────────────────────────────── */
+
+@media (max-width: 992px) {
+    .hero-gradient > .container {
+        flex-direction: column;
+        padding: 2rem 1.5rem;
+        gap: 1.5rem;
+    }
+
+    .hero-copy {
+        flex: 1 1 100%;
+        min-height: auto;
+        width: 100%;
+        padding: 2.5rem 2rem;
+    }
+
+    .hero-gradient > .container > .row > .col-lg-6:last-child {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
+    .hero-gradient > .container > .row > .col-lg-6:last-child .position-relative {
+        height: auto;
+        max-height: 400px;
+    }
+}
+</style>
+
+<!-- Premium Inspiration Section -->
+<div class="container py-5 my-5">
+    <div class="card inspiration-card p-0 border-0 rounded-5 overflow-hidden shadow-2xl animate-up">
+        <div class="row g-0 align-items-stretch">
+            <div class="col-lg-6 p-5 p-md-5 d-flex flex-column justify-content-center">
+                <div class="mb-4">
+                    <span class="badge bg-indigo-50 text-indigo-600 px-3 py-2 rounded-pill small fw-bold text-uppercase tracking-wider">
+                        Guiding Philosophy
+                    </span>
+                </div>
+                
+                <h2 class="display-4 feynman-name mb-4">Richard Feynman</h2>
+                
+                <div class="inspiration-quote-container mb-4">
+                    <div class="quote-container">
+                        <span class="quote-mark">❝</span>
+                        <p class="feynman-quote">
+                            "If you can't explain it simply, then you don't understand it well enough."
+                        </p>
+                    </div>
+                </div>
+                
+                <p class="lead text-secondary mb-4 opacity-90">
+                    Modern machine learning systems often behave like black boxes. 
+                    FeynML translates complex ML failures into clear, actionable 
+                    explanations that students, engineers, and practitioners can understand.
+                </p>
+                
+                <div class="d-flex align-items-center gap-3 pt-3 border-top mt-2">
+                    <div class="h6 mb-0 fw-bold text-indigo-600">Clarity.</div>
+                    <div class="h6 mb-0 fw-bold text-indigo-600">Simplicity.</div>
+                    <div class="h6 mb-0 fw-bold text-indigo-600">Understanding.</div>
+                </div>
+            </div>
+            <div class="col-lg-6 position-relative">
+    <div class="feynman-image-wrapper h-100">
+        <img src="{{ url_for('static', filename='images/myimage.jpg') }}"
+             class="img-fluid feynman-hero-img"
+             alt="Richard Feynman">
+        <div class="image-overlay"></div>
+    </div>
+</div>
+        </div>
+    </div>
+</div>
+
+<section class="how-it-works" style="padding: 80px 0; text-align: center;">
+    <style>
+    .section-badge {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #4fc3f7;
+        background: rgba(79, 195, 247, 0.1);
+        border: 1px solid rgba(79, 195, 247, 0.2);
+        border-radius: 100px;
+        padding: 6px 16px;
+        margin-bottom: 16px;
+    }
+    [data-theme="light"] .section-badge,
+    .light .section-badge {
+        background: #DBEAFE;
+        color: #1D4ED8;
+        border-color: #93C5FD;
+        font-weight: 600;
+    }
+    [data-theme="dark"] .section-badge,
+    .dark .section-badge {
+        background: rgba(79, 195, 247, 0.1);
+        color: #93C5FD;
+        border-color: rgba(79, 195, 247, 0.2);
+    }
+    .steps-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        max-width: 900px;
+        margin: 48px auto 0;
+        position: relative;
+    }
+    .step-card {
+        background: rgba(15, 23, 42, 0.65);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 32px 24px;
+        text-align: left;
+        position: relative;
+        transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    }
+    [data-theme="light"] .step-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+    }
+    .step-card:hover {
+        border-color: rgba(79,195,247,0.3);
+        transform: translateY(-4px);
+    }
+    .step-number {
+        font-size: 3rem;
+        font-weight: 800;
+        color: rgba(79, 195, 247, 0.12);
+        line-height: 1;
+        margin-bottom: 16px;
+        font-family: var(--font-heading);
+    }
+    [data-theme="light"] .step-number {
+        color: #cbd5e1;
+    }
+    [data-theme="dark"] .step-number {
+        color: rgba(59, 130, 246, 0.18);
+    }
+    .step-card h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: rgba(255,255,255,0.92);
+        margin-bottom: 10px;
+    }
+    [data-theme="light"] .step-card h3 {
+        color: #0f172a;
+    }
+    .step-card p {
+        font-size: 0.95rem;
+        color: rgba(255,255,255,0.78);
+        line-height: 1.8;
+    }
+    [data-theme="light"] .step-card p {
+        color: #475569;
+    }
+    @media (max-width: 768px) {
+        .steps-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    </style>
+    <p class="section-badge">How it works</p>
+    <h2 class="section-title">From upload to insight in 3 steps</h2>
+    <p class="section-subtitle">No configuration. No boilerplate. Just answers.</p>
+
+    <div class="steps-grid">
+        <div class="step-card">
+            <div class="step-number">01</div>
+            <div class="step-icon mb-3"><i class="bi bi-cloud-arrow-up-fill text-info" style="font-size: 1.5rem;"></i></div>
+            <h3>Upload your dataset</h3>
+            <p>Drop a CSV or JSON. FeynML accepts datasets up to 50MB and automatically detects column types, target variables, and data structure.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">02</div>
+            <div class="step-icon mb-3"><i class="bi bi-brain text-info" style="font-size: 1.5rem;"></i></div>
+            <h3>Run diagnostics</h3>
+            <p>Choose from drift detection, label noise analysis, leakage detection, calibration audit, fairness check, or full pipeline scan.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">03</div>
+            <div class="step-icon mb-3"><i class="bi bi-file-earmark-text-fill text-info" style="font-size: 1.5rem;"></i></div>
+            <h3>Get actionable reports</h3>
+            <p>Receive a detailed failure report with root cause explanations, severity scores, and fix recommendations — exportable as PDF.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Platform Capabilities & Roadmap -->
+<div class="container py-5 my-5">
+    <style>
+    .capability-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 16px;
+        padding: 24px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .capability-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #4fc3f7, transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .capability-card:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(79, 195, 247, 0.3);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(79, 195, 247, 0.1);
+    }
+    .capability-card:hover::before {
+        opacity: 1;
+    }
+    .capability-item {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 18px;
+        align-items: flex-start;
+    }
+    .capability-item:last-child {
+        margin-bottom: 0;
+    }
+    .capability-item-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(79, 195, 247, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .capability-item-icon i {
+        color: #4fc3f7 !important;
+    }
+    .capability-card-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.92);
+        margin-bottom: 6px;
+    }
+    .capability-item-text {
+        font-size: 0.78rem;
+        color: rgba(255, 255, 255, 0.5);
+        line-height: 1.5;
+    }
+    .row.row-cols-1.row-cols-md-2.row-cols-lg-3 > .col:nth-of-type(1) .capability-card {
+        border-top: 2px solid #4fc3f7;
+    }
+    .row.row-cols-1.row-cols-md-2.row-cols-lg-3 > .col:nth-of-type(2) .capability-card {
+        border-top: 2px solid #ff7043;
+    }
+    .row.row-cols-1.row-cols-md-2.row-cols-lg-3 > .col:nth-of-type(3) .capability-card {
+        border-top: 2px solid #66bb6a;
+    }
+    </style>
+    <div class="text-center mb-5 animate-up">
+        <h2 class="display-5 fw-bold mb-3 section-title">Platform Capabilities & Roadmap</h2>
+        <p class="text-muted section-subtitle">What FeynML can do today, its current limitations, and the future roadmap for AI-first failure investigation.</p>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 animate-up">
+        <div class="col">
+            <div class="capability-card h-100 p-4">
+                <h5 class="capability-card-title mb-4">Current Capabilities</h5>
+                <div class="capability-item">
+                    <div class="capability-item-icon text-info"><i class="bi bi-check-circle"></i></div>
+                    <div>
+                        <div class="capability-item-title">Feature Drift Detection</div>
+                        <div class="capability-item-text">Detect distribution shifts across model inputs and targets.</div>
+                    </div>
+                </div>
+                <div class="capability-item">
+                    <div class="capability-item-icon text-info"><i class="bi bi-check-circle"></i></div>
+                    <div>
+                        <div class="capability-item-title">Calibration Analysis</div>
+                        <div class="capability-item-text">Audit score reliability and probability calibration.</div>
+                    </div>
+                </div>
+                <div class="capability-item">
+                    <div class="capability-item-icon text-info"><i class="bi bi-check-circle"></i></div>
+                    <div>
+                        <div class="capability-item-title">Label Noise Detection</div>
+                        <div class="capability-item-text">Flag inconsistent labels and annotation drift.</div>
+                    </div>
+                </div>
+                <div class="capability-item">
+                    <div class="capability-item-icon text-info"><i class="bi bi-check-circle"></i></div>
+                    <div>
+                        <div class="capability-item-title">Leakage Detection</div>
+                        <div class="capability-item-text">Surface potential target leakage and data contamination.</div>
+                    </div>
+                </div>
+                <div class="capability-item">
+                    <div class="capability-item-icon text-info"><i class="bi bi-check-circle"></i></div>
+                    <div>
+                        <div class="capability-item-title">Missingness Analysis</div>
+                        <div class="capability-item-text">Evaluate missing value patterns and feature coverage.</div>
+                    </div>
+                </div>
+                <div class="capability-item">
+                    <div class="capability-item-icon text-info"><i class="bi bi-check-circle"></i></div>
+                    <div>
+                        <div class="capability-item-title">Fairness Audit</div>
+                        <div class="capability-item-text">Assess model performance across sensitive groups.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="capability-card h-100 p-4">
+                <h5 class="capability-card-title mb-4">Technical Limits</h5>
+                <div class="capability-item">
+                    <div class="capability-item-icon text-warning"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div>
+                        <div class="capability-item-title">Recommended Upload Size</div>
+                        <div class="capability-item-text">50 MB</div>
+                    </div>
+                </div>
+                <div class="capability-item">
+                    <div class="capability-item-icon text-info"><i class="bi bi-info-circle"></i></div>
+                    <div>
+                        <div class="capability-item-title">Tested Dataset Size</div>
+                        <div class="capability-item-text">Up to 500k rows</div>
+                    </div>
+                </div>
+                <div class="capability-item">
+                    <div class="capability-item-icon text-info"><i class="bi bi-file-earmark-text"></i></div>
+                    <div>
+                        <div class="capability-item-title">Supported Formats</div>
+                        <div class="capability-item-text">CSV, JSON</div>
+                    </div>
+                </div>
+                <div class="capability-item">
+                    <div class="capability-item-icon text-warning"><i class="bi bi-clock-history"></i></div>
+                    <div>
+                        <div class="capability-item-title">Real-time Monitoring</div>
+                        <div class="capability-item-text">Not Available</div>
+                    </div>
+                </div>
+                <div class="capability-item">
+                    <div class="capability-item-icon text-warning"><i class="bi bi-stack"></i></div>
+                    <div>
+                        <div class="capability-item-title">Multi-table Support</div>
+                        <div class="capability-item-text">Not Available</div>
+                    </div>
+                </div>
+                <div class="capability-item">
+                    <div class="capability-item-icon text-info"><i class="bi bi-gear-wide-connected"></i></div>
+                    <div>
+                        <div class="capability-item-title">GPU Acceleration</div>
+                        <div class="capability-item-text">Planned</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="capability-card h-100 p-4">
+                <h5 class="capability-card-title mb-4">Future Roadmap</h5>
+                <div class="roadmap-group mb-4">
+                    <div class="roadmap-year">2026</div>
+                    <div class="roadmap-item">
+                        <span class="roadmap-dot"></span>
+                        <span>SHAP Integration</span>
+                    </div>
+                    <div class="roadmap-item">
+                        <span class="roadmap-dot"></span>
+                        <span>LIME Integration</span>
+                    </div>
+                    <div class="roadmap-item">
+                        <span class="roadmap-dot"></span>
+                        <span>Slice Discovery</span>
+                    </div>
+                </div>
+                <div class="roadmap-group">
+                    <div class="roadmap-year">2027</div>
+                    <div class="roadmap-item">
+                        <span class="roadmap-dot"></span>
+                        <span>LLM Investigation Agent</span>
+                    </div>
+                    <div class="roadmap-item">
+                        <span class="roadmap-dot"></span>
+                        <span>Root Cause Analysis</span>
+                    </div>
+                    <div class="roadmap-item">
+                        <span class="roadmap-dot"></span>
+                        <span>Cloud Deployment</span>
+                    </div>
+                    <div class="roadmap-item">
+                        <span class="roadmap-dot"></span>
+                        <span>Real-Time Monitoring</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5 my-5">
+    <div class="phase-roadmap-heading animate-up">
+        <h3>FeynML Investigation Framework</h3>
+        <p>Five structured phases used to diagnose, observe, explain, and debug machine learning systems.</p>
+    </div>
+
+    <div class="phase-roadmap animate-up">
+        <div class="phase-node">
+            <div class="hex">P0</div>
+            <span>Foundations</span>
+            <small>Math • Stats • ML Basics</small>
+        </div>
+        <div class="phase-node">
+            <div class="hex">P1</div>
+            <span>Diagnostics</span>
+            <small>Metrics • Calibration • Fairness</small>
+        </div>
+        <div class="phase-node">
+            <div class="hex">P2</div>
+            <span>Observability</span>
+            <small>Drift • Monitoring • Slices</small>
+        </div>
+        <div class="phase-node">
+            <div class="hex">P3</div>
+            <span>Root Cause</span>
+            <small>SHAP • LIME • Failure Analysis</small>
+        </div>
+        <div class="phase-node">
+            <div class="hex">P4</div>
+            <span>Data Debugging</span>
+            <small>Leakage • Missing Data • Causality</small>
+        </div>
+    </div>
+
+    <div class="text-center mb-5 animate-up" style="margin-top: 2.5rem;">
+        <h2 class="display-5 fw-bold mb-3 section-title">Built Using</h2>
+        <p class="text-muted section-subtitle">The core technologies powering the FeynML diagnostic engine.</p>
+    </div>
+
+    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-7 g-4 animate-up" style="animation-delay: 0.2s;">
+        <div class="col">
+            <div class="tech-badge">
+                <i class="bi bi-gear-fill tech-icon"></i>
+                <div>
+                    <span class="tech-name">Flask</span>
+                    <span class="tech-role">Web framework</span>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="tech-badge">
+                <i class="bi bi-table tech-icon"></i>
+                <div>
+                    <span class="tech-name">Pandas</span>
+                    <span class="tech-role">Data processing</span>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="tech-badge">
+                <i class="bi bi-calculator tech-icon"></i>
+                <div>
+                    <span class="tech-name">NumPy</span>
+                    <span class="tech-role">Numerical compute</span>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="tech-badge">
+                <i class="bi bi-graph-up-arrow tech-icon"></i>
+                <div>
+                    <span class="tech-name">SciPy</span>
+                    <span class="tech-role">Scientific computing</span>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="tech-badge">
+                <i class="bi bi-cpu tech-icon"></i>
+                <div>
+                    <span class="tech-name">Scikit-Learn</span>
+                    <span class="tech-role">ML algorithms</span>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="tech-badge">
+                <i class="bi bi-bar-chart-fill tech-icon"></i>
+                <div>
+                    <span class="tech-name">Plotly</span>
+                    <span class="tech-role">Visualizations</span>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="tech-badge">
+                <i class="bi bi-code-slash tech-icon"></i>
+                <div>
+                    <span class="tech-name">Jinja2</span>
+                    <span class="tech-role">Templating</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feature Bento Grid -->
+<div class="container py-5 my-5">
+    <div class="text-center mb-5 animate-up">
+        <h2 class="display-5 fw-bold mb-3">Engineered for Accuracy</h2>
+        <p class="text-muted">Comprehensive diagnostics across the entire ML lifecycle.</p>
+    </div>
+    
+    <div class="bento-grid animate-up" style="animation-delay: 0.2s;">
+        <div class="bento-item">
+            <div class="feature-icon"><i class="bi bi-activity"></i></div>
+            <h4 class="fw-bold mb-3">Drift Observability</h4>
+            <p class="text-muted small">Monitor covariate and target drift with automated KS-tests and PSI metrics.</p>
+        </div>
+        <div class="bento-item">
+            <div class="feature-icon" style="background: var(--sev-medium-bg); color: var(--sev-medium);"><i class="bi bi-graph-up"></i></div>
+            <h4 class="fw-bold mb-3">Calibration Audit</h4>
+            <p class="text-muted small">Identify miscalibration in probability scores and improve model reliability.</p>
+        </div>
+        <div class="bento-item">
+            <div class="feature-icon" style="background: var(--sev-high-bg); color: var(--sev-high);"><i class="bi bi-shield-check"></i></div>
+            <h4 class="fw-bold mb-3">Leakage Detection</h4>
+            <p class="text-muted small">Prevent target leakage and ensure your model generalizes to production data.</p>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+    <div class="container cta-section">
+        <div class="cta-card animate-up">
+            <h2>Ready to audit your model?</h2>
+            <p class="cta-copy mx-auto mb-5">Start your investigation with FeynML's research-backed diagnostic suite.</p>
+            <a href="{{ url_for('index') }}" class="enterprise-cta-button d-inline-flex align-items-center justify-content-center">
+                Start Investigation
+            </a>
+        </div>
+    </div>
+{% endblock %}

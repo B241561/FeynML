@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% block title %}Admin Analytics{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 animate-premium">
+        <div>
+            <h2 class="fw-bold mb-1 text-primary">Admin Analytics</h2>
+            <p class="text-muted mb-0">Live insight into user activity, dataset uploads, and report generation.</p>
+        </div>
+        <a href="/admin" class="btn btn-outline-indigo btn-sm rounded-pill"><i class="bi bi-arrow-left me-2"></i>Back to Admin</a>
+    </div>
+
+    {% if analytics_error %}
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card analytics-warning-card p-4">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-exclamation-triangle-fill fs-3 text-warning"></i>
+                    <div>
+                        <h5 class="mb-1">Analytics partial load</h5>
+                        <p class="mb-0 text-muted">Some analytics data could not be retrieved. Metrics are shown with safe defaults and the application remains available.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="analytics-kpi-grid mb-4">
+        <div class="card analytics-card p-4">
+            <div class="small text-muted text-uppercase fw-bold mb-2">Total Users</div>
+            <div class="d-flex align-items-end justify-content-between gap-3">
+                <div>
+                    <h3 class="fw-bold mb-1">{{ total_users or 0 }}</h3>
+                    <p class="mb-0 text-muted">Registered platform users</p>
+                </div>
+                <i class="bi bi-people-fill fs-2 text-indigo-400"></i>
+            </div>
+        </div>
+        <div class="card analytics-card p-4">
+            <div class="small text-muted text-uppercase fw-bold mb-2">New Users Today</div>
+            <div class="d-flex align-items-end justify-content-between gap-3">
+                <div>
+                    <h3 class="fw-bold mb-1">{{ new_users_today or 0 }}</h3>
+                    <p class="mb-0 text-muted">Signups in the last 24 hours</p>
+                </div>
+                <i class="bi bi-person-plus-fill fs-2 text-success"></i>
+            </div>
+        </div>
+        <div class="card analytics-card p-4">
+            <div class="small text-muted text-uppercase fw-bold mb-2">Uploaded Datasets</div>
+            <div class="d-flex align-items-end justify-content-between gap-3">
+                <div>
+                    <h3 class="fw-bold mb-1">{{ uploaded_datasets or 0 }}</h3>
+                    <p class="mb-0 text-muted">Dataset uploads by users</p>
+                </div>
+                <i class="bi bi-cloud-arrow-up-fill fs-2 text-info"></i>
+            </div>
+        </div>
+        <div class="card analytics-card p-4">
+            <div class="small text-muted text-uppercase fw-bold mb-2">Models Trained</div>
+            <div class="d-flex align-items-end justify-content-between gap-3">
+                <div>
+                    <h3 class="fw-bold mb-1">{{ models_trained or 0 }}</h3>
+                    <p class="mb-0 text-muted">Completed analysis runs</p>
+                </div>
+                <i class="bi bi-gear-fill fs-2 text-warning"></i>
+            </div>
+        </div>
+        <div class="card analytics-card p-4">
+            <div class="small text-muted text-uppercase fw-bold mb-2">Reports Generated</div>
+            <div class="d-flex align-items-end justify-content-between gap-3">
+                <div>
+                    <h3 class="fw-bold mb-1">{{ reports_generated or 0 }}</h3>
+                    <p class="mb-0 text-muted">Exported investigation reports</p>
+                </div>
+                <i class="bi bi-file-earmark-bar-graph-fill fs-2 text-info"></i>
+            </div>
+        </div>
+        <div class="card analytics-card p-4">
+            <div class="small text-muted text-uppercase fw-bold mb-2">Active Users</div>
+            <div class="d-flex align-items-end justify-content-between gap-3">
+                <div>
+                    <h3 class="fw-bold mb-1">{{ active_users|default(0) }}</h3>
+                    <p class="mb-0 text-muted">Users active in the last 7 days</p>
+                </div>
+                <i class="bi bi-person-check-fill fs-2 text-success"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-6">
+            <div class="card analytics-chart-card p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <h5 class="mb-1">User Growth</h5>
+                        <small class="text-muted">Last 7 days</small>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <canvas id="userGrowthChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card analytics-chart-card p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <h5 class="mb-1">Dataset Upload Trend</h5>
+                        <small class="text-muted">Last 7 days</small>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <canvas id="datasetTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card analytics-chart-card p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <h5 class="mb-1">Report Generation Trend</h5>
+                        <small class="text-muted">Last 7 days</small>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <canvas id="reportTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    const analyticsLabels = {{ labels|tojson }};
+    const userGrowthData = {{ user_growth|tojson }};
+    const datasetTrendData = {{ dataset_trend|tojson }};
+    const reportTrendData = {{ report_trend|tojson }};
+
+    const chartBaseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            x: {
+                grid: {
+                    color: 'rgba(148, 163, 184, 0.12)'
+                },
+                ticks: {
+                    color: 'rgba(248, 250, 252, 0.82)'
+                }
+            },
+            y: {
+                grid: {
+                    color: 'rgba(148, 163, 184, 0.12)'
+                },
+                ticks: {
+                    color: 'rgba(248, 250, 252, 0.82)'
+                },
+                beginAtZero: true
+            }
+        },
+        plugins: {
+            legend: {
+                labels: { color: 'rgba(248, 250, 252, 0.85)' }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(15, 23, 42, 0.96)',
+                titleColor: '#fff',
+                bodyColor: '#ddd'
+            }
+        }
+    };
+
+    new Chart(document.getElementById('userGrowthChart'), {
+        type: 'line',
+        data: {
+            labels: analyticsLabels,
+            datasets: [{
+                label: 'New Users',
+                data: userGrowthData,
+                borderColor: 'rgba(79, 124, 255, 0.92)',
+                backgroundColor: 'rgba(79, 124, 255, 0.18)',
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: 'rgba(79, 124, 255, 0.92)',
+                fill: true,
+                tension: 0.38,
+                borderWidth: 2
+            }]
+        },
+        options: chartBaseOptions
+    });
+
+    new Chart(document.getElementById('datasetTrendChart'), {
+        type: 'line',
+        data: {
+            labels: analyticsLabels,
+            datasets: [{
+                label: 'Uploads',
+                data: datasetTrendData,
+                borderColor: 'rgba(52, 211, 153, 0.92)',
+                backgroundColor: 'rgba(52, 211, 153, 0.18)',
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: 'rgba(52, 211, 153, 0.92)',
+                fill: true,
+                tension: 0.38,
+                borderWidth: 2
+            }]
+        },
+        options: chartBaseOptions
+    });
+
+    new Chart(document.getElementById('reportTrendChart'), {
+        type: 'bar',
+        data: {
+            labels: analyticsLabels,
+            datasets: [{
+                label: 'Reports',
+                data: reportTrendData,
+                backgroundColor: 'rgba(79, 124, 255, 0.72)',
+                borderColor: 'rgba(79, 124, 255, 0.92)',
+                borderWidth: 1
+            }]
+        },
+        options: chartBaseOptions
+    });
+</script>
+{% endblock %}

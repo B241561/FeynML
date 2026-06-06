@@ -68,6 +68,88 @@ class DriftGateError(GateError):
     pass
 
 
+def _safe_pvalue(raw, default=None):
+    """
+    Coerce scratch test p_value to float, or None if unavailable (e.g. 'scipy required').
+    Avoids TypeError from round() on non-numeric values.
+    """
+    if raw is None:
+        return default
+    if isinstance(raw, (int, float)):
+        return float(raw)
+    if isinstance(raw, str):
+        return default
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+def _round_pvalue(raw, default=None, decimals=5):
+    p = _safe_pvalue(raw, default=default)
+    if p is None:
+        return None
+    return round(p, decimals)
+
+
+def _significant_drift(test_result):
+    """Normalize scratch keys: shift_detected (KS/PSI/chi2) or legacy significant_drift."""
+    if not test_result:
+        return False
+    if "significant_drift" in test_result and test_result["significant_drift"] is not None:
+        return bool(test_result["significant_drift"])
+    if "shift_detected" in test_result and test_result["shift_detected"] is not None:
+        return bool(test_result["shift_detected"])
+    return False
+
+
+def _chi2_statistic(test_result):
+    """Normalize chi2 vs chi2_statistic keys from scratch drift_detection."""
+    if "chi2_statistic" in test_result:
+        return float(test_result["chi2_statistic"])
+    return float(test_result.get("chi2", 0.0))
+
+
+def _domain_auc(dc):
+    """Normalize domain_classifier_drift output (domain_auc or legacy auc)."""
+    if not dc or dc.get("error"):
+        return 0.5
+    for key in ("domain_auc", "auc"):
+        val = dc.get(key)
+        if isinstance(val, (int, float)):
+            return float(val)
+    return 0.5
+
+
+def _feature_column(rows, col_idx, categorical=False):
+    """Extract one feature column; categoricals include all values as strings."""
+    if categorical:
+        return [str(row[col_idx]) for row in rows if col_idx < len(row)]
+    return [
+        row[col_idx] for row in rows
+        if col_idx < len(row) and isinstance(row[col_idx], (int, float))
+    ]
+
+
+def _classify_feature_status(pvalue, psi_v, ks_stat, significant, ks_alpha, thresholds):
+    """Map normalized test outputs to STABLE / WARN / DRIFT."""
+    psi_v = psi_v or 0.0
+    ks_v  = ks_stat or 0.0
+    
+    # 1. DRIFT triggers (Critical/High)
+    # Trigger if PSI >= 0.25 (industry standard) or KS >= 0.20 or very low p-value
+    if psi_v >= 0.25 or ks_v >= 0.20 or (pvalue is not None and pvalue < 0.001):
+        return "DRIFT"
+        
+    # 2. WARN triggers (Medium)
+    # Trigger if PSI >= 0.10 or KS >= 0.10 or p-value < alpha
+    sig_p = pvalue is not None and pvalue < ks_alpha
+    if sig_p or significant or psi_v >= 0.10 or ks_v >= 0.10:
+        return "WARN"
+        
+    return "STABLE"
+
+
 class DriftEngine(BaseModule):
     """
     Production drift monitoring engine.
@@ -137,64 +219,67 @@ class DriftEngine(BaseModule):
         drifted, warned = [], []
 
         for j, fname in enumerate(self._feature_names):
-            ref_col = [row[j] for row in self._reference
-                       if isinstance(row[j], (int, float))]
-            cur_col = [row[j] for row in X_current
-                       if isinstance(row[j], (int, float))]
+            is_cat = j in self._categorical
+            ref_col = _feature_column(self._reference, j, categorical=is_cat)
+            cur_col = _feature_column(X_current, j, categorical=is_cat)
             if not ref_col or not cur_col:
                 continue
 
-            if j in self._categorical:
-                # Chi-squared for categorical
-                from collections import Counter
-                ref_cats = [str(v) for v in ref_col]
-                cur_cats = [str(v) for v in cur_col]
-                test_result = chi2_test_categorical(ref_cats, cur_cats, fname)
+            if is_cat:
+                test_result = chi2_test_categorical(
+                    ref_col, cur_col, fname, alpha=self.ks_alpha
+                )
                 feature_entry = {
                     "feature":   fname,
                     "type":      "categorical",
-                    "pvalue":    round(test_result.get("p_value", 1.0), 5),
-                    "chi2_stat": round(test_result.get("chi2_statistic", 0.0), 4),
+                    "pvalue":    _round_pvalue(test_result.get("p_value")),
+                    "pvalue_unavailable": _safe_pvalue(test_result.get("p_value")) is None,
+                    "chi2_stat": round(_chi2_statistic(test_result), 4),
                     "psi":       None,
-                    "significant_drift": test_result.get("significant_drift", False),
+                    "significant_drift": _significant_drift(test_result),
                 }
             else:
-                # KS test
                 ks_result = ks_test(ref_col, cur_col, fname, alpha=self.ks_alpha)
-                # PSI
                 psi_val = psi(ref_col, cur_col)
                 psi_score = psi_val.get("psi", 0.0)
                 feature_entry = {
                     "feature":  fname,
                     "type":     "numeric",
                     "ks_stat":  round(ks_result.get("ks_statistic", 0.0), 4),
-                    "pvalue":   round(ks_result.get("p_value", 1.0), 5),
+                    "pvalue":   _round_pvalue(ks_result.get("p_value"), default=1.0),
+                    "pvalue_unavailable": False,
                     "psi":      round(psi_score, 4),
-                    "significant_drift": ks_result.get("significant_drift", False),
+                    "significant_drift": _significant_drift(ks_result),
                 }
 
-            # Status classification
             p = feature_entry["pvalue"]
-            psi_v = feature_entry.get("psi") or 0.0
-            if p < self.ks_alpha or psi_v >= self.psi_thresholds["WARN"]:
-                if psi_v >= self.psi_thresholds["WARN"] or p < 0.001:
-                    feature_entry["status"] = "DRIFT"
-                    drifted.append(fname)
-                else:
-                    feature_entry["status"] = "WARN"
-                    warned.append(fname)
-            else:
-                feature_entry["status"] = "STABLE"
+            psi_v = feature_entry.get("psi")
+            ks_v = feature_entry.get("ks_stat") if feature_entry["type"] == "numeric" else None
+            
+            feature_entry["status"] = _classify_feature_status(
+                p,
+                psi_v,
+                ks_v,
+                feature_entry["significant_drift"],
+                self.ks_alpha,
+                self.psi_thresholds,
+            )
+            if feature_entry["status"] == "DRIFT":
+                drifted.append(fname)
+            elif feature_entry["status"] == "WARN":
+                warned.append(fname)
 
             per_feature.append(feature_entry)
-            self._log(f"  {fname}: {feature_entry['status']} "
-                      f"(p={p:.4f}, psi={psi_v:.4f})")
+            p_str = f"{p:.4f}" if p is not None else "n/a"
+            psi_str = f"{psi_v:.4f}" if psi_v is not None else "n/a"
+            self._log(f"  {fname}: {feature_entry['status']} (p={p_str}, psi={psi_str})")
 
-        # Domain classifier (overall drift check)
         domain_auc = 0.5
         try:
-            dc = domain_classifier_drift(self._reference, X_current, self._feature_names)
-            domain_auc = dc.get("auc", 0.5)
+            dc = domain_classifier_drift(
+                self._reference, X_current, self._feature_names
+            )
+            domain_auc = _domain_auc(dc)
         except Exception as ex:
             self._log(f"Domain classifier failed: {ex}")
 
@@ -219,8 +304,8 @@ class DriftEngine(BaseModule):
             "domain_auc":    round(domain_auc, 4),
             "mean_psi":      round(mean_psi, 4),
             "n_features":    n_feat,
-            "n_drifted":     len(drifted),
-            "n_warned":      len(warned),
+            "num_drifted_features": len(drifted),
+            "num_warned_features":  len(warned),
             "alerts": self._build_alerts(drifted, warned, domain_auc, mean_psi),
         }
 
@@ -254,7 +339,7 @@ class DriftEngine(BaseModule):
         sev_order = {"NONE": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
         actual = result.get("severity", "NONE")
         if sev_order.get(actual, 0) > sev_order.get(max_severity, 3):
-            n_drifted = result["findings"].get("n_drifted", 0)
+            n_drifted = result["findings"].get("num_drifted_features", 0)
             raise DriftGateError(
                 f"DriftEngine gate FAILED. Severity: {actual}. "
                 f"{n_drifted} features drifted. Investigate before serving."

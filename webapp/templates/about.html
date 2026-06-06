@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5 mt-5">
+    <div class="row g-5 align-items-center">
+        <div class="col-lg-6 animate-up">
+            <h1 class="display-4 fw-bold mb-4">About FeynML</h1>
+            <p class="lead text-muted mb-4">
+                FeynML was created as an academic and engineering initiative to make machine learning systems easier to understand, diagnose, and improve.
+            </p>
+            <p class="text-muted mb-4">
+                The project was developed by **Arman Kaushik**, a Computer Science undergraduate at Swami Keshvanand Institute of Technology (SKIT), Jaipur. 
+            </p>
+            <p class="text-muted">
+                FeynML combines statistical diagnostics, model observability, root-cause analysis, and automated reporting into a single investigation platform.
+            </p>
+            
+            <div class="mt-5 p-4 bg-secondary rounded-4 border">
+                <h4 class="fw-bold mb-3">Developer</h4>
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="bg-indigo-600 text-white avatar-badge d-flex align-items-center justify-content-center">
+                        <i class="fa-solid fa-code"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-primary">Arman Kaushik</div>
+                        <div class="small text-muted">B.Tech Computer Science Engineering</div>
+                        <div class="small text-muted">SKIT Jaipur</div>
+                    </div>
+                </div>
+                
+                <h6 class="fw-bold text-uppercase small text-muted mb-3">Interests</h6>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <span class="badge bg-indigo-50 text-indigo-600 border border-indigo-200">Machine Learning</span>
+                    <span class="badge bg-indigo-50 text-indigo-600 border border-indigo-200">Data Analytics</span>
+                </div>
+
+                <div class="d-flex gap-3 pt-3 border-top">
+                    <a href="https://github.com/B241561" target="_blank" class="btn btn-sm btn-outline-indigo rounded-pill px-3">
+                        <i class="fa-brands fa-github me-2"></i>GitHub
+                    </a>
+                    <a href="https://www.linkedin.com/in/arman-kaushik-29b5b6370/" target="_blank" class="btn btn-sm btn-outline-indigo rounded-pill px-3">
+                        <i class="fa-brands fa-linkedin me-2"></i>LinkedIn
+                    </a>
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <h2 class="fw-bold mb-3">Mission</h2>
+                <p class="text-muted">
+                    To make machine learning reliability accessible, explainable, and practical for everyone—from students learning ML concepts to professionals deploying models in production.
+                </p>
+            </div>
+        </div>
+        <div class="col-lg-6 animate-up" style="animation-delay: 0.2s;">
+            <div class="bg-indigo-600 rounded-5 p-5 text-white shadow-lg">
+                <h3 class="fw-bold mb-4">The Architecture</h3>
+                <div class="mb-4">
+                    <div class="small fw-bold text-uppercase opacity-50 mb-2">Phase 1: Diagnostic Core</div>
+                    <p class="small opacity-75">Stateless engines for calibration, fairness, and slice performance discovery.</p>
+                </div>
+                <div class="mb-4">
+                    <div class="small fw-bold text-uppercase opacity-50 mb-2">Phase 2: Observability</div>
+                    <p class="small opacity-75">Drift detection monitoring the shift between training and production distributions.</p>
+                </div>
+                <div class="mb-4">
+                    <div class="small fw-bold text-uppercase opacity-50 mb-2">Phase 3: Root Cause</div>
+                    <p class="small opacity-75">Data integrity scanners for target leakage, label noise, and missing data mechanisms.</p>
+                </div>
+                <hr class="opacity-25 my-4">
+                <div class="d-flex align-items-center">
+                    <div class="small fw-bold">Academic Initiative</div>
+                    <div class="ms-auto small opacity-50">SKIT Jaipur</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

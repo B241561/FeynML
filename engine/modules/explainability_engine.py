@@ -21,6 +21,7 @@ Usage:
 
 import sys
 import os
+import numpy as np
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _P3   = os.path.abspath(os.path.join(_HERE, "..", "..", "scratch", "phase3"))
@@ -68,6 +69,28 @@ class ExplainabilityGateError(GateError):
     pass
 
 
+def _lime_feature_importances(result_lime, feature_names):
+    """
+    Map lime_explain() output to a full-length importance dict.
+
+    scratch/phase3/lime_explainer returns 'explanation' (top-K only);
+    the engine expects one weight per feature in feature_names order.
+    """
+    importances = {f: 0.0 for f in feature_names}
+    for item in result_lime.get("explanation", []):
+        feat = item.get("feature")
+        if feat in importances:
+            importances[feat] = float(item.get("weight", 0.0))
+    return importances
+
+
+def _lime_local_r2(result_lime):
+    """local_fidelity_r2 (scratch) with fallback to legacy local_r2 key."""
+    if "local_fidelity_r2" in result_lime:
+        return result_lime["local_fidelity_r2"]
+    return result_lime.get("local_r2")
+
+
 class ExplainabilityEngine(BaseModule):
     """
     End-to-end explainability pipeline for the ML Failure Engine.
@@ -108,6 +131,13 @@ class ExplainabilityEngine(BaseModule):
                 severity="CRITICAL"
             )
 
+        def to_scalar(v):
+            """Robustly convert numpy array or list to a scalar float."""
+            if isinstance(v, (np.ndarray, list)):
+                # If it's an array, take the mean or first element
+                return float(np.mean(v))
+            return float(v)
+
         n_features = len(x_instance)
         if feature_names is None:
             feature_names = [f"f{i}" for i in range(n_features)]
@@ -138,10 +168,18 @@ class ExplainabilityEngine(BaseModule):
                     )
                     shap_vals = result_shap["shap_values"]
 
+                # Ensure shap_vals are scalars
+                shap_vals = [to_scalar(v) for v in shap_vals]
+                
+                self._log(f"SHAP output type: {type(shap_vals)}")
+                self._log(f"SHAP output shape: {len(shap_vals)}")
+
                 findings["shap_values"] = {
                     feature_names[i]: round(shap_vals[i], 6)
                     for i in range(n_features)
                 }
+                findings["prediction"] = to_scalar(result_shap.get("prediction", 0))
+                findings["base_value"] = to_scalar(result_shap.get("base_value", 0))
                 self._log(f"SHAP complete, sum={sum(shap_vals):.4f}")
             except Exception as ex:
                 self._log(f"SHAP failed: {ex}")
@@ -156,14 +194,15 @@ class ExplainabilityEngine(BaseModule):
                     feature_names=feature_names, K=min(n_features, 6),
                     n_samples=n_samples
                 )
-                lime_dict = dict(result_lime["feature_importances"])
-                lime_vals = [lime_dict.get(f, 0.0) for f in feature_names]
+                lime_dict = _lime_feature_importances(result_lime, feature_names)
+                # Ensure lime_dict values are scalars
+                lime_vals = [to_scalar(lime_dict[f]) for f in feature_names]
                 findings["lime_values"] = {
-                    f: round(v, 6) for f, v in result_lime["feature_importances"]
+                    f: round(to_scalar(lime_dict[f]), 6) for f in feature_names
                 }
-                findings["lime_r2"]     = result_lime.get("local_r2", None)
+                findings["lime_r2"] = to_scalar(_lime_local_r2(result_lime))
                 self._log(f"LIME complete, R²={findings['lime_r2']:.3f}"
-                          if findings.get("lime_r2") else "LIME complete")
+                          if findings.get("lime_r2") is not None else "LIME complete")
             except Exception as ex:
                 self._log(f"LIME failed: {ex}")
                 findings["lime_error"] = str(ex)
@@ -175,8 +214,8 @@ class ExplainabilityEngine(BaseModule):
                     shap_vals, lime_vals, feature_names
                 )
                 findings["agreement"] = {
-                    "spearman_rho":   agreement["spearman_rho"],
-                    "top3_overlap":   agreement["top3_overlap"],
+                    "spearman_rho":   to_scalar(agreement["spearman_rho"]),
+                    "top3_overlap":   to_scalar(agreement["top3_overlap"]),
                     "verdict":        agreement["verdict"],
                 }
                 self._log(f"Agreement verdict: {agreement['verdict']}, "
@@ -185,7 +224,7 @@ class ExplainabilityEngine(BaseModule):
                 self._log(f"Agreement check failed: {ex}")
 
         # ── Unified top features ─────────────────────────────────────────────
-        primary_vals = shap_vals or lime_vals or ([0.0] * n_features)
+        primary_vals = [to_scalar(v) for v in (shap_vals or lime_vals or ([0.0] * n_features))]
         ranked = sorted(
             range(n_features), key=lambda i: abs(primary_vals[i]), reverse=True
         )
@@ -195,6 +234,42 @@ class ExplainabilityEngine(BaseModule):
              "rank": r + 1}
             for r, i in enumerate(ranked[:5])
         ]
+        
+        # Phase 6: Standardized output format for validation
+        findings["status"] = "success"
+        findings["top_features"] = [
+            {"feature": feature_names[i], "importance": round(abs(primary_vals[i]), 5)}
+            for i in ranked[:5]
+        ]
+
+        # Log top scores
+        top_scores = [f"{f['feature']}: {f['importance']}" for f in findings["top_features"]]
+        self._log(f"Top feature scores: {', '.join(top_scores)}")
+
+        # ── Phase 6: Business Explanation ────────────────────────────────────
+        top_feat = findings["top_features"][0]["feature"] if findings["top_features"] else "N/A"
+        findings["business_explanation"] = (
+            f"The model's decisions are primarily driven by '{top_feat}'. "
+            f"A higher value in this feature significantly impacts the prediction. "
+            f"The analysis used {method.upper()} to attribute importance across {n_features} features."
+        )
+
+        # ── Phase 6 Enhancements ─────────────────────────────────────────────
+        findings["positive_contributors"] = [
+            {"feature": feature_names[i], "value": round(primary_vals[i], 5)}
+            for i in ranked if primary_vals[i] > 0
+        ][:5]
+        findings["negative_contributors"] = [
+            {"feature": feature_names[i], "value": round(primary_vals[i], 5)}
+            for i in ranked if primary_vals[i] < 0
+        ][:5]
+
+        # Plotly chart data
+        findings["plotly_charts"] = {
+            "summary": self._get_plotly_summary_data(primary_vals, feature_names),
+            "waterfall": self._get_plotly_waterfall_data(primary_vals, feature_names, findings.get("prediction", 0), findings.get("base_value", 0)),
+            "bar": self._get_plotly_bar_data(primary_vals, feature_names)
+        }
 
         # ── Severity ─────────────────────────────────────────────────────────
         if "shap_error" in findings and "lime_error" in findings:
@@ -218,6 +293,57 @@ class ExplainabilityEngine(BaseModule):
         else:
             return "lime"   # faster for high-dimensional
 
+    # ── Plotly Helpers ───────────────────────────────────────────────────────
+
+    def _get_plotly_summary_data(self, values, feature_names):
+        """Prepare data for a SHAP summary-like dot plot."""
+        return {
+            "type": "scatter",
+            "x": values,
+            "y": feature_names,
+            "mode": "markers",
+            "marker": {
+                "color": values,
+                "colorscale": "RdBu",
+                "showscale": True,
+                "size": 10
+            }
+        }
+
+    def _get_plotly_waterfall_data(self, values, feature_names, prediction, base_value=0):
+        """Prepare data for a SHAP waterfall plot."""
+        # Sort by absolute value
+        sorted_idx = np.argsort(np.abs(values))[::-1]
+        sorted_vals = [values[i] for i in sorted_idx]
+        sorted_names = [feature_names[i] for i in sorted_idx]
+        
+        # Add base value at the beginning
+        final_names = ["Base Value"] + sorted_names
+        final_vals = [base_value] + sorted_vals
+        measures = ["absolute"] + ["relative"] * len(sorted_vals)
+        
+        return {
+            "type": "waterfall",
+            "orientation": "h",
+            "measure": measures,
+            "y": final_names,
+            "x": final_vals,
+            "connector": {"line": {"color": "rgb(63, 63, 63)"}},
+        }
+
+    def _get_plotly_bar_data(self, values, feature_names):
+        """Prepare data for a SHAP bar importance plot."""
+        abs_vals = [abs(v) for v in values]
+        sorted_idx = np.argsort(abs_vals)[::-1]
+        
+        return {
+            "type": "bar",
+            "x": [abs_vals[i] for i in sorted_idx][:10],
+            "y": [feature_names[i] for i in sorted_idx][:10],
+            "orientation": "h",
+            "marker": {"color": "rgba(50, 171, 96, 0.6)"}
+        }
+
     # ── Batch explanation ─────────────────────────────────────────────────────
 
     def explain_batch(self, model_fn, X_instances, X_background,
@@ -239,7 +365,7 @@ class ExplainabilityEngine(BaseModule):
         # Global importance = mean |importance| across instances
         global_rank = sorted(
             all_importances.items(),
-            key=lambda kv: sum(kv[1]) / max(len(kv[1]), 1),
+            key=lambda kv: float(np.mean(kv[1])) if kv[1] else 0.0,
             reverse=True
         )
 
@@ -248,7 +374,7 @@ class ExplainabilityEngine(BaseModule):
             "per_instance":     results,
             "global_importance": [
                 {"feature": f, "mean_abs_importance": round(
-                    sum(vals) / max(len(vals), 1), 5
+                    float(np.mean(vals)), 5
                 )} for f, vals in global_rank[:10]
             ],
         }

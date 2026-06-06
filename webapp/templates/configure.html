@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5 mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 animate-up">
+            <div class="d-flex justify-content-between align-items-end mb-5">
+                <div>
+                    <h1 class="display-5 fw-bold mb-1">Dataset Mapping</h1>
+                    <p class="text-muted mb-0">Define the schema for investigation session: <span class="badge bg-light border">{{ filename }}</span></p>
+                </div>
+                <div class="text-end d-none d-md-block">
+                    <div class="small text-muted text-uppercase fw-bold mb-1">Step 2 of 4</div>
+                    <div class="progress progress-sm">
+                        <div class="progress-bar bg-indigo-600" style="width: 50%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-5 shadow border-0 rounded-4" style="height: auto; max-height: calc(100vh - 140px); overflow-y: auto;">
+                <form action="{{ url_for('run_analysis') }}" method="POST">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Target Column</label>
+                            <select class="form-select bg-main border-color p-3" name="target_col" required>
+                                <option value="" disabled selected>Select ground truth...</option>
+                                {% for col in columns %}
+                                <option value="{{ col }}">{{ col }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">The actual outcome or label.</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Prediction Column</label>
+                            <select class="form-select bg-main border-color p-3" name="pred_col" id="pred_col">
+                                <option value="">-- No Prediction Column --</option>
+                                {% for col in columns %}
+                                <option value="{{ col }}">{{ col }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Model predictions or probabilities.</div>
+                            
+                            <div class="mt-3 p-3 bg-light rounded-3 border d-flex align-items-center">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" name="auto_predict" id="auto_predict" value="true">
+                                    <label class="form-check-label small fw-bold text-indigo-600" for="auto_predict">
+                                        Auto Generate Predictions
+                                    </label>
+                                </div>
+                                <i class="bi bi-info-circle ms-auto text-muted" data-bs-toggle="tooltip" title="Trains a baseline RandomForest model to generate out-of-fold predictions for calibration audit."></i>
+                            </div>
+
+                            <div id="prediction-warning" class="alert alert-warning small mt-2 d-none py-2">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Prediction column should contain model outputs, not the actual target column.
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Sensitive Attribute</label>
+                            <select class="form-select bg-main border-color p-3" name="sensitive_col">
+                                <option value="">None (Skip Fairness)</option>
+                                {% for col in columns %}
+                                <option value="{{ col }}">{{ col }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Used for demographic parity audit.</div>
+
+                            <div class="mt-3 p-3 bg-light rounded-3 border d-flex align-items-center">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" name="auto_detect_sensitive" id="auto_detect_sensitive" value="true">
+                                    <label class="form-check-label small fw-bold text-indigo-600" for="auto_detect_sensitive">
+                                        Auto Detect Sensitive Columns
+                                    </label>
+                                </div>
+                                <i class="bi bi-info-circle ms-auto text-muted" data-bs-toggle="tooltip" title="Automatically detects columns like gender, race, age."></i>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Timestamp Column</label>
+                            <select class="form-select bg-main border-color p-3" name="time_col">
+                                <option value="">None (Skip Temporal)</option>
+                                {% for col in columns %}
+                                <option value="{{ col }}">{{ col }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Used for drift trend analysis.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Treatment Column</label>
+                            <select class="form-select bg-main border-color p-3" name="treatment_col">
+                                <option value="">None (Skip Causal)</option>
+                                {% for col in columns %}
+                                <option value="{{ col }}">{{ col }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Used for causal effect estimation.</div>
+
+                            <div class="mt-3 p-3 bg-light rounded-3 border d-flex align-items-center">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" name="auto_detect_treatment" id="auto_detect_treatment" value="true">
+                                    <label class="form-check-label small fw-bold text-indigo-600" for="auto_detect_treatment">
+                                        Auto Detect Treatment Variable
+                                    </label>
+                                </div>
+                                <i class="bi bi-info-circle ms-auto text-muted" data-bs-toggle="tooltip" title="Heuristically identifies likely intervention columns."></i>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Reference Dataset</label>
+                            <select class="form-select bg-main border-color p-3" name="reference_dataset">
+                                <option value="">None (Skip Drift Baseline)</option>
+                                {% for col in columns %}
+                                <option value="{{ col }}">{{ col }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Optional baseline for distribution drift.</div>
+                        </div>
+                    </div>
+
+                    <hr class="my-5 opacity-10">
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('index') }}" class="btn btn-link text-muted text-decoration-none">
+                            <i class="bi bi-arrow-left me-2"></i> Back
+                        </a>
+                        <button type="submit" class="btn btn-indigo px-5 py-3 rounded-3 fw-bold shadow-sm">
+                            Execute Analysis <i class="bi bi-play-fill ms-2"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const targetSelect = document.querySelector('select[name="target_col"]');
+    const predSelect = document.getElementById('pred_col');
+    const autoPredict = document.getElementById('auto_predict');
+    const warning = document.getElementById('prediction-warning');
+
+    function checkConflict() {
+        if (targetSelect.value && predSelect.value && targetSelect.value === predSelect.value) {
+            warning.classList.remove('d-none');
+        } else {
+            warning.classList.add('d-none');
+        }
+        
+        // Toggle autoPredict based on predSelect
+        if (predSelect.value) {
+            autoPredict.disabled = true;
+            autoPredict.checked = false;
+        } else {
+            autoPredict.disabled = false;
+        }
+    }
+
+    function checkAuto() {
+        if (autoPredict.checked) {
+            predSelect.disabled = true;
+            predSelect.value = "";
+        } else {
+            predSelect.disabled = false;
+        }
+        checkConflict();
+    }
+
+    targetSelect.addEventListener('change', checkConflict);
+    predSelect.addEventListener('change', checkConflict);
+    autoPredict.addEventListener('change', checkAuto);
+    
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}

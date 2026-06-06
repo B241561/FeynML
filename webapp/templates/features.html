@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5 mt-5">
+    <div class="text-center mb-5 animate-up">
+        <h1 class="display-4 fw-bold mb-3">Platform Features</h1>
+        <p class="lead text-muted">Deep statistical diagnostics for high-stakes machine learning.</p>
+    </div>
+
+    <div class="row g-4 py-5">
+        <!-- Feature 1 -->
+        <div class="col-md-6 animate-up">
+            <div class="card h-100 p-4 shadow-sm border-0">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="feature-icon mb-0 me-3"><i class="bi bi-graph-up"></i></div>
+                    <h3 class="fw-bold mb-0">Calibration Analysis</h3>
+                </div>
+                <p class="text-muted mb-4">
+                    Ensure your model's probability scores reflect real-world frequencies. Our calibration engine computes Expected Calibration Error (ECE) and visualizes reliability diagrams to detect overconfidence.
+                </p>
+                <ul class="list-unstyled small text-muted">
+                    <li class="mb-2"><i class="bi bi-check-lg text-indigo-600 me-2"></i>Reliability Diagrams</li>
+                    <li class="mb-2"><i class="bi bi-check-lg text-indigo-600 me-2"></i>ECE Metric Calculation</li>
+                    <li><i class="bi bi-check-lg text-indigo-600 me-2"></i>Platt Scaling Recommendations</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="col-md-6 animate-up" style="animation-delay: 0.1s;">
+            <div class="card h-100 p-4 shadow-sm border-0">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="feature-icon mb-0 me-3" style="background: var(--sev-medium-bg); color: var(--sev-medium);"><i class="bi bi-activity"></i></div>
+                    <h3 class="fw-bold mb-0">Drift Observability</h3>
+                </div>
+                <p class="text-muted mb-4">
+                    Identify distribution shifts before they impact performance. Monitor covariate and target drift using automated KS-tests, Chi-square tests, and Population Stability Index (PSI).
+                </p>
+                <ul class="list-unstyled small text-muted">
+                    <li class="mb-2"><i class="bi bi-check-lg text-indigo-600 me-2"></i>Per-feature Drift Status</li>
+                    <li class="mb-2"><i class="bi bi-check-lg text-indigo-600 me-2"></i>PSI Trend Analysis</li>
+                    <li><i class="bi bi-check-lg text-indigo-600 me-2"></i>Multivariate Drift AUC</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="col-md-6 animate-up" style="animation-delay: 0.2s;">
+            <div class="card h-100 p-4 shadow-sm border-0">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="feature-icon mb-0 me-3" style="background: var(--sev-high-bg); color: var(--sev-high);"><i class="bi bi-shield-exclamation"></i></div>
+                    <h3 class="fw-bold mb-0">Label Noise Detection</h3>
+                </div>
+                <p class="text-muted mb-4">
+                    Clean your data with automated label noise analysis. Using Confident Learning principles, we identify mislabeled samples and estimate the underlying noise fraction in your dataset.
+                </p>
+                <ul class="list-unstyled small text-muted">
+                    <li class="mb-2"><i class="bi bi-check-lg text-indigo-600 me-2"></i>Mislabel Identification</li>
+                    <li class="mb-2"><i class="bi bi-check-lg text-indigo-600 me-2"></i>Noise Fraction Estimation</li>
+                    <li><i class="bi bi-check-lg text-indigo-600 me-2"></i>Interactive Integrity Profile</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="col-md-6 animate-up" style="animation-delay: 0.3s;">
+            <div class="card h-100 p-4 shadow-sm border-0">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="feature-icon mb-0 me-3" style="background: var(--sev-critical-bg); color: var(--sev-critical);"><i class="bi bi-search"></i></div>
+                    <h3 class="fw-bold mb-0">Leakage & Integrity</h3>
+                </div>
+                <p class="text-muted mb-4">
+                    Protect your model from target leakage. We scan features for statistical correlation spikes and mutual information anomalies that indicate the presence of future information.
+                </p>
+                <ul class="list-unstyled small text-muted">
+                    <li class="mb-2"><i class="bi bi-check-lg text-indigo-600 me-2"></i>Correlation Spike Detection</li>
+                    <li class="mb-2"><i class="bi bi-check-lg text-indigo-600 me-2"></i>Missingness Mechanism Analysis</li>
+                    <li><i class="bi bi-check-lg text-indigo-600 me-2"></i>Automated Suspect Flagging</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

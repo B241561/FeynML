@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Tasks | FeynML{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/productivity.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="section-title mb-1">Task Manager</h1>
+            <p class="section-subtitle">Track tasks with priority, due dates, and completion state.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('notes') }}" class="btn btn-outline-indigo rounded-pill me-2">Notes</a>
+            <a href="{{ url_for('tasks') }}" class="btn btn-indigo rounded-pill">Tasks</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="glass-panel p-4">
+                <div class="mb-3">
+                    <h3 class="mb-1">Task Details</h3>
+                    <p class="text-muted mb-0">Use priorities and due dates to keep work focused.</p>
+                </div>
+                <form id="task-form" action="{{ url_for('save_task') }}" method="post">
+                    <input type="hidden" id="task_id" name="task_id" value="">
+                    <div class="mb-3">
+                        <label class="form-label text-secondary">Title</label>
+                        <input id="task-title" name="title" type="text" class="form-control form-control-dark" placeholder="Task name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary">Description</label>
+                        <textarea id="task-description" name="description" rows="5" class="form-control form-control-dark" placeholder="Add notes or context for the task"></textarea>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary">Priority</label>
+                            <select id="task-priority" name="priority" class="form-select form-select-dark">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary">Due Date</label>
+                            <input id="task-due-date" name="due_date" type="date" class="form-control form-control-dark">
+                        </div>
+                    </div>
+                    <div class="form-check form-switch mb-3 text-secondary">
+                        <input id="task-completed" name="is_completed" class="form-check-input" type="checkbox">
+                        <label class="form-check-label" for="task-completed">Mark as complete</label>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-indigo rounded-pill px-4">Save Task</button>
+                        <button id="new-task" type="button" class="btn btn-outline-secondary rounded-pill">New Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="glass-panel p-4">
+                <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-start align-items-md-center mb-3">
+                    <div>
+                        <h3 class="mb-1">Task Board</h3>
+                        <p class="text-muted mb-0">Filter by status and focus on the next actions.</p>
+                    </div>
+                    <div class="btn-group" role="group" aria-label="Task filter">
+                        <a href="{{ url_for('tasks', status='all') }}" class="btn btn-sm {% if status_filter == 'all' %}btn-indigo{% else %}btn-outline-indigo{% endif %}">All</a>
+                        <a href="{{ url_for('tasks', status='pending') }}" class="btn btn-sm {% if status_filter == 'pending' %}btn-indigo{% else %}btn-outline-indigo{% endif %}">Pending</a>
+                        <a href="{{ url_for('tasks', status='completed') }}" class="btn btn-sm {% if status_filter == 'completed' %}btn-indigo{% else %}btn-outline-indigo{% endif %}">Completed</a>
+                    </div>
+                </div>
+
+                <div id="tasks-list" class="row g-3">
+                    {% if tasks %}
+                        {% for task in tasks %}
+                        <div class="col-12 task-card" data-task-id="{{ task.id }}" data-title="{{ task.title | e }}" data-priority="{{ task.priority }}" data-due-date="{{ task.due_date.isoformat() if task.due_date else '' }}" data-completed="{{ 'true' if task.is_completed else 'false' }}">
+                            <div class="glass-card p-3 h-100 d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-start mb-3 gap-3">
+                                    <div>
+                                        <h5 class="mb-1 task-title {% if task.is_completed %}text-decoration-line-through text-muted{% endif %}">{{ task.title }}</h5>
+                                        <div class="d-flex flex-wrap gap-2 small text-secondary">
+                                            <span class="badge priority-badge priority-{{ task.priority|lower }}">{{ task.priority }}</span>
+                                            {% if task.due_date %}
+                                            <span>Due {{ task.due_date.strftime('%b %d, %Y') }}</span>
+                                            {% endif %}
+                                            <span>{{ 'Completed' if task.is_completed else 'Pending' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary edit-task">Edit</button>
+                                        <button type="button" class="btn btn-sm btn-danger delete-task" data-task-id="{{ task.id }}">Delete</button>
+                                    </div>
+                                </div>
+                                <div class="text-secondary task-description">{{ task.description or 'No description added.' }}</div>
+                                <div class="task-full-description d-none">{{ task.description or '' }}</div>
+                                <div class="mt-3 d-flex justify-content-between align-items-center">
+                                    <span class="small text-muted">Updated {{ task.updated_at.strftime('%b %d, %Y %H:%M') }}</span>
+                                    <button type="button" class="btn btn-sm btn-{{ 'success' if task.is_completed else 'outline-success' }} complete-task" data-task-id="{{ task.id }}">
+                                        <i class="bi bi-check2-circle me-1"></i>
+                                        {{ 'Completed' if task.is_completed else 'Mark Complete' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-12">
+                            <div class="glass-card p-4 text-center text-muted">
+                                <i class="bi bi-list-task fs-1 mb-3"></i>
+                                <p class="mb-0">No tasks found. Create a task to get started.</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/productivity.js') }}"></script>
+{% endblock %}

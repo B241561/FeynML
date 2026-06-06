@@ -14,13 +14,22 @@ Provides:
 import sys
 import math
 from datetime import datetime
+import pandas as pd
+import numpy as np
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SEVERITY ORDERING
 # ─────────────────────────────────────────────────────────────────────────────
 
-SEVERITY_ORDER = {"NONE": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
+SEVERITY_ORDER = {
+    "NONE": 0, 
+    "LOW": 1, 
+    "MEDIUM": 2, 
+    "WARNING": 2,  # Alias for MEDIUM
+    "HIGH": 3, 
+    "CRITICAL": 4
+}
 
 
 class GateError(Exception):
@@ -133,6 +142,30 @@ class BaseModule:
                 f"(recommended ≥ {minimum})."
             )
 
+    # ── Serialization ────────────────────────────────────────────────────────
+
+    def _serialize_findings(self, data):
+        """
+        Recursively convert numpy/pandas objects to JSON-serializable Python types.
+        """
+        if isinstance(data, dict):
+            return {k: self._serialize_findings(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._serialize_findings(v) for v in data]
+        elif isinstance(data, pd.DataFrame):
+            return data.to_dict('records')
+        elif isinstance(data, pd.Series):
+            return data.to_list()
+        elif isinstance(data, np.ndarray):
+            return data.tolist()
+        elif isinstance(data, (np.int64, np.int32, np.int16, np.int8)):
+            return int(data)
+        elif isinstance(data, (np.float64, np.float32, np.float16)):
+            return float(data)
+        elif isinstance(data, np.bool_):
+            return bool(data)
+        return data
+
     # ── Gate enforcement ─────────────────────────────────────────────────────
 
     def assert_gate(self, result, max_severity="LOW"):
@@ -159,6 +192,46 @@ class BaseModule:
                 f"Severity: {actual_sev} > allowed max: {max_severity}.\n"
                 f"Findings: {result.get('findings', {})}"
             )
+
+    def _resolve_target(self, df, target_hint=None):
+        """
+        Shared target-column resolver.
+        1. Checks if target_hint exists in df.
+        2. If not, looks for common target names.
+        3. If not, tries to infer from filename-like hints.
+        4. Validates existence and returns the column name.
+        """
+        if target_hint and target_hint in df.columns:
+            return target_hint
+
+        # Common target names
+        common_names = ['target', 'label', 'y', 'class', 'outcome', 'price', 'rating']
+        for name in common_names:
+            if name in df.columns:
+                self._log(f"Inferred target column: '{name}'")
+                return name
+
+        # Case-insensitive check
+        for col in df.columns:
+            if col.lower() in common_names:
+                self._log(f"Inferred target column (case-insensitive): '{col}'")
+                return col
+
+        # If we have a hint like 'movies' and the dataset is 'movies_dataset.csv'
+        # we might want to check if any column contains the hint or vice versa
+        # Also try plural/singular matches
+        if target_hint:
+            hint = target_hint.lower().rstrip('s')
+            for col in df.columns:
+                c = col.lower()
+                if hint in c or c in hint:
+                    self._log(f"Inferred target column from hint '{target_hint}': '{col}'")
+                    return col
+
+        raise ValueError(
+            f"Target column '{target_hint}' not found in dataset. "
+            f"Available columns: {list(df.columns[:10])}..."
+        )
 
     # ── Public interface ─────────────────────────────────────────────────────
 
