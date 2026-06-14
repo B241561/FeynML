@@ -121,7 +121,7 @@ qdldl==0.1.9.post1
 referencing==0.37.0
 requests==2.34.2
 rpds-py==2026.5.1
-scikit-learn==1.5.2
+scikit-learn==1.7.2
 scipy==1.14.1
 scs==3.2.11
 seaborn==0.13.2
