@@ -34,3 +34,36 @@ verification_output*.txt
 rendered_*.html
 repro*.html
 .env 
+# IDE
+
+.idea/
+
+# Database
+
+*.db
+
+# Generated reports
+
+webapp/reports/
+
+# Uploaded datasets
+
+webapp/uploads/
+
+# Audit outputs
+
+audit_output.txt
+final_audit.txt
+validation_results.json
+
+# Python cache
+
+**pycache**/
+*.pyc
+
+# Virtual environments
+
+.venv/
+.venv311/
+tmp_env/
+
