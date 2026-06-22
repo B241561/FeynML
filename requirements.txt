@@ -17,3 +17,4 @@ jinja2==3.1.4
 sqlalchemy==2.0.36
 itsdangerous==2.2.0
 click==8.1.7
+flask-bcrypt==1.0.1
