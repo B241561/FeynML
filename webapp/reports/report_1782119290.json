@@ -1,0 +1,61 @@
+{
+    "calibration": {
+        "label": "model",
+        "n": 300,
+        "n_bins": 10,
+        "ece": 0.005833,
+        "mce": 0.23,
+        "brier": 0.000459,
+        "bss": 0.997786,
+        "severity": "NONE",
+        "curve": {
+            "bin_edges": [
+                [
+                    0.0,
+                    0.1
+                ],
+                [
+                    0.7,
+                    0.8
+                ],
+                [
+                    0.8,
+                    0.9
+                ],
+                [
+                    0.9,
+                    1.0
+                ]
+            ],
+            "mean_predicted": [
+                0.0032075471698113224,
+                0.77,
+                0.8500000000000001,
+                0.993647058823529
+            ],
+            "fraction_pos": [
+                0.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "counts": [
+                212,
+                1,
+                2,
+                85
+            ]
+        },
+        "interpretation": "ECE < 2%  \u2014 production-ready calibration.",
+        "prediction_source": "auto_generated",
+        "model_type": "RandomForestClassifier"
+    },
+    "fairness": {
+        "axes": [
+            "Income"
+        ],
+        "per_axis": {
+            "Income": {
+                "group_name": "Income",
+                "group_names": [
+                    

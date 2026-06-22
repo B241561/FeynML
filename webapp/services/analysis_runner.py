@@ -24,6 +24,46 @@ from engine.modules.drift_engine import DriftEngine
 from engine.modules.leakage_engine import LeakageEngine
 from engine.modules.label_noise_engine import LabelNoiseEngine
 from engine.modules.missing_data_engine import MissingDataEngine
+from engine.modules.slicer_engine import SlicerEngine
+from engine.modules.root_cause_engine import AutoRootCauseEngine
+from engine.modules.ai_investigator import AIInvestigator
+from engine.modules.audience_translator import AudienceTranslator
+from engine.modules.domain_translator import DomainTranslator
+
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (np.integer, np.int64)):
+            return int(obj)
+        if isinstance(obj, (np.floating, np.float64)):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, np.bool_):
+            return bool(obj)
+        return super().default(obj)
+
+
+def convert_numpy(obj):
+    if isinstance(obj, dict):
+        return {
+            (int(k) if isinstance(k, np.integer)
+             else str(k) if not isinstance(k, (str, int, float, bool))
+             else k): convert_numpy(v)
+            for k, v in obj.items()
+        }
+    elif isinstance(obj, list):
+        return [convert_numpy(i) for i in obj]
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    return obj
+
 
 class AnalysisRunner:
     """
@@ -231,6 +271,26 @@ class AnalysisRunner:
             )
             charts['missing_data'] = to_json_standard(fig_md)
 
+        # 6. Label Noise Per Class Chart
+        ln_findings = results.get('label_noise', {}).get('findings', {})
+        per_class = ln_findings.get('per_class_noise', [])
+        if per_class:
+            class_labels = [str(c['class_label']) for c in per_class]
+            error_counts = [c['error_samples'] for c in per_class]
+            fig_ln = go.Figure(go.Bar(
+                x=class_labels,
+                y=error_counts,
+                marker_color='#f97316',
+                name='Mislabeled Samples'
+            ))
+            fig_ln.update_layout(
+                title='Mislabeled Samples per Class',
+                xaxis_title='Class',
+                yaxis_title='Mislabeled Samples',
+                **base_layout
+            )
+            charts['label_noise_per_class'] = to_json_standard(fig_ln)
+
         results['charts'] = charts
         self.log(f"CHARTS_GENERATED: Created {len(charts)} visualizations.")
 
@@ -278,6 +338,16 @@ class AnalysisRunner:
             if not pred_col: pred_col = None
             if not sensitive_col: sensitive_col = None
             if not timestamp_col: timestamp_col = None
+            
+            # Auto-detect sensitive column if not provided
+            SENSITIVE_ATTRIBUTES = ['gender', 'sex', 'race', 'ethnicity', 'age', 'religion', 'nationality', 'income', 'caste']
+            if not sensitive_col:
+                for col in df.columns:
+                    col_lower = col.lower()
+                    if any(attr in col_lower for attr in SENSITIVE_ATTRIBUTES):
+                        sensitive_col = col
+                        self.log(f"AUTO_DETECT: Sensitive attribute detected: {sensitive_col}")
+                        break
             
             # Additional safety: ensure columns exist in df
             if pred_col and pred_col not in df.columns:
@@ -437,11 +507,23 @@ class AnalysisRunner:
                     # FairnessEngine requires register_axis() before run()
                     fair_engine.register_axis(sensitive_col, df[sensitive_col].values)
                     self.results['fairness'] = fair_engine.run(y_true, (y_proba[:, 1] > 0.5).astype(int), y_proba[:, 1])
+                    # Add auto-detect note if applicable
+                    if not config.get('sensitive_col'):
+                        self.results['fairness']['auto_detected'] = True
+                        self.results['fairness']['auto_detected_column'] = sensitive_col
                     self.log(f"ENGINE_COMPLETED: FairnessEngine audit complete.")
                 except Exception as e:
                     traceback.print_exc()
                     self.log(f"ENGINE_FAILED: FairnessEngine error: {str(e)}")
                     self.results['fairness'] = {"status": "FAILED", "error": str(e), "severity": "HIGH"}
+            else:
+                self.log("Skipping FairnessEngine (no sensitive column provided or auto-detected).")
+                self.results['fairness'] = {
+                    "status": "SKIPPED",
+                    "reason": "No sensitive column provided or auto-detected",
+                    "severity": "NONE",
+                    "findings": {}
+                }
             
             # --- Phase 3: Observability ---
             self.progress = 40
@@ -463,6 +545,18 @@ class AnalysisRunner:
                 traceback.print_exc()
                 self.log(f"ENGINE_FAILED: DriftEngine error: {str(e)}")
                 self.results['drift'] = {"status": "FAILED", "error": str(e), "severity": "HIGH"}
+
+            # Slice Analysis
+            try:
+                self.log("ENGINE_STARTED: SlicerEngine")
+                slicer_engine = SlicerEngine(k=5, effect_size_threshold=0.2)
+                y_pred = (y_proba[:, 1] > 0.5).astype(int)
+                self.results['slice'] = slicer_engine.run(y_true, y_pred, X.values.tolist(), X.columns.tolist())
+                self.log("ENGINE_COMPLETED: SlicerEngine slice analysis complete.")
+            except Exception as e:
+                traceback.print_exc()
+                self.log(f"ENGINE_FAILED: SlicerEngine error: {str(e)}")
+                self.results['slice'] = {"status": "FAILED", "error": str(e), "severity": "HIGH"}
 
             # --- Phase 4: Root Cause Analysis ---
             self.progress = 70
@@ -517,6 +611,180 @@ class AnalysisRunner:
                 self.log(f"ENGINE_FAILED: MissingDataEngine error: {str(e)}")
                 self.results['missing_data'] = {"status": "FAILED", "error": str(e), "severity": "HIGH"}
 
+            # --- Auto Root Cause Analysis ---
+            self.progress = 80
+            self.status = "running (Auto Root Cause)"
+            self.log("STATUS_UPDATE: Auto Root Cause Analysis started.")
+            
+            try:
+                self.log("ENGINE_STARTED: AutoRootCauseEngine")
+                rc_engine = AutoRootCauseEngine(verbose=False)
+                # Collect reports from all engines
+                drift_report = self.results.get('drift')
+                slice_report = self.results.get('slice')
+                calibration_report = self.results.get('calibration')
+                data_quality_report = self.results.get('missing_data')
+                leakage_report = self.results.get('leakage')
+                
+                self.results['root_cause'] = rc_engine.run(
+                    drift_report=drift_report,
+                    slice_report=slice_report,
+                    calibration_report=calibration_report,
+                    data_quality_report=data_quality_report,
+                    leakage_report=leakage_report
+                )
+                
+                try:
+                    translator = DomainTranslator()
+                    audience = getattr(
+                        self, 'audience', 'ml_engineer'
+                    )
+                    rc_data = self.results.get(
+                        'root_cause', {}
+                    )
+                    root_causes = rc_data.get(
+                        'root_causes', []
+                    )
+                    for cause in root_causes:
+                        cause['domain_translation'] = \
+                            translator.translate(
+                                finding_type='drift',
+                                feature_name=cause.get(
+                                    'cause', ''
+                                ),
+                                severity=cause.get(
+                                    'severity', 'MEDIUM'
+                                ),
+                                technical_details=str(
+                                    cause.get('evidence', '')
+                                ),
+                                audience=audience
+                            )
+                except Exception:
+                    pass
+                
+                self.log("ENGINE_COMPLETED: AutoRootCauseEngine analysis complete.")
+            except Exception as e:
+                traceback.print_exc()
+                self.log(f"ENGINE_FAILED: AutoRootCauseEngine error: {str(e)}")
+                self.results['root_cause'] = {"status": "FAILED", "error": str(e), "severity": "HIGH"}
+                try:
+                    translator = DomainTranslator()
+                    audience = getattr(
+                        self, 'audience', 'ml_engineer'
+                    )
+                    rc_data = self.results.get(
+                        'root_cause', {}
+                    )
+                    root_causes = rc_data.get(
+                        'root_causes', []
+                    )
+                    for cause in root_causes:
+                        cause['domain_translation'] = \
+                            translator.translate(
+                                finding_type='drift',
+                                feature_name=cause.get(
+                                    'cause', ''
+                                ),
+                                severity=cause.get(
+                                    'severity', 'MEDIUM'
+                                ),
+                                technical_details=str(
+                                    cause.get('evidence', '')
+                                ),
+                                audience=audience
+                            )
+                except Exception:
+                    pass
+            
+            # --- AI Investigator Analysis ---
+            self.progress = 85
+            self.status = "running (AI Investigator)"
+            self.log("STATUS_UPDATE: AI Investigator Analysis started.")
+            
+            try:
+                self.log("ENGINE_STARTED: AIInvestigator")
+                ai_investigator = AIInvestigator(use_llm=False, verbose=False)
+                
+                # Get audience for audience-specific summary
+                audience_key = getattr(self, 'audience', 'ml_engineer')
+                audience = AIInvestigator.normalize_audience(audience_key)
+                # Persist selected audience into the report JSON so the dashboard
+                # can restore the correct audience on reload.
+                self.results['selected_audience'] = audience
+                
+                # Convert root_cause dict to Investigation object
+                try:
+                    from engine.modules.investigation import Investigation
+                    root_cause_dict = self.results.get('root_cause', {})
+                    investigation = Investigation.from_dict(root_cause_dict)
+                    
+                    # Generate AI Investigator outputs for ALL audiences so that the
+                    # downstream AudienceTranslator can render fully adapted reports
+                    # (not just Doctor/Student).
+                    audiences = [
+                        "ML Engineer",
+                        "Executive",
+                        "Doctor",
+                        "Loan Officer",
+                        "Student",
+                        "HR Manager",
+                        "Insurance Analyst",
+                        "Legal / Compliance Officer",
+                        "Researcher",
+                    ]
+
+                    ai_by_audience = {}
+                    for aud in audiences:
+                        try:
+                            ai_by_audience[aud] = ai_investigator.analyze(investigation, aud)
+                        except Exception as aud_e:
+                            # Never stop early; ensure all 9 keys exist.
+                            self.log(f"WARNING: AIInvestigator audience '{aud}' failed: {aud_e}")
+                            ai_by_audience[aud] = ai_investigator.analyze(investigation, "ML Engineer")
+
+                    # Keep the selected audience as the top-level section for legacy consumers.
+                    self.results['ai_investigator'] = ai_by_audience.get(audience, ai_by_audience.get("ML Engineer"))
+                    self.results['ai_investigator_by_audience'] = ai_by_audience
+                    self.log("ENGINE_COMPLETED: AIInvestigator analysis complete.")
+                except Exception as inv_e:
+                    # If Investigation conversion fails, create degraded analysis
+                    self.log(f"WARNING: Investigation conversion failed: {str(inv_e)}")
+                    self.results['ai_investigator'] = ai_investigator._generate_deterministic(
+                        Investigation(health_status="Unknown", confidence=0, evidence=[], recommendations=[]),
+                        audience
+                    )
+            except Exception as e:
+                traceback.print_exc()
+                self.log(f"ENGINE_FAILED: AIInvestigator error: {str(e)}")
+                self.results['ai_investigator'] = {"status": "FAILED", "error": str(e)}
+            
+            # --- Audience Translation ---
+            self.progress = 90
+            self.status = "running (Audience Translation)"
+            self.log("STATUS_UPDATE: Audience Translation started.")
+            
+            try:
+                self.log("ENGINE_STARTED: AudienceTranslator")
+                audience_translator = AudienceTranslator(verbose=False)
+                
+                # Get root_cause and ai_investigator data
+                root_cause_data = self.results.get('root_cause', {})
+                ai_investigator_data = self.results.get('ai_investigator', {})
+                ai_investigator_by_audience = self.results.get('ai_investigator_by_audience')
+                
+                # Generate audience-specific reports
+                self.results['audience_reports'] = audience_translator.translate(
+                    root_cause=root_cause_data,
+                    ai_investigator=ai_investigator_data,
+                    ai_investigator_by_audience=ai_investigator_by_audience
+                )
+                self.log("ENGINE_COMPLETED: AudienceTranslator analysis complete.")
+            except Exception as e:
+                traceback.print_exc()
+                self.log(f"ENGINE_FAILED: AudienceTranslator error: {str(e)}")
+                self.results['audience_reports'] = {"status": "FAILED", "error": str(e)}
+
             # --- Save Results ---
             self.progress = 90
             self.status = "saving_report"
@@ -536,7 +804,8 @@ class AnalysisRunner:
             self.report_path = os.path.join(reports_dir, report_filename)
             
             with open(self.report_path, 'w') as f:
-                json.dump(self.results, f, indent=4)
+                results = convert_numpy(self.results)
+                json.dump(results, f, indent=4)
             
             self.log(f"REPORT_SAVED: Results saved to {report_filename}")
             self.progress = 100

@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Audience</title>
+</head>
+<body>
+    <!-- Audience dropdown -->
+    <div class="dropdown">
+        <ul>
+            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="ML Engineer" href="#"><i class="bi bi-cpu me-2 text-indigo-500"></i>ML Engineer</a></li>
+            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Executive" href="#"><i class="bi bi-briefcase me-2 text-indigo-500"></i>Executive</a></li>
+            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Doctor" href="#"><i class="bi bi-heart-pulse me-2 text-indigo-500"></i>Doctor</a></li>
+            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Loan Officer" href="#"><i class="bi bi-bank me-2 text-indigo-500"></i>Loan Officer</a></li>
+            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Student" href="#"><i class="bi bi-mortarboard me-2 text-indigo-500"></i>Student</a></li>
+        </ul>
+    </div>
+
+    <!-- AI Investigator -->
+    <div id="audience-content">
+        <h6 class="fw-bold small text-muted text-uppercase mb-3">Executive Summary</h6>
+        <p class="mb-4" id="audience-executive-summary">Initial (from ai_investigator)</p>
+
+        <h6 class="fw-bold small text-muted text-uppercase mb-3">Investigation Findings</h6>
+        <div class="bg-dark p-3 rounded mb-4" id="audience-findings">Initial findings</div>
+
+        <h6 class="fw-bold small text-muted text-uppercase mb-3">Recommended Actions</h6>
+        <ul class="list-group list-group-flush mb-4" id="audience-recommendations">
+            <li>Initial rec1</li>
+            <li>Initial rec2</li>
+        </ul>
+    </div>
+
+    <script>
+    // Audience Translation JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        const audienceReports = {"ML Engineer": {"audience": "ML Engineer", "executive_summary": "Technical audit complete. Model health: Warning with 70% confidence. Primary issue: BillAmount feature drift. 3 technical issues identified requiring remediation.", "findings": "Model health status: Warning\nConfidence score: 70%", "recommendations": ["Fix drift", "Recalibrate"]}, "Executive": {"audience": "Executive", "executive_summary": "Model performance assessment indicates uncertain operations. Risk level: HIGH. 3 issues identified.", "findings": "Business Impact Assessment", "recommendations": ["Retrain", "Calibrate"]}};
+        
+        console.log('[AUDIENCE DEBUG] audienceReports loaded:', audienceReports);
+        console.log('[AUDIENCE DEBUG] Keys in audienceReports:', Object.keys(audienceReports));
+        
+        console.log('[AUDIENCE DEBUG] audience-executive-summary exists:', !!document.getElementById('audience-executive-summary'));
+        console.log('[AUDIENCE DEBUG] audience-findings exists:', !!document.getElementById('audience-findings'));
+        console.log('[AUDIENCE DEBUG] audience-recommendations exists:', !!document.getElementById('audience-recommendations'));
+        
+        document.querySelectorAll('.audience-option').forEach(option => {
+            console.log('[AUDIENCE DEBUG] Found audience option:', option.getAttribute('data-audience'));
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                const audience = this.getAttribute('data-audience');
+                console.log('[AUDIENCE DEBUG] Clicked audience:', audience);
+                updateAudienceContent(audience);
+            });
+        });
+        
+        function updateAudienceContent(audience) {
+            console.log('[AUDIENCE DEBUG] updateAudienceContent called with:', audience);
+            const report = audienceReports[audience];
+            console.log('[AUDIENCE DEBUG] Report object:', report);
+            if (!report) {
+                console.log('[AUDIENCE DEBUG] Report not found for audience:', audience);
+                return;
+            }
+            
+            // Update executive summary
+            const execSummaryEl = document.getElementById('audience-executive-summary');
+            console.log('[AUDIENCE DEBUG] execSummaryEl found:', !!execSummaryEl);
+            if (execSummaryEl && report.executive_summary) {
+                console.log('[AUDIENCE DEBUG] Updating executive summary');
+                execSummaryEl.textContent = report.executive_summary;
+            }
+            
+            // Update findings
+            const findingsEl = document.getElementById('audience-findings');
+            console.log('[AUDIENCE DEBUG] findingsEl found:', !!findingsEl);
+            if (findingsEl && report.findings) {
+                console.log('[AUDIENCE DEBUG] Updating findings');
+                findingsEl.innerHTML = report.findings.replace(/\n/g, '<br>');
+            }
+            
+            // Update recommendations
+            const recommendationsEl = document.getElementById('audience-recommendations');
+            console.log('[AUDIENCE DEBUG] recommendationsEl found:', !!recommendationsEl);
+            if (recommendationsEl && report.recommendations) {
+                console.log('[AUDIENCE DEBUG] Updating recommendations');
+                recommendationsEl.innerHTML = report.recommendations.map(action => 
+                    `<li class="list-group-item"><i class="bi bi-lightbulb-fill me-2 text-warning"></i>${action}</li>`
+                ).join('');
+            }
+        }
+        
+        // Initial call!
+        console.log("Calling updateAudienceContent('ML Engineer') initially...");
+        updateAudienceContent('ML Engineer');
+    });
+    </script>
+</body>
+</html>

@@ -279,6 +279,10 @@ print(f"DEBUG: Selected model: {MODEL_NAME}")
 def get_groq_response(message, history, context=""):
     """Internal helper to get response from Groq."""
     try:
+        if not GROQ_API_KEY:
+            raise ValueError("GROQ_API_KEY is not set in environment variables")
+            
+        current_app.logger.info("Chatbot: Initializing Groq client")
         client = Groq(api_key=GROQ_API_KEY)
         
         # Build messages
@@ -295,6 +299,7 @@ def get_groq_response(message, history, context=""):
         
         messages.append({"role": "user", "content": full_message})
         
+        current_app.logger.info(f"Chatbot: Calling Groq API with model {MODEL_NAME}")
         completion = client.chat.completions.create(
             model=MODEL_NAME,
             messages=messages,
@@ -305,27 +310,55 @@ def get_groq_response(message, history, context=""):
             stop=None,
         )
         
-        return completion.choices[0].message.content
+        response_text = completion.choices[0].message.content
+        current_app.logger.info("Chatbot: Received response from Groq API")
+        return response_text
     except Exception as e:
-        print(f"DEBUG: Groq API Exception: {type(e).__name__}: {str(e)}")
+        current_app.logger.error(f"Chatbot: Groq API Error: {str(e)}")
         raise
 
 @chatbot_bp.route('/message', methods=['POST'])
 def chatbot_message():
     try:
+        current_app.logger.info("Chatbot: Incoming message request")
         data = request.get_json()
+        if not data:
+            current_app.logger.warning("Chatbot: Missing request body")
+            return jsonify({"success": false, "error": "Missing request body"}), 400
+
         user_message = data.get('message')
         history = data.get('history', [])
         context = data.get('context', "")
 
-        if not GROQ_API_KEY:
-            print("DEBUG: Groq API key missing from environment")
-            return jsonify({"error": "Groq API key not found"}), 500
+        if not user_message:
+            current_app.logger.warning("Chatbot: Message content is empty")
+            return jsonify({"success": false, "error": "Message content is required"}), 400
 
+        if not GROQ_API_KEY:
+            current_app.logger.error("Chatbot: Groq API key missing from environment")
+            return jsonify({
+                "success": false, 
+                "error": "GROQ_API_KEY is not configured on the server. Please add it to your environment variables."
+            }), 500
+
+        current_app.logger.info(f"Chatbot: Generating response for message: {user_message[:50]}...")
         reply = get_groq_response(user_message, history, context)
-        return jsonify({"reply": reply})
+        
+        current_app.logger.info("Chatbot: Successfully generated reply")
+        return jsonify({"success": true, "reply": reply})
 
     except Exception as e:
-        print(f"DEBUG: Chatbot implementation error: {str(e)}")
-        current_app.logger.error(f"Chatbot error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        err_msg = str(e)
+        stack_trace = traceback.format_exc()
+        current_app.logger.error(f"Chatbot Exception: {err_msg}\n{stack_trace}")
+        
+        # Determine if it's an API error or an internal error
+        status_code = 500
+        error_type = type(e).__name__
+        
+        return jsonify({
+            "success": false, 
+            "error": f"Internal Server Error ({error_type}): {err_msg}",
+            "details": stack_trace if current_app.debug else None
+        }), status_code

@@ -11,10 +11,14 @@ import plotly
 import plotly.graph_objects as go
 import plotly.express as px
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file, send_from_directory
+from sqlalchemy import func, or_
 from flask_login import current_user, login_user, logout_user, login_required
 from webapp.extensions import db, login_manager, bcrypt, migrate
 from webapp.services.analysis_runner import AnalysisRunner
+from webapp.services.email_service import EmailService
+
+email_service = EmailService()
 from webapp.models import (
     User,
     Dataset,
@@ -25,6 +29,7 @@ from webapp.models import (
     UsageStat,
     Note,
     Task,
+    AppSetting,
 )
 
 try:
@@ -285,6 +290,15 @@ def unauthorized():
 @app.errorhandler(401)
 def unauthorized_error(error):
     return redirect(url_for('login'))
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'favicon.ico',
+        mimetype='image/vnd.microsoft.icon'
+    )
 
 
 @app.route('/')
@@ -1115,6 +1129,9 @@ def run_analysis():
         }
 
         try:
+            runner.audience = session.get(
+                'selected_audience', 'ml_engineer'
+            )
             runner.run(filepath, session['analysis_config'])
             return redirect(url_for('analysis_progress'))
         except Exception as e:
@@ -1155,6 +1172,20 @@ def analysis_status():
     except Exception:
         traceback.print_exc()
         raise
+
+
+@app.route('/set-audience', methods=['POST'])
+@login_required
+def set_audience():
+    try:
+        from flask import request, session
+        audience = request.form.get('audience')
+        if audience:
+            session['selected_audience'] = audience
+        return jsonify({'success': True, 'audience': audience})
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/analysis-results')
@@ -1201,6 +1232,9 @@ def view_dashboard(report_id):
     data.setdefault('label_noise', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
     data.setdefault('leakage', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
     data.setdefault('missing_data', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
+    data.setdefault('root_cause', {'health_status': 'Unknown', 'confidence': 0, 'root_causes': [], 'recommended_actions': []})
+    data.setdefault('ai_investigator', {'risk_level': 'UNKNOWN', 'executive_summary': '', 'investigation_findings': '', 'impact_assessment': '', 'confidence_explanation': '', 'recommended_actions': [], 'technical_notes': ''})
+    data.setdefault('audience_reports', {})
 
     filename = session.get('filename', report.filename if report else 'Unknown')
     severities = [
@@ -1363,6 +1397,17 @@ def view_dashboard(report_id):
         )
         charts['missing_data'] = json.dumps(fig_miss, cls=plotly.utils.PlotlyJSONEncoder)
 
+    # Ensure the dashboard knows the currently selected audience so it can render
+    # audience-specific sections (e.g. AI Investigator report).
+    # Priority:
+    # 1) session['selected_audience'] (live selection)
+    # 2) report JSON data['selected_audience'] (persisted selection)
+    selected_audience = session.get('selected_audience') or data.get('selected_audience', 'ML Engineer')
+    try:
+        data['selected_audience'] = selected_audience
+    except Exception:
+        pass
+
     return render_template('dashboard.html',
                            data=data,
                            report_id=report_id,
@@ -1370,7 +1415,8 @@ def view_dashboard(report_id):
                            risk_level=risk_level,
                            critical_count=critical_count,
                            alerts_count=alerts_count,
-                           charts=charts)
+                           charts=charts,
+                           selected_audience=selected_audience)
 
 
 @app.route('/dashboard')
@@ -1407,6 +1453,9 @@ def view_report(report_id):
     data.setdefault('label_noise', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
     data.setdefault('leakage', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
     data.setdefault('missing_data', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
+    data.setdefault('root_cause', {'health_status': 'Unknown', 'confidence': 0, 'root_causes': [], 'recommended_actions': []})
+    data.setdefault('ai_investigator', {'risk_level': 'UNKNOWN', 'executive_summary': '', 'investigation_findings': '', 'impact_assessment': '', 'confidence_explanation': '', 'recommended_actions': [], 'technical_notes': ''})
+    data.setdefault('audience_reports', {})
 
     severities = [
         data.get('calibration', {}).get('severity', 'NONE'),

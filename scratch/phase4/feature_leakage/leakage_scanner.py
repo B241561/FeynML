@@ -72,9 +72,9 @@ def rank_leakage_suspects(report):
     # Check target leakage scores
     target_scores = report.get("target_leakage", {}).get("scores", {})
     for feat, score in target_scores.items():
-        if score > 0.8:
+        if score > 0.95:
             suspects.append({"feature": feat, "score": score, "type": "target_leakage", "severity": "HIGH"})
-        elif score > 0.5:
+        elif score > 0.85:
             suspects.append({"feature": feat, "score": score, "type": "target_leakage", "severity": "MEDIUM"})
             
     # Check spike

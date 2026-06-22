@@ -33,3 +33,4 @@ verification_output*.txt
 # Rendered HTML
 rendered_*.html
 repro*.html
+.env 

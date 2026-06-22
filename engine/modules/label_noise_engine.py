@@ -67,6 +67,32 @@ class LabelNoiseEngine(BaseModule):
         # 3. Quality scores
         scores = label_quality_scores(y_proba, y_noisy)
         
+        # 4. Collect error details (top 10)
+        error_details = []
+        for idx in error_indices[:10]:
+            s = int(y_noisy[idx])
+            y_pred = int(np.argmax(y_proba[idx]))
+            noise_prob = float(1 - y_proba[idx, s])  # 1 - confidence in noisy label
+            error_details.append({
+                "sample_index": int(idx),
+                "true_label": int(s),
+                "predicted_label": int(y_pred),
+                "noise_probability": noise_prob
+            })
+            
+        # 5. Per class noise counts
+        num_classes = y_proba.shape[1]
+        per_class_noise = []
+        for c in range(num_classes):
+            class_indices = np.where(y_noisy == c)[0]
+            class_errors = np.intersect1d(class_indices, error_indices)
+            per_class_noise.append({
+                "class_label": int(c),
+                "total_samples": len(class_indices),
+                "error_samples": len(class_errors),
+                "error_rate": len(class_errors) / len(class_indices) if len(class_indices) > 0 else 0.0
+            })
+        
         findings = {
             "num_errors_detected": len(error_indices),
             "total_samples": len(y_noisy),
@@ -74,7 +100,9 @@ class LabelNoiseEngine(BaseModule):
             "is_asymmetric": noise_report["is_asymmetric"],
             "noise_severity": noise_report["severity"],
             "avg_label_quality": float(np.mean(scores)),
-            "error_indices": error_indices.tolist()[:100] # Limit log size
+            "error_indices": error_indices.tolist()[:100],
+            "error_details": error_details,
+            "per_class_noise": per_class_noise
         }
         
         # Determine severity

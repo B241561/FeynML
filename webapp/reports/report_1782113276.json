@@ -1,0 +1,801 @@
+{
+    "calibration": {
+        "label": "model",
+        "n": 300,
+        "n_bins": 10,
+        "ece": 0.005833,
+        "mce": 0.23,
+        "brier": 0.000459,
+        "bss": 0.997786,
+        "severity": "NONE",
+        "curve": {
+            "bin_edges": [
+                [
+                    0.0,
+                    0.1
+                ],
+                [
+                    0.7,
+                    0.8
+                ],
+                [
+                    0.8,
+                    0.9
+                ],
+                [
+                    0.9,
+                    1.0
+                ]
+            ],
+            "mean_predicted": [
+                0.0032075471698113224,
+                0.77,
+                0.8500000000000001,
+                0.993647058823529
+            ],
+            "fraction_pos": [
+                0.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "counts": [
+                212,
+                1,
+                2,
+                85
+            ]
+        },
+        "interpretation": "ECE < 2%  \u2014 production-ready calibration.",
+        "prediction_source": "auto_generated",
+        "model_type": "RandomForestClassifier"
+    },
+    "fairness": {
+        "status": "FAILED",
+        "error": "audit_by_group() got an unexpected keyword argument 'axis_name'",
+        "severity": "HIGH"
+    },
+    "drift": {
+        "module": "DriftEngine",
+        "timestamp": "2026-06-22T12:57:27",
+        "severity": "HIGH",
+        "passed": false,
+        "findings": {
+            "per_feature": [
+                {
+                    "feature": "Income",
+                    "type": "numeric",
+                    "ks_stat": 0.1133,
+                    "pvalue": 0.29037,
+                    "pvalue_unavailable": false,
+                    "psi": 0.1023,
+                    "significant_drift": false,
+                    "status": "WARN"
+                },
+                {
+                    "feature": "CreditScore",
+                    "type": "numeric",
+                    "ks_stat": 0.2133,
+                    "pvalue": 0.00217,
+                    "pvalue_unavailable": false,
+                    "psi": 0.2364,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "DebtRatio",
+                    "type": "numeric",
+                    "ks_stat": 0.1067,
+                    "pvalue": 0.36077,
+                    "pvalue_unavailable": false,
+                    "psi": 0.2502,
+                    "significant_drift": false,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "LoanAmount",
+                    "type": "numeric",
+                    "ks_stat": 0.1067,
+                    "pvalue": 0.36077,
+                    "pvalue_unavailable": false,
+                    "psi": 0.0977,
+                    "significant_drift": false,
+                    "status": "WARN"
+                },
+                {
+                    "feature": "ApprovalFlag",
+                    "type": "numeric",
+                    "ks_stat": 0.0533,
+                    "pvalue": 0.98329,
+                    "pvalue_unavailable": false,
+                    "psi": 0.0138,
+                    "significant_drift": false,
+                    "status": "STABLE"
+                }
+            ],
+            "drifted": [
+                "CreditScore",
+                "DebtRatio"
+            ],
+            "warned": [
+                "Income",
+                "LoanAmount"
+            ],
+            "domain_auc": 0.5748,
+            "mean_psi": 0.1401,
+            "n_features": 5,
+            "num_drifted_features": 2,
+            "num_warned_features": 2,
+            "alerts": [
+                {
+                    "level": "HIGH",
+                    "message": "2 feature(s) show significant drift: ['CreditScore', 'DebtRatio']. Model retraining recommended."
+                },
+                {
+                    "level": "MEDIUM",
+                    "message": "2 feature(s) show borderline drift: ['Income', 'LoanAmount']. Monitor closely."
+                }
+            ],
+            "excluded_features": [],
+            "audit_log": []
+        },
+        "log": [
+            "[12:57:25] [INFO] [DriftEngine] Starting DriftEngine",
+            "[12:57:25] [INFO] [DriftEngine]   Income: WARN (p=0.2904, psi=0.1023)",
+            "[12:57:25] [INFO] [DriftEngine]   CreditScore: DRIFT (p=0.0022, psi=0.2364)",
+            "[12:57:25] [INFO] [DriftEngine]   DebtRatio: DRIFT (p=0.3608, psi=0.2502)",
+            "[12:57:25] [INFO] [DriftEngine]   LoanAmount: WARN (p=0.3608, psi=0.0977)",
+            "[12:57:25] [INFO] [DriftEngine]   ApprovalFlag: STABLE (p=0.9833, psi=0.0138)"
+        ]
+    },
+    "slice": {
+        "module": "SlicerEngine",
+        "timestamp": "2026-06-22T12:57:27",
+        "severity": "NONE",
+        "passed": true,
+        "findings": {
+            "slices": [],
+            "n_slices_found": 0,
+            "worst_slice": null,
+            "overall_loss": 0.0,
+            "task": "classification",
+            "n_samples": 300,
+            "recommendations": [
+                "No problematic slices found \u2014 model is uniformly calibrated."
+            ]
+        },
+        "log": [
+            "[12:57:27] [INFO] [SlicerEngine] Starting SlicerEngine",
+            "[12:57:27] [INFO] [SlicerEngine] Slicing: n=300, k=5, effect_threshold=0.2",
+            "[12:57:27] [INFO] [SlicerEngine] Overall classification loss: 0.0000",
+            "[12:57:27] [INFO] [SlicerEngine] Found 0 slices. Worst effect=0.000"
+        ]
+    },
+    "label_noise": {
+        "module": "LabelNoiseEngine",
+        "timestamp": "2026-06-22T12:57:27",
+        "severity": "MEDIUM",
+        "passed": false,
+        "findings": {
+            "num_errors_detected": 47,
+            "total_samples": 300,
+            "estimated_noise_fraction": 0.15666666666666668,
+            "is_asymmetric": false,
+            "noise_severity": 0.0,
+            "avg_label_quality": 0.9941666666666666,
+            "error_indices": [
+                13,
+                18,
+                29,
+                31,
+                47,
+                53,
+                55,
+                63,
+                72,
+                73,
+                84,
+                92,
+                94,
+                101,
+                107,
+                109,
+                111,
+                113,
+                120,
+                129,
+                133,
+                134,
+                140,
+                146,
+                152,
+                166,
+                169,
+                176,
+                184,
+                190,
+                196,
+                208,
+                221,
+                235,
+                239,
+                241,
+                254,
+                258,
+                273,
+                277,
+                279,
+                281,
+                283,
+                287,
+                289,
+                298,
+                299
+            ],
+            "error_details": [
+                {
+                    "sample_index": 13,
+                    "true_label": 0,
+                    "predicted_label": 0,
+                    "noise_probability": 0.010000000000000009
+                },
+                {
+                    "sample_index": 18,
+                    "true_label": 0,
+                    "predicted_label": 0,
+                    "noise_probability": 0.030000000000000027
+                },
+                {
+                    "sample_index": 29,
+                    "true_label": 0,
+                    "predicted_label": 0,
+                    "noise_probability": 0.030000000000000027
+                },
+                {
+                    "sample_index": 31,
+                    "true_label": 0,
+                    "predicted_label": 0,
+                    "noise_probability": 0.06999999999999995
+                },
+                {
+                    "sample_index": 47,
+                    "true_label": 0,
+                    "predicted_label": 0,
+                    "noise_probability": 0.010000000000000009
+                },
+                {
+                    "sample_index": 53,
+                    "true_label": 0,
+                    "predicted_label": 0,
+                    "noise_probability": 0.020000000000000018
+                },
+                {
+                    "sample_index": 55,
+                    "true_label": 0,
+                    "predicted_label": 0,
+                    "noise_probability": 0.020000000000000018
+                },
+                {
+                    "sample_index": 63,
+                    "true_label": 1,
+                    "predicted_label": 1,
+                    "noise_probability": 0.06999999999999995
+                },
+                {
+                    "sample_index": 72,
+                    "true_label": 1,
+                    "predicted_label": 1,
+                    "noise_probability": 0.18999999999999995
+                },
+                {
+                    "sample_index": 73,
+                    "true_label": 0,
+                    "predicted_label": 0,
+                    "noise_probability": 0.010000000000000009
+                }
+            ],
+            "per_class_noise": [
+                {
+                    "class_label": 0,
+                    "total_samples": 212,
+                    "error_samples": 36,
+                    "error_rate": 0.16981132075471697
+                },
+                {
+                    "class_label": 1,
+                    "total_samples": 88,
+                    "error_samples": 11,
+                    "error_rate": 0.125
+                }
+            ]
+        },
+        "log": [
+            "[12:57:27] [INFO] [LabelNoiseEngine] Starting LabelNoiseEngine",
+            "[12:57:27] [INFO] [LabelNoiseEngine] Starting Label Noise audit...",
+            "[12:57:27] [INFO] [LabelNoiseEngine] Audit complete. Detected 47 errors."
+        ]
+    },
+    "leakage": {
+        "module": "LeakageEngine",
+        "timestamp": "2026-06-22T12:57:28",
+        "severity": "MEDIUM",
+        "passed": false,
+        "findings": {
+            "summary": "Detected 2 potential leakage issues:\n- [MEDIUM] ApprovalFlag: target_leakage (Score: 0.88)\n- [MEDIUM] LoanApproved: target_leakage (Score: 0.88)",
+            "num_suspects": 2,
+            "suspects": [
+                {
+                    "feature": "ApprovalFlag",
+                    "score": 0.8820338747531978,
+                    "type": "target_leakage",
+                    "severity": "MEDIUM"
+                },
+                {
+                    "feature": "LoanApproved",
+                    "score": 0.8820338747531978,
+                    "type": "target_leakage",
+                    "severity": "MEDIUM"
+                }
+            ],
+            "full_report": {
+                "target_leakage": {
+                    "scores": {
+                        "Income": 0.16279517765634244,
+                        "CreditScore": 0.4659841286576921,
+                        "DebtRatio": 0.4561458586658811,
+                        "LoanAmount": 0.032298845763726707,
+                        "ApprovalFlag": 0.8820338747531978,
+                        "LoanApproved": 0.8820338747531978
+                    }
+                },
+                "temporal_leakage": {}
+            }
+        },
+        "log": [
+            "[12:57:27] [INFO] [LeakageEngine] Starting LeakageEngine",
+            "[12:57:28] [INFO] [LeakageEngine] Starting Leakage scan...",
+            "[12:57:28] [INFO] [LeakageEngine] Leakage scan complete. Found 2 suspects."
+        ]
+    },
+    "missing_data": {
+        "module": "MissingDataEngine",
+        "timestamp": "2026-06-22T12:57:28",
+        "severity": "NONE",
+        "passed": true,
+        "findings": {
+            "missingness_rates": {
+                "Income": 0.0,
+                "CreditScore": 0.0,
+                "DebtRatio": 0.0,
+                "LoanAmount": 0.0,
+                "ApprovalFlag": 0.0
+            },
+            "mechanisms": {
+                "Income": "NONE",
+                "CreditScore": "NONE",
+                "DebtRatio": "NONE",
+                "LoanAmount": "NONE",
+                "ApprovalFlag": "NONE"
+            },
+            "global_mcar": {
+                "statistic": 0.0,
+                "pvalue": 1.0,
+                "mcar_likely": true,
+                "df": 0,
+                "error": "Insufficient degrees of freedom"
+            },
+            "signal_strength": {},
+            "max_missing_rate": 0.0
+        },
+        "log": [
+            "[12:57:28] [INFO] [MissingDataEngine] Starting MissingDataEngine",
+            "[12:57:28] [INFO] [MissingDataEngine] Starting Missing Data audit...",
+            "[12:57:28] [INFO] [MissingDataEngine] Missing Data audit complete. Max rate: 0.00%"
+        ]
+    },
+    "root_cause": {
+        "investigation_id": "inv_a398df3ab99c",
+        "health_status": "Critical",
+        "confidence": 70,
+        "root_causes": [
+            {
+                "cause": "CreditScore feature drift",
+                "score": 75,
+                "severity": "HIGH",
+                "evidence": [
+                    "PSI=0.236, KS=0.213"
+                ],
+                "category": "feature_drift",
+                "source_modules": [
+                    "drift_engine"
+                ],
+                "domain_translation": "We've detected a significant shift in the credit scores of our loan applicants, which may impact the accuracy of our lending decisions. This could lead to higher default rates and financial losses for the institution. To mitigate this risk, I recommend reviewing and updating our credit scoring criteria to ensure they remain effective in evaluating borrower creditworthiness."
+            },
+            {
+                "cause": "DebtRatio feature drift",
+                "score": 75,
+                "severity": "HIGH",
+                "evidence": [
+                    "PSI=0.250, KS=0.107"
+                ],
+                "category": "feature_drift",
+                "source_modules": [
+                    "drift_engine"
+                ],
+                "domain_translation": "We've detected a significant change in the debt-to-income ratio of our loan applicants, which may impact the accuracy of our credit risk assessments. This could lead to inaccurate loan approvals, potentially resulting in higher default rates and financial losses. To mitigate this, I recommend reviewing and updating our loan application evaluation criteria to ensure they align with current borrower profiles."
+            },
+            {
+                "cause": "Income feature drift",
+                "score": 50,
+                "severity": "MEDIUM",
+                "evidence": [
+                    "PSI=0.102, KS=0.113"
+                ],
+                "category": "feature_drift",
+                "source_modules": [
+                    "drift_engine"
+                ],
+                "domain_translation": "We've noticed a slight change in the income patterns of our loan applicants, which may affect the accuracy of our loan decisions. This shift could lead to a small increase in risk or inaccurate credit assessments, potentially impacting our loan portfolio's overall quality. To address this, we recommend reviewing and updating our income verification processes to ensure they remain effective and aligned with current applicant trends."
+            },
+            {
+                "cause": "LoanAmount feature drift",
+                "score": 25,
+                "severity": "LOW",
+                "evidence": [
+                    "PSI=0.098, KS=0.107"
+                ],
+                "category": "feature_drift",
+                "source_modules": [
+                    "drift_engine"
+                ],
+                "domain_translation": "We've noticed a slight change in the average loan amounts being requested, which may indicate a shift in customer behavior. This change is relatively minor and doesn't currently pose a significant risk to our lending decisions. To stay on top of this trend, I recommend reviewing our loan portfolio quarterly to ensure our risk assessment remains accurate."
+            }
+        ],
+        "evidence": [
+            "4 features show drift."
+        ],
+        "recommended_actions": [
+            "CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+            "DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+            "Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+            "LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+            "Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+        ],
+        "generated_at": "2026-06-22T12:57:28.161200",
+        "module": "AutoRootCauseEngine",
+        "metadata": {
+            "evidence_summary": "4 features show drift.",
+            "excluded_features": [],
+            "audit_log": [
+                "[Leakage Detected] ApprovalFlag (Confidence: 0.000)",
+                "[Leakage Detected] LoanApproved (Confidence: 0.000)"
+            ]
+        },
+        "excluded_features": [],
+        "audit_log": [
+            "[Leakage Detected] ApprovalFlag (Confidence: 0.000)",
+            "[Leakage Detected] LoanApproved (Confidence: 0.000)"
+        ]
+    },
+    "selected_audience": "Loan Officer",
+    "ai_investigator": {
+        "executive_summary": "Credit risk model reliability compromised. Portfolio impact: potential for inaccurate lending decisions. Significant regulatory and financial risk.",
+        "investigation_findings": "Credit framing: these shifts can change loan approval outcomes and increase portfolio risk if not addressed. Widespread distributional drift detected across 4 features, indicating significant changes in the underlying data distribution that may require comprehensive model retraining. The presence of 2 high-severity issue(s) indicates significant model degradation.",
+        "impact_assessment": "Portfolio impact: decision accuracy may degrade for certain borrower segments, increasing default risk and potential policy exceptions. Distributional drift may affect predictions for segments of the population that differ from training data. Prediction reliability may be compromised for affected segments.",
+        "confidence_explanation": "Investigation confidence is 70% based on:\n\n\u2022 Number of identified issues: 4\n\u2022 High-severity issues: 2\n\u2022 Evidence strength: Strong (multiple supporting signals)\n\nModerate confidence indicates some uncertainty in root cause attribution.",
+        "recommended_actions": [
+            "Risk action: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+            "Risk action: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+            "Risk action: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+            "Risk action: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+            "Risk action: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+        ],
+        "technical_notes": "Technical Summary:\n\nFEATURE_DRIFT:\n  \u2022 CreditScore feature drift (Score: 75, Severity: HIGH)\n  \u2022 DebtRatio feature drift (Score: 75, Severity: HIGH)\n  \u2022 Income feature drift (Score: 50, Severity: MEDIUM)\n\nAnalysis Engines Used: drift_engine\n\nInvestigation ID: inv_a398df3ab99c\nGenerated At: 2026-06-22T12:57:28.161200\n",
+        "risk_level": "CRITICAL",
+        "generated_at": "2026-06-22T12:57:55.305750",
+        "investigation_id": "inv_a398df3ab99c"
+    },
+    "ai_investigator_by_audience": {
+        "ML Engineer": {
+            "executive_summary": "Critical model degradation detected. Prediction reliability significantly compromised. Confidence: 70%.",
+            "investigation_findings": "Widespread distributional drift detected across 4 features, indicating significant changes in the underlying data distribution that may require comprehensive model retraining. The presence of 2 high-severity issue(s) indicates significant model degradation.",
+            "impact_assessment": "Distributional drift may affect predictions for segments of the population that differ from training data. Prediction reliability may be compromised for affected segments.",
+            "confidence_explanation": "Investigation confidence is 70% based on:\n\n\u2022 Number of identified issues: 4\n\u2022 High-severity issues: 2\n\u2022 Evidence strength: Strong (multiple supporting signals)\n\nModerate confidence indicates some uncertainty in root cause attribution.",
+            "recommended_actions": [
+                "CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Technical Summary:\n\nFEATURE_DRIFT:\n  \u2022 CreditScore feature drift (Score: 75, Severity: HIGH)\n  \u2022 DebtRatio feature drift (Score: 75, Severity: HIGH)\n  \u2022 Income feature drift (Score: 50, Severity: MEDIUM)\n\nAnalysis Engines Used: drift_engine\n\nInvestigation ID: inv_a398df3ab99c\nGenerated At: 2026-06-22T12:57:28.161200\n",
+            "risk_level": "CRITICAL",
+            "generated_at": "2026-06-22T12:57:55.305750",
+            "investigation_id": "inv_a398df3ab99c"
+        },
+        "Executive": {
+            "executive_summary": "Model reliability compromised. Business impact: reduced prediction accuracy affecting decisions. Significant operational risk to business outcomes.",
+            "investigation_findings": "Business framing: these issues indicate the model may be drifting away from the conditions it was built for, increasing operational risk. Widespread distributional drift detected across 4 features, indicating significant changes in the underlying data distribution that may require comprehensive model retraining. The presence of 2 high-severity issue(s) indicates significant model degradation.",
+            "impact_assessment": "Business impact: degraded decision quality can create revenue/ROI risk, higher operating costs, and reduced trust in automated workflows. Distributional drift may affect predictions for segments of the population that differ from training data. Prediction reliability may be compromised for affected segments.",
+            "confidence_explanation": "Investigation confidence is 70% based on:\n\n\u2022 Number of identified issues: 4\n\u2022 High-severity issues: 2\n\u2022 Evidence strength: Strong (multiple supporting signals)\n\nModerate confidence indicates some uncertainty in root cause attribution.",
+            "recommended_actions": [
+                "Business action: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "Business action: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Business action: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "Business action: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Business action: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Technical Summary:\n\nFEATURE_DRIFT:\n  \u2022 CreditScore feature drift (Score: 75, Severity: HIGH)\n  \u2022 DebtRatio feature drift (Score: 75, Severity: HIGH)\n  \u2022 Income feature drift (Score: 50, Severity: MEDIUM)\n\nAnalysis Engines Used: drift_engine\n\nInvestigation ID: inv_a398df3ab99c\nGenerated At: 2026-06-22T12:57:28.161200\n",
+            "risk_level": "CRITICAL",
+            "generated_at": "2026-06-22T12:57:55.305750",
+            "investigation_id": "inv_a398df3ab99c"
+        },
+        "Doctor": {
+            "executive_summary": "Clinical decision support reliability compromised. Patient care impact: potential reduction in diagnostic accuracy. Significant risk to patient outcomes.",
+            "investigation_findings": "Clinical framing: these signals suggest the decision support tool may behave differently for current patients than it did during validation. Widespread distributional drift detected across 4 features, indicating significant changes in the underlying data distribution that may require comprehensive model retraining. The presence of 2 high-severity issue(s) indicates significant model degradation.",
+            "impact_assessment": "Clinical impact: this may increase the risk of missed or incorrect clinical decisions; use clinical judgment and consider re-validation. Distributional drift may affect predictions for segments of the population that differ from training data. Prediction reliability may be compromised for affected segments.",
+            "confidence_explanation": "Investigation confidence is 70% based on:\n\n\u2022 Number of identified issues: 4\n\u2022 High-severity issues: 2\n\u2022 Evidence strength: Strong (multiple supporting signals)\n\nModerate confidence indicates some uncertainty in root cause attribution.",
+            "recommended_actions": [
+                "Clinical action: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "Clinical action: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Clinical action: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "Clinical action: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Clinical action: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Technical Summary:\n\nFEATURE_DRIFT:\n  \u2022 CreditScore feature drift (Score: 75, Severity: HIGH)\n  \u2022 DebtRatio feature drift (Score: 75, Severity: HIGH)\n  \u2022 Income feature drift (Score: 50, Severity: MEDIUM)\n\nAnalysis Engines Used: drift_engine\n\nInvestigation ID: inv_a398df3ab99c\nGenerated At: 2026-06-22T12:57:28.161200\n",
+            "risk_level": "CRITICAL",
+            "generated_at": "2026-06-22T12:57:55.305750",
+            "investigation_id": "inv_a398df3ab99c"
+        },
+        "Loan Officer": {
+            "executive_summary": "Credit risk model reliability compromised. Portfolio impact: potential for inaccurate lending decisions. Significant regulatory and financial risk.",
+            "investigation_findings": "Credit framing: these shifts can change loan approval outcomes and increase portfolio risk if not addressed. Widespread distributional drift detected across 4 features, indicating significant changes in the underlying data distribution that may require comprehensive model retraining. The presence of 2 high-severity issue(s) indicates significant model degradation.",
+            "impact_assessment": "Portfolio impact: decision accuracy may degrade for certain borrower segments, increasing default risk and potential policy exceptions. Distributional drift may affect predictions for segments of the population that differ from training data. Prediction reliability may be compromised for affected segments.",
+            "confidence_explanation": "Investigation confidence is 70% based on:\n\n\u2022 Number of identified issues: 4\n\u2022 High-severity issues: 2\n\u2022 Evidence strength: Strong (multiple supporting signals)\n\nModerate confidence indicates some uncertainty in root cause attribution.",
+            "recommended_actions": [
+                "Risk action: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "Risk action: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Risk action: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "Risk action: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Risk action: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Technical Summary:\n\nFEATURE_DRIFT:\n  \u2022 CreditScore feature drift (Score: 75, Severity: HIGH)\n  \u2022 DebtRatio feature drift (Score: 75, Severity: HIGH)\n  \u2022 Income feature drift (Score: 50, Severity: MEDIUM)\n\nAnalysis Engines Used: drift_engine\n\nInvestigation ID: inv_a398df3ab99c\nGenerated At: 2026-06-22T12:57:28.161200\n",
+            "risk_level": "CRITICAL",
+            "generated_at": "2026-06-22T12:57:55.305750",
+            "investigation_id": "inv_a398df3ab99c"
+        },
+        "Student": {
+            "executive_summary": "Model integrity requires immediate attention. Learning impact: predictions may be unreliable for current data patterns. Significant impact on learning outcomes.",
+            "investigation_findings": "Plain-language framing: this means the data the model sees now is different from what it learned from, so its outputs may be less reliable. Widespread distributional drift detected across 4 features, indicating significant changes in the underlying data distribution that may require comprehensive model retraining. The presence of 2 high-severity issue(s) indicates significant model degradation.",
+            "impact_assessment": "Practical impact: decisions based on the model may be less accurate until the issues are fixed and the model is updated. Distributional drift may affect predictions for segments of the population that differ from training data. Prediction reliability may be compromised for affected segments.",
+            "confidence_explanation": "Investigation confidence is 70% based on:\n\n\u2022 Number of identified issues: 4\n\u2022 High-severity issues: 2\n\u2022 Evidence strength: Strong (multiple supporting signals)\n\nModerate confidence indicates some uncertainty in root cause attribution.",
+            "recommended_actions": [
+                "Action: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "Action: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Action: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "Action: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Action: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Technical Summary:\n\nFEATURE_DRIFT:\n  \u2022 CreditScore feature drift (Score: 75, Severity: HIGH)\n  \u2022 DebtRatio feature drift (Score: 75, Severity: HIGH)\n  \u2022 Income feature drift (Score: 50, Severity: MEDIUM)\n\nAnalysis Engines Used: drift_engine\n\nInvestigation ID: inv_a398df3ab99c\nGenerated At: 2026-06-22T12:57:28.161200\n",
+            "risk_level": "CRITICAL",
+            "generated_at": "2026-06-22T12:57:55.305750",
+            "investigation_id": "inv_a398df3ab99c"
+        },
+        "HR Manager": {
+            "executive_summary": "Workforce prediction model reliability compromised. Talent management impact: potential for inaccurate hiring or retention decisions. Significant risk to workforce decisions.",
+            "investigation_findings": "HR framing: these changes can affect employee-related decisions (attrition, performance, hiring) for certain groups or time periods. Widespread distributional drift detected across 4 features, indicating significant changes in the underlying data distribution that may require comprehensive model retraining. The presence of 2 high-severity issue(s) indicates significant model degradation.",
+            "impact_assessment": "People impact: inaccurate predictions may lead to suboptimal retention or performance interventions; validate before acting on results. Distributional drift may affect predictions for segments of the population that differ from training data. Prediction reliability may be compromised for affected segments.",
+            "confidence_explanation": "Investigation confidence is 70% based on:\n\n\u2022 Number of identified issues: 4\n\u2022 High-severity issues: 2\n\u2022 Evidence strength: Strong (multiple supporting signals)\n\nModerate confidence indicates some uncertainty in root cause attribution.",
+            "recommended_actions": [
+                "HR action: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "HR action: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "HR action: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "HR action: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "HR action: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Technical Summary:\n\nFEATURE_DRIFT:\n  \u2022 CreditScore feature drift (Score: 75, Severity: HIGH)\n  \u2022 DebtRatio feature drift (Score: 75, Severity: HIGH)\n  \u2022 Income feature drift (Score: 50, Severity: MEDIUM)\n\nAnalysis Engines Used: drift_engine\n\nInvestigation ID: inv_a398df3ab99c\nGenerated At: 2026-06-22T12:57:28.161200\n",
+            "risk_level": "CRITICAL",
+            "generated_at": "2026-06-22T12:57:55.305750",
+            "investigation_id": "inv_a398df3ab99c"
+        },
+        "Insurance Analyst": {
+            "executive_summary": "Underwriting model reliability compromised. Portfolio impact: potential for inaccurate premium exposure and claims risk assessment. Significant underwriting and reserve risk.",
+            "investigation_findings": "Actuarial framing: these shifts can change risk scoring behavior and distort underwriting segmentation over time. Widespread distributional drift detected across 4 features, indicating significant changes in the underlying data distribution that may require comprehensive model retraining. The presence of 2 high-severity issue(s) indicates significant model degradation.",
+            "impact_assessment": "Underwriting impact: mis-scoring can affect premium adequacy, loss ratio, and reserve assumptions for certain cohorts. Distributional drift may affect predictions for segments of the population that differ from training data. Prediction reliability may be compromised for affected segments.",
+            "confidence_explanation": "Investigation confidence is 70% based on:\n\n\u2022 Number of identified issues: 4\n\u2022 High-severity issues: 2\n\u2022 Evidence strength: Strong (multiple supporting signals)\n\nModerate confidence indicates some uncertainty in root cause attribution.",
+            "recommended_actions": [
+                "Risk action: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "Risk action: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Risk action: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "Risk action: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Risk action: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Technical Summary:\n\nFEATURE_DRIFT:\n  \u2022 CreditScore feature drift (Score: 75, Severity: HIGH)\n  \u2022 DebtRatio feature drift (Score: 75, Severity: HIGH)\n  \u2022 Income feature drift (Score: 50, Severity: MEDIUM)\n\nAnalysis Engines Used: drift_engine\n\nInvestigation ID: inv_a398df3ab99c\nGenerated At: 2026-06-22T12:57:28.161200\n",
+            "risk_level": "CRITICAL",
+            "generated_at": "2026-06-22T12:57:55.305750",
+            "investigation_id": "inv_a398df3ab99c"
+        },
+        "Legal / Compliance Officer": {
+            "executive_summary": "Model compliance requires immediate review. Governance impact: potential regulatory exposure and documentation requirements. Significant regulatory and governance risk.",
+            "investigation_findings": "Governance framing: these issues can raise compliance and documentation risk, especially if outcomes differ across protected groups. Widespread distributional drift detected across 4 features, indicating significant changes in the underlying data distribution that may require comprehensive model retraining. The presence of 2 high-severity issue(s) indicates significant model degradation.",
+            "impact_assessment": "Regulatory impact: degraded or shifting model behavior can increase disparate impact risk and regulatory exposure; document and review controls. Distributional drift may affect predictions for segments of the population that differ from training data. Prediction reliability may be compromised for affected segments.",
+            "confidence_explanation": "Investigation confidence is 70% based on:\n\n\u2022 Number of identified issues: 4\n\u2022 High-severity issues: 2\n\u2022 Evidence strength: Strong (multiple supporting signals)\n\nModerate confidence indicates some uncertainty in root cause attribution.",
+            "recommended_actions": [
+                "Compliance action: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "Compliance action: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Compliance action: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "Compliance action: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Compliance action: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Technical Summary:\n\nFEATURE_DRIFT:\n  \u2022 CreditScore feature drift (Score: 75, Severity: HIGH)\n  \u2022 DebtRatio feature drift (Score: 75, Severity: HIGH)\n  \u2022 Income feature drift (Score: 50, Severity: MEDIUM)\n\nAnalysis Engines Used: drift_engine\n\nInvestigation ID: inv_a398df3ab99c\nGenerated At: 2026-06-22T12:57:28.161200\n",
+            "risk_level": "CRITICAL",
+            "generated_at": "2026-06-22T12:57:55.307784",
+            "investigation_id": "inv_a398df3ab99c"
+        },
+        "Researcher": {
+            "executive_summary": "Research model anomalies detected. Evidence quality: statistical validity may be compromised by distributional shifts. Significant impact on research validity.",
+            "investigation_findings": "Research framing: these signals may indicate dataset shift and threaten validity or generalizability of conclusions. Widespread distributional drift detected across 4 features, indicating significant changes in the underlying data distribution that may require comprehensive model retraining. The presence of 2 high-severity issue(s) indicates significant model degradation.",
+            "impact_assessment": "Methodology impact: results may not generalize; consider re-sampling, recalibration, and reporting uncertainty alongside outcomes. Distributional drift may affect predictions for segments of the population that differ from training data. Prediction reliability may be compromised for affected segments.",
+            "confidence_explanation": "Investigation confidence is 70% based on:\n\n\u2022 Number of identified issues: 4\n\u2022 High-severity issues: 2\n\u2022 Evidence strength: Strong (multiple supporting signals)\n\nModerate confidence indicates some uncertainty in root cause attribution.",
+            "recommended_actions": [
+                "Research action: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "Research action: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Research action: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "Research action: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Research action: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Technical Summary:\n\nFEATURE_DRIFT:\n  \u2022 CreditScore feature drift (Score: 75, Severity: HIGH)\n  \u2022 DebtRatio feature drift (Score: 75, Severity: HIGH)\n  \u2022 Income feature drift (Score: 50, Severity: MEDIUM)\n\nAnalysis Engines Used: drift_engine\n\nInvestigation ID: inv_a398df3ab99c\nGenerated At: 2026-06-22T12:57:28.161200\n",
+            "risk_level": "CRITICAL",
+            "generated_at": "2026-06-22T12:57:55.307784",
+            "investigation_id": "inv_a398df3ab99c"
+        }
+    },
+    "audience_reports": {
+        "ML Engineer": {
+            "audience": "ML Engineer",
+            "executive_summary": "Critical model degradation detected. Primary issue: feature drift affecting prediction reliability. Immediate retraining recommended. Confidence: 70%.",
+            "findings": "Model health status: Critical\nConfidence score: 70%\n\nPrimary technical issues identified:\n1. CreditScore feature drift (Severity: HIGH)\n   Score: 75.000\n   Evidence: PSI=0.236, KS=0.213\n\n2. DebtRatio feature drift (Severity: HIGH)\n   Score: 75.000\n   Evidence: PSI=0.250, KS=0.107\n\n3. Income feature drift (Severity: MEDIUM)\n   Score: 50.000\n   Evidence: PSI=0.102, KS=0.113\n\n4. LoanAmount feature drift (Severity: LOW)\n   Score: 25.000\n   Evidence: PSI=0.098, KS=0.107\n\n\nDetailed Analysis:\nWidespread distributional drift detected across 4 features, indicating significant changes in the underlying data distribution that may require comprehensive model retraining. The presence of 2 high-severity issue(s) indicates significant model degradation.\n",
+            "impact_assessment": "Technical impact includes potential reduction in prediction accuracy, calibration drift, and increased risk of unreliable outputs for production workloads.",
+            "confidence_explanation": "Confidence score of 70% is based on root cause analysis of drift metrics (PSI, KS), calibration error (ECE, Brier score), and feature importance stability.",
+            "recommendations": [
+                "CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Technical recommendations focus on feature drift mitigation, model recalibration, and retraining with updated datasets. Key metrics to monitor: PSI, KS, calibration ECE, feature importance variance over time."
+        },
+        "Executive": {
+            "audience": "Executive",
+            "executive_summary": "Model reliability compromised. Business impact: reduced prediction accuracy affecting decisions. Immediate corrective action required. Risk level: CRITICAL.",
+            "findings": "Business Impact Assessment:\nCurrent model performance is at risk with 70% confidence in assessment.\n\nKey Business Risks:\n1. CreditScore feature drift: High - Priority action needed\n2. DebtRatio feature drift: High - Priority action needed\n3. Income feature drift: Medium - Monitor closely\n\nOverall Risk Level: CRITICAL\n\nBusiness impact: degraded decision quality can create revenue/ROI risk, higher operating costs, and reduced trust in automated workflows. Distributional drift may affect predictions for segments of the population that differ from training data. Prediction reliability may be compromised for affected segments.\n",
+            "impact_assessment": "Business risk includes potential revenue impact from incorrect decisions, operational friction from unreliable outputs, and increased scrutiny from stakeholders.",
+            "confidence_explanation": "Confidence score of 70% reflects our level of certainty in the identified issues and recommended actions based on comprehensive model health monitoring.",
+            "recommendations": [
+                "Schedule model retraining to improve accuracy",
+                "Schedule model retraining to improve accuracy",
+                "Schedule model retraining to improve accuracy",
+                "Schedule model retraining to improve accuracy",
+                "Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Technical details are available upon request from the data science team."
+        },
+        "Doctor": {
+            "audience": "Doctor",
+            "executive_summary": "Clinical decision support reliability compromised. 4 factors affecting predictions. Immediate validation required. Use clinical judgment. Confidence: 70%.",
+            "findings": "Clinical Decision Support Assessment:\nModel reliability for clinical decisions: unreliable\nConfidence in assessment: 70%\n\nPotential Clinical Impact:\n1. CreditScore feature drift: Moderate - Review recommended\n2. DebtRatio feature drift: Moderate - Review recommended\n3. Income feature drift: Low - Monitor\n\nNote: Always use clinical judgment alongside model predictions.",
+            "impact_assessment": "Clinical implications include potential impact on diagnostic reliability, patient risk stratification, and overall quality of care decisions.",
+            "confidence_explanation": "Confidence score of 70% reflects the strength of evidence from model performance monitoring and clinical validation.",
+            "recommendations": [
+                "Clinical: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "Clinical: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Clinical: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "Clinical: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Clinical: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Technical performance metrics and validation details are available in the full model monitoring report."
+        },
+        "Loan Officer": {
+            "audience": "Loan Officer",
+            "executive_summary": "Credit risk model reliability compromised. 4 risk factors affecting lending. Immediate validation required. Ensure compliance. Risk level: CRITICAL.",
+            "findings": "Credit Risk Model Assessment:\nModel risk classification: High Risk\nAssessment confidence: 70%\n\nRisk Factors Identified:\n1. CreditScore feature drift: Moderate - Monitor closely\n2. DebtRatio feature drift: Moderate - Monitor closely\n3. Income feature drift: Low - Track trends\n\nOverall Risk Level: CRITICAL\n\nCompliance Note: Ensure model meets regulatory requirements.",
+            "impact_assessment": "Portfolio impact includes potential for inaccurate credit decisions, increased default risk, and compliance implications from unreliable model outputs.",
+            "confidence_explanation": "Confidence score of 70% is based on monitoring of model performance metrics, default prediction accuracy, and compliance validation checks.",
+            "recommendations": [
+                "Risk Management: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "Risk Management: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Risk Management: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "Risk Management: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Risk Management: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Model performance and compliance documentation are available in the regulatory reporting package."
+        },
+        "Student": {
+            "audience": "Student",
+            "executive_summary": "Model integrity requires immediate attention. 4 issues detected. Predictions unreliable for current data. Address to restore accuracy.",
+            "findings": "Model Health Assessment:\nCurrent status: requires immediate attention\nInvestigation confidence: 70%\n\nIdentified Issues:\n1. CreditScore feature drift (Severity: HIGH)\n2. DebtRatio feature drift (Severity: HIGH)\n3. Income feature drift (Severity: MEDIUM)\n",
+            "impact_assessment": "Unreliable model predictions may lead to incorrect decisions. Addressing identified issues is critical to restoring model performance.",
+            "confidence_explanation": "Confidence score of 70% is based on analysis of model health metrics and detected anomalies.",
+            "recommendations": [
+                "ACTION REQUIRED: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "ACTION REQUIRED: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "ACTION REQUIRED: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "ACTION REQUIRED: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "ACTION REQUIRED: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Review recommended actions to address identified issues and restore model performance."
+        },
+        "HR Manager": {
+            "audience": "HR Manager",
+            "executive_summary": "HR decision support model reliability compromised. 4 factors affecting predictions. Immediate validation required. Confidence: 70%.",
+            "findings": "HR Model Assessment:\nModel reliability for HR decisions: High Risk\nAssessment confidence: 70%\n\nPotential HR Impact:\n1. CreditScore feature drift: Moderate - Review recommended\n2. DebtRatio feature drift: Moderate - Review recommended\n3. Income feature drift: Low - Monitor\n\nOverall Risk Level: CRITICAL\n\nNote: Always use HR judgment alongside model predictions.",
+            "impact_assessment": "HR implications include potential impact on hiring decisions, performance evaluations, and employee retention strategies.",
+            "confidence_explanation": "Confidence score of 70% reflects the strength of evidence from model performance monitoring and HR validation.",
+            "recommendations": [
+                "HR Action: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "HR Action: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "HR Action: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "HR Action: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "HR Action: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Model performance and validation details are available in the full HR analytics report."
+        },
+        "Insurance Analyst": {
+            "audience": "Insurance Analyst",
+            "executive_summary": "Insurance risk model reliability compromised. 4 risk factors affecting underwriting. Immediate validation required. Risk level: CRITICAL.",
+            "findings": "Insurance Risk Model Assessment:\nModel risk classification: High Risk\nAssessment confidence: 70%\n\nRisk Factors Identified:\n1. CreditScore feature drift: Moderate - Monitor closely\n2. DebtRatio feature drift: Moderate - Monitor closely\n3. Income feature drift: Low - Track trends\n\nOverall Risk Level: CRITICAL\n\nCompliance Note: Ensure model meets insurance regulatory requirements.",
+            "impact_assessment": "Portfolio impact includes potential for inaccurate risk assessments, increased claims costs, and compliance implications from unreliable model outputs.",
+            "confidence_explanation": "Confidence score of 70% is based on monitoring of model performance metrics, risk prediction accuracy, and compliance validation checks.",
+            "recommendations": [
+                "Risk Management: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "Risk Management: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Risk Management: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "Risk Management: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Risk Management: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Model performance and compliance documentation are available in the regulatory reporting package."
+        },
+        "Legal / Compliance Officer": {
+            "audience": "Legal / Compliance Officer",
+            "executive_summary": "Model compliance assessment: Non-Compliant. 4 compliance risks identified. Immediate action required. Risk level: CRITICAL.",
+            "findings": "Model Compliance Assessment:\nCurrent compliance status: Non-Compliant\nAssessment confidence: 70%\n\nPotential Compliance Risks:\n1. CreditScore feature drift: Moderate - Review and document\n2. DebtRatio feature drift: Moderate - Review and document\n3. Income feature drift: Low - Monitor\n\nOverall Risk Level: CRITICAL\n\nNote: Document all findings and actions taken for audit trail purposes.",
+            "impact_assessment": "Compliance implications include potential for regulatory violations, fines, and reputational damage from unfair or unreliable model outputs.",
+            "confidence_explanation": "Confidence score of 70% is based on analysis of fairness metrics, bias detection, and model performance validation.",
+            "recommendations": [
+                "Compliance Action: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "Compliance Action: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Compliance Action: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "Compliance Action: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Compliance Action: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Full audit trail and compliance documentation are available in the model governance package."
+        },
+        "Researcher": {
+            "audience": "Researcher",
+            "executive_summary": "Research model investigation: Requires Immediate Attention. 4 technical issues identified. Immediate attention required. Confidence: 70%.",
+            "findings": "Research Model Assessment:\nCurrent model status: Requires Immediate Attention\nInvestigation confidence: 70%\n\nIdentified Issues:\n1. CreditScore feature drift (Severity: HIGH, Score: 75.000)\n   Evidence: PSI=0.236, KS=0.213\n2. DebtRatio feature drift (Severity: HIGH, Score: 75.000)\n   Evidence: PSI=0.250, KS=0.107\n3. Income feature drift (Severity: MEDIUM, Score: 50.000)\n   Evidence: PSI=0.102, KS=0.113\n4. LoanAmount feature drift (Severity: LOW, Score: 25.000)\n   Evidence: PSI=0.098, KS=0.107\n\nDetailed Analysis:\nResearch framing: these signals may indicate dataset shift and threaten validity or generalizability of conclusions. Widespread distributional drift detected across 4 features, indicating significant changes in the underlying data distribution that may require comprehensive model retraining. The presence of 2 high-severity issue(s) indicates significant model degradation.\n",
+            "impact_assessment": "Research implications include potential challenges to study validity, reproducibility, and the reliability of experimental conclusions.",
+            "confidence_explanation": "Confidence score of 70% is based on comprehensive analysis of model performance metrics, feature stability, and statistical validation.",
+            "recommendations": [
+                "Research Action: CreditScore distribution shifted significantly (PSI=0.236, KS=0.213). Collect recent samples from the affected segment before retraining.",
+                "Research Action: DebtRatio distribution shifted significantly (PSI=0.250, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Research Action: Income distribution shifted significantly (PSI=0.102, KS=0.113). Collect recent samples from the affected segment before retraining.",
+                "Research Action: LoanAmount distribution shifted significantly (PSI=0.098, KS=0.107). Collect recent samples from the affected segment before retraining.",
+                "Research Action: Multiple issues detected (severity: HIGH). Prioritize addressing the highest-scoring root causes first."
+            ],
+            "technical_notes": "Detailed performance metrics, statistical analyses, and reproducibility information are available in the full research report."
+        }
+    },
+    "charts": {
+        "prediction_dist": "{\"data\": [{\"marker\": {\"color\": \"#3b82f6\"}, \"name\": \"Predicted Probabilities\", \"nbinsx\": 30, \"opacity\": 0.7, \"x\": [0.0032075471698113224, 0.77, 0.8500000000000001, 0.993647058823529], \"type\": \"histogram\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Prediction Confidence Distribution\"}, \"xaxis\": {\"title\": {\"text\": \"Predicted Probability\"}}, \"yaxis\": {\"title\": {\"text\": \"Frequency\"}}, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "residuals": "{\"data\": [{\"marker\": {\"color\": \"#f97316\", \"opacity\": 0.6, \"size\": 8}, \"mode\": \"markers\", \"name\": \"Residuals\", \"x\": [0.0032075471698113224, 0.77, 0.8500000000000001, 0.993647058823529], \"y\": [-0.0032075471698113224, 0.22999999999999998, 0.1499999999999999, 0.006352941176471005], \"type\": \"scatter\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"shapes\": [{\"line\": {\"color\": \"#64748b\", \"dash\": \"dash\"}, \"type\": \"line\", \"x0\": 0, \"x1\": 1, \"xref\": \"x domain\", \"y0\": 0, \"y1\": 0, \"yref\": \"y\"}], \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Residuals Plot (Actual - Predicted)\"}, \"xaxis\": {\"title\": {\"text\": \"Predicted Probability\"}}, \"yaxis\": {\"title\": {\"text\": \"Residual\"}}, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "psi_heatmap": "{\"data\": [{\"colorbar\": {\"thickness\": 15, \"title\": {\"text\": \"PSI\"}}, \"colorscale\": [[0.0, \"rgb(0,104,55)\"], [0.1, \"rgb(26,152,80)\"], [0.2, \"rgb(102,189,99)\"], [0.3, \"rgb(166,217,106)\"], [0.4, \"rgb(217,239,139)\"], [0.5, \"rgb(255,255,191)\"], [0.6, \"rgb(254,224,139)\"], [0.7, \"rgb(253,174,97)\"], [0.8, \"rgb(244,109,67)\"], [0.9, \"rgb(215,48,39)\"], [1.0, \"rgb(165,0,38)\"]], \"x\": [\"Income\", \"CreditScore\", \"DebtRatio\", \"LoanAmount\", \"ApprovalFlag\"], \"y\": [\"PSI\"], \"z\": [[0.1023, 0.2364, 0.2502, 0.0977, 0.0138]], \"type\": \"heatmap\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Population Stability Index (PSI)\"}, \"xaxis\": {\"title\": {\"text\": \"Feature\"}}, \"height\": 250, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "ks_ranked": "{\"data\": [{\"marker\": {\"color\": \"#ea580c\"}, \"name\": \"KS Statistic\", \"orientation\": \"h\", \"x\": [0.2133, 0.1133, 0.1067, 0.1067, 0.0533], \"y\": [\"CreditScore\", \"Income\", \"DebtRatio\", \"LoanAmount\", \"ApprovalFlag\"], \"type\": \"bar\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"KS Statistic Ranked by Feature\"}, \"xaxis\": {\"title\": {\"text\": \"KS Statistic\"}}, \"yaxis\": {\"title\": {\"text\": \"Feature\"}}, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "noise_score_dist": "{\"data\": [{\"marker\": {\"color\": \"#10b981\"}, \"name\": \"Noise Score\", \"nbinsx\": 30, \"x\": [0.24785281057338515, 0.1860933251479343, 0.042191696159990945, 0.11780854257196, 0.03663738282475484, 0.10282960716987537, 0.02926559452576086, 0.1345259901085199, 0.27957497412809645, 0.20214501888945502, 0.2513891802360688, 0.0559579596787647, 0.10691518407735004, 0.9064657590104467, 0.20401735487479244, 0.1607919783133165, 0.24522429125442813, 0.15171612982545363, 0.8956689675183903, 0.2165159704198721, 0.06448123985162246, 0.29918490976766976, 0.07803734246513562, 0.025669190509122274, 0.01937451991914376, 0.15379922475360852, 0.11917692676638043, 0.2144813293965509, 0.24191361640954095, 0.9257355189835401, 0.0002640916443214958, 0.8053050354939486, 0.2535618981993604, 0.2807028769856725, 0.0833819798967766, 0.11342319824807923, 0.23593217119188173, 0.2704345912550208, 0.21264436227720696, 0.06553115613420409, 0.2603856399951311, 0.09980259683460528, 0.15235951816924212, 0.2176067201043918, 0.07089490356859186, 0.1308360199824632, 0.004795876099212981, 0.7632682176867865, 0.06399583734464566, 0.014741419279682387, 0.16658340715213973, 0.2105057142023621, 0.22791052561838884, 0.7276686087582565, 0.25187492397193273, 0.8239115990407264, 0.09846671171203462, 0.08307320730354922, 0.2855744390400193, 0.16693963722458433, 0.026611358687341036, 0.02066999741448382, 0.0003108153694136195, 0.950089558439789, 0.15187381050196833, 0.09930448361830695, 0.14481258413560402, 0.14918362282951544, 0.09430923802087544, 0.01462415087614206, 0.26390550959971604, 0.0727658352272566, 0.8832776633890644, 0.8350773196833459, 0.2313676826551237, 0.16546992597401697, 0.23668619418317685, 0.2982181881534208, 0.24139897165697466, 0.033652812915579124, 0.08908911416779496, 0.24789042276716083, 0.2886204782803164, 0.2955979610734679, 0.7657373379244867, 0.0926765254461607, 0.24331714604173685, 0.12194560640529203, 0.009020625436597384, 0.14909742067558732, 0.16819309211165517, 0.12922610595484768, 0.8610969475427498, 0.29384637640469796, 0.9269484401761009, 0.16491169126894953, 0.046740087826915855, 0.009414602121621785, 0.20673418242637948, 0.09170217840312074, 0.14563139368050174, 0.7455858682440064, 0.10032591738859815, 0.0491598512667493, 0.1816147168370469, 0.12029072745163893, 0.12629465243767582, 0.8665834134943816, 0.13221134139337562, 0.74897770137459, 0.007148702255485462, 0.7555168472445278, 0.21689272595972503, 0.7419931478947591, 0.01099238049605763, 0.15556094145051086, 0.11876773744790192, 0.11414460700982808, 0.20320701474069916, 0.1892803060207674, 0.8776523135718429, 0.029138436370068785, 0.0433984692484453, 0.20643240234483073, 0.02447763169656084, 0.005924199384312334, 0.17802262563409058, 0.24133247238237368, 0.019165934729686272, 0.9576649549213927, 0.12202479122830957, 0.14290680832308286, 0.25992546408036027, 0.8414562403439775, 0.787964180164199, 0.2939707471535744, 0.18725350273568203, 0.09627389056635073, 0.09170084375891692, 0.14018884204807647, 0.7360959129467634, 0.15934158179862615, 0.16145016317376318, 0.13053474366997697, 0.16672462119057993, 0.15609982536376082, 0.8068825432590119, 0.0818868060657318, 0.137145895871478, 0.053410105977468876, 0.18765007132719552, 0.025336710223028833, 0.9765107471379728, 0.2903633857331725, 0.0798185859780128, 0.24626354925791966, 0.22234311046279046, 0.05943000813633056, 0.1137008151629882, 0.0825364600918398, 0.2232073138236934, 0.26470869664386565, 0.1295812638617733, 0.10864941396764505, 0.1589353876338244, 0.26864829020952175, 0.9473206120503503, 0.025633027021092426, 0.25182317479535293, 0.8322002452890769, 0.20287516304597952, 0.03281668508565416, 0.14988817346698033, 0.14863765175232274, 0.28206285896341354, 0.12883368058843267, 0.9451554400095431, 0.2151293305900973, 0.12610552693368374, 0.2921457621965661, 0.1632467433239687, 0.19290237579125602, 0.23067197676917098, 0.050170265615855976, 0.9505038914458015, 0.02496716303913239, 0.0803688166587664, 0.20290346335660306, 0.1465473935444826, 0.18188260125284994, 0.9821794372873272, 0.2440244770349398, 0.21172695705052047, 0.18774910004622003, 0.05621370447162729, 0.16855645339558156, 0.8183800086405664, 0.07647319035209264, 0.1804361725193274, 0.02707416692312756, 0.2416395987877116, 0.10330832092936072, 0.2746650050070887, 0.1459342399746975, 0.17614944523046444, 0.08693967159109835, 0.006588957892354163, 0.22820224111374143, 0.8399394448914909, 0.2688399155692114, 0.15324638976990707, 0.014965018027618248, 0.25585491563006624, 0.1969973422869332, 0.0833453443975471, 0.13608100750404636, 0.2988150891490514, 0.15967335779396874, 0.23892593750296895, 0.2377978859468112, 0.05930304988352083, 0.9391730487177242, 0.2425101152444878, 0.10483090818472247, 0.01179120198921213, 0.0507547313500342, 0.052904372853161775, 0.24083310534906788, 0.18774012326852296, 0.24165962369630242, 0.2544000081832217, 0.2534655925457927, 0.22146856202320445, 0.27436199488376406, 0.11974638402582667, 0.8921878192475465, 0.07241478692793656, 0.22029636924382673, 0.18697778289679487, 0.7120800237410463, 0.011417826126940978, 0.8787564840425472, 0.17142585687908066, 0.22597549336640718, 0.1636924654921409, 0.24245471876118016, 0.11595086470531243, 0.25487462567681696, 0.02768902726393635, 0.2063646967073929, 0.05788323680175191, 0.2597132430335291, 0.13834152953949044, 0.21052443269004464, 0.7700258871423805, 0.03747825110725384, 0.08183866776826292, 0.2300547297792536, 0.7587377232907434, 0.023297226704971107, 0.1768698282784751, 0.007557082417586436, 0.15890726361788685, 0.10371523482538837, 0.2826522149895057, 0.052382746698263725, 0.013752956667977934, 0.28994558163956785, 0.19388640030095797, 0.24301954621897212, 0.22221509209604728, 0.22732099250967155, 0.23669911539639632, 0.854559269409662, 0.17853189419813756, 0.1363126987512394, 0.19196468596482946, 0.9836063363792866, 0.28482161135581663, 0.7408063092723938, 0.12179445762645896, 0.8456731245978784, 0.1643558315062126, 0.7621686225640738, 0.03935355185239087, 0.12829616774606184, 0.23572593524583216, 0.881822316345519, 0.08402084321904142, 0.8859583319873126, 0.13552411955795995, 0.2176689268024985, 0.10746379776146689, 0.1838742628398347, 0.23592036544350198, 0.2925243110546535, 0.28484134107707043, 0.22401566137139942, 0.7060671398403824, 0.8689665193531578], \"type\": \"histogram\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Label Noise Score Distribution\"}, \"xaxis\": {\"title\": {\"text\": \"Noise Score\"}}, \"yaxis\": {\"title\": {\"text\": \"Frequency\"}}, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "leakage_scores": "{\"data\": [{\"marker\": {\"color\": \"#f97316\"}, \"name\": \"Leakage Score\", \"x\": [\"ApprovalFlag\", \"LoanApproved\"], \"y\": [0.8820338747531978, 0.8820338747531978], \"type\": \"bar\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Feature Leakage Scores\"}, \"xaxis\": {\"title\": {\"text\": \"Feature\"}}, \"yaxis\": {\"title\": {\"text\": \"Leakage Score\"}}, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "correlation_heatmap": "{\"data\": [{\"colorbar\": {\"thickness\": 15, \"title\": {\"text\": \"Correlation\"}}, \"colorscale\": [[0.0, \"rgb(103,0,31)\"], [0.1, \"rgb(178,24,43)\"], [0.2, \"rgb(214,96,77)\"], [0.3, \"rgb(244,165,130)\"], [0.4, \"rgb(253,219,199)\"], [0.5, \"rgb(247,247,247)\"], [0.6, \"rgb(209,229,240)\"], [0.7, \"rgb(146,197,222)\"], [0.8, \"rgb(67,147,195)\"], [0.9, \"rgb(33,102,172)\"], [1.0, \"rgb(5,48,97)\"]], \"x\": [\"Income\", \"CreditScore\", \"DebtRatio\", \"LoanAmount\", \"ApprovalFlag\", \"LoanApproved\"], \"y\": [\"Income\", \"CreditScore\", \"DebtRatio\", \"LoanAmount\", \"ApprovalFlag\", \"LoanApproved\"], \"z\": [[1.0, 0.08, -0.12, -0.02, 0.2, 0.2], [0.08, 1.0, -0.18, 0.07, 0.55, 0.55], [-0.12, -0.18, 1.0, -0.0, -0.55, -0.55], [-0.02, 0.07, -0.0, 1.0, -0.03, -0.03], [0.2, 0.55, -0.55, -0.03, 1.0, 1.0], [0.2, 0.55, -0.55, -0.03, 1.0, 1.0]], \"zmid\": 0, \"type\": \"heatmap\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Feature Correlation Matrix\"}, \"xaxis\": {\"title\": {\"text\": \"Feature\"}}, \"yaxis\": {\"title\": {\"text\": \"Feature\"}}, \"height\": 500, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "missing_data": "{\"data\": [{\"marker\": {\"color\": \"#64748b\"}, \"name\": \"Missing Rate\", \"x\": [\"Income\", \"CreditScore\", \"DebtRatio\", \"LoanAmount\", \"ApprovalFlag\"], \"y\": [0.0, 0.0, 0.0, 0.0, 0.0], \"type\": \"bar\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Missing Data (%)\"}, \"xaxis\": {\"title\": {\"text\": \"Feature\"}}, \"yaxis\": {\"title\": {\"text\": \"Missing Percentage (%)\"}}, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "label_noise_per_class": "{\"data\": [{\"marker\": {\"color\": \"#f97316\"}, \"name\": \"Mislabeled Samples\", \"x\": [\"0\", \"1\"], \"y\": [36, 11], \"type\": \"bar\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Mislabeled Samples per Class\"}, \"xaxis\": {\"title\": {\"text\": \"Class\"}}, \"yaxis\": {\"title\": {\"text\": \"Mislabeled Samples\"}}, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}"
+    }
+}

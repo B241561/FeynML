@@ -119,17 +119,25 @@ class LeakageDetector(BaseModule):
                     mi_scores = mutual_info_regression(X, y, random_state=42, n_jobs=n_jobs)
                 
                 max_mi = np.max(mi_scores) if len(mi_scores) > 0 else 1.0
-                threshold_val = threshold * max_mi
                 
-                self._log(f"Max MI: {max_mi:.4f}, threshold: {threshold_val:.4f}")
+                self._log(f"Max MI: {max_mi:.4f}")
                 
                 for feature, mi in zip(feature_cols, mi_scores):
-                    if mi > threshold_val:
+                    # Normalize MI to 0-1 range (approx) to align with correlation thresholds
+                    norm_mi = min(1.0, mi / max_mi) if max_mi > 0 else 0
+                    if norm_mi > 0.95:
                         suspects.append({
                             'feature': feature,
                             'mutual_info': float(mi),
                             'correlation': np.nan,
-                            'leakage_risk': 'CRITICAL' if mi > 0.95 * max_mi else 'HIGH'
+                            'leakage_risk': 'HIGH'
+                        })
+                    elif norm_mi > 0.85:
+                        suspects.append({
+                            'feature': feature,
+                            'mutual_info': float(mi),
+                            'correlation': np.nan,
+                            'leakage_risk': 'MEDIUM'
                         })
             except Exception as e:
                 self._warn(f"MI calculation failed: {e}")
@@ -142,17 +150,29 @@ class LeakageDetector(BaseModule):
                         corr, _ = pearsonr(X[col].dropna(), y[:len(X[col].dropna())])
                         corr = abs(corr)
                         
-                        if corr > 0.9:  # Very high correlation
-                            existing = [s for s in suspects if s['feature'] == col]
+                        existing = [s for s in suspects if s['feature'] == col]
+                        if corr > 0.95:
                             if existing:
                                 existing[0]['correlation'] = float(corr)
-                                existing[0]['leakage_risk'] = 'CRITICAL'
+                                existing[0]['leakage_risk'] = 'HIGH'
                             else:
                                 suspects.append({
                                     'feature': col,
                                     'mutual_info': np.nan,
                                     'correlation': float(corr),
-                                    'leakage_risk': 'CRITICAL' if corr > 0.95 else 'HIGH'
+                                    'leakage_risk': 'HIGH'
+                                })
+                        elif corr > 0.85:
+                            if existing:
+                                existing[0]['correlation'] = float(corr)
+                                if existing[0]['leakage_risk'] != 'HIGH':
+                                    existing[0]['leakage_risk'] = 'MEDIUM'
+                            else:
+                                suspects.append({
+                                    'feature': col,
+                                    'mutual_info': np.nan,
+                                    'correlation': float(corr),
+                                    'leakage_risk': 'MEDIUM'
                                 })
                     except (ValueError, RuntimeWarning):
                         pass

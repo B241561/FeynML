@@ -1,0 +1,610 @@
+{
+    "calibration": {
+        "label": "model",
+        "n": 545,
+        "n_bins": 10,
+        "ece": 0.187333,
+        "mce": 0.27833,
+        "brier": 0.108745,
+        "bss": 0.564982,
+        "severity": "HIGH",
+        "curve": {
+            "bin_edges": [
+                [
+                    0.0,
+                    0.1
+                ],
+                [
+                    0.1,
+                    0.2
+                ],
+                [
+                    0.2,
+                    0.3
+                ],
+                [
+                    0.3,
+                    0.4
+                ],
+                [
+                    0.4,
+                    0.5
+                ],
+                [
+                    0.5,
+                    0.6
+                ],
+                [
+                    0.6,
+                    0.7
+                ],
+                [
+                    0.7,
+                    0.8
+                ],
+                [
+                    0.8,
+                    0.9
+                ],
+                [
+                    0.9,
+                    1.0
+                ]
+            ],
+            "mean_predicted": [
+                0.05499609846066538,
+                0.16300264882070878,
+                0.2484780213284149,
+                0.34946126162504115,
+                0.4564534298077605,
+                0.5359553704435596,
+                0.6534596013336169,
+                0.7687604712801565,
+                0.8285204298786976,
+                0.9458772592848073
+            ],
+            "fraction_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.12307692307692308,
+                0.4666666666666667,
+                0.8142857142857143,
+                0.7777777777777778,
+                0.9886363636363636,
+                0.9791666666666666,
+                1.0
+            ],
+            "counts": [
+                3,
+                47,
+                117,
+                65,
+                60,
+                70,
+                18,
+                88,
+                48,
+                29
+            ]
+        },
+        "interpretation": "ECE > 10% \u2014 recalibration strongly recommended.",
+        "prediction_source": "auto_generated",
+        "model_type": "RandomForestRegressor"
+    },
+    "drift": {
+        "module": "DriftEngine",
+        "timestamp": "2026-06-21T13:36:32",
+        "severity": "HIGH",
+        "passed": false,
+        "findings": {
+            "per_feature": [
+                {
+                    "feature": "area",
+                    "type": "numeric",
+                    "ks_stat": 0.512,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 1.4574,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "bedrooms",
+                    "type": "numeric",
+                    "ks_stat": 0.3073,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 0.5857,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "bathrooms",
+                    "type": "numeric",
+                    "ks_stat": 0.3239,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 0.6066,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "stories",
+                    "type": "numeric",
+                    "ks_stat": 0.2281,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 2.8502,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "parking",
+                    "type": "numeric",
+                    "ks_stat": 0.2659,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 0.3248,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                },
+                {
+                    "feature": "predicted_price",
+                    "type": "numeric",
+                    "ks_stat": 0.8716,
+                    "pvalue": 0.0,
+                    "pvalue_unavailable": false,
+                    "psi": 12.8016,
+                    "significant_drift": true,
+                    "status": "DRIFT"
+                }
+            ],
+            "drifted": [
+                "area",
+                "bedrooms",
+                "bathrooms",
+                "stories",
+                "parking",
+                "predicted_price"
+            ],
+            "warned": [],
+            "domain_auc": 0.5,
+            "mean_psi": 3.1044,
+            "n_features": 13,
+            "num_drifted_features": 6,
+            "num_warned_features": 0,
+            "alerts": [
+                {
+                    "level": "CRITICAL",
+                    "message": "6 feature(s) show significant drift: ['area', 'bedrooms', 'bathrooms', 'stories', 'parking']. Model retraining recommended."
+                }
+            ]
+        },
+        "log": [
+            "[13:36:31] [INFO] [DriftEngine] Starting DriftEngine",
+            "[13:36:31] [INFO] [DriftEngine]   area: DRIFT (p=0.0000, psi=1.4574)",
+            "[13:36:31] [INFO] [DriftEngine]   bedrooms: DRIFT (p=0.0000, psi=0.5857)",
+            "[13:36:31] [INFO] [DriftEngine]   bathrooms: DRIFT (p=0.0000, psi=0.6066)",
+            "[13:36:31] [INFO] [DriftEngine]   stories: DRIFT (p=0.0000, psi=2.8502)",
+            "[13:36:31] [INFO] [DriftEngine]   parking: DRIFT (p=0.0000, psi=0.3248)",
+            "[13:36:31] [INFO] [DriftEngine]   predicted_price: DRIFT (p=0.0000, psi=12.8016)",
+            "[13:36:32] [INFO] [DriftEngine] Domain classifier failed: \nAll the 3 fits failed.\nIt is very likely that your model is misconfigured.\nYou can try to debug the error by setting error_score='raise'.\n\nBelow are more details about the failures:\n--------------------------------------------------------------------------------\n3 fits failed with the following error:\nTraceback (most recent call last):\n  File \"C:\\Users\\arman\\OneDrive\\Desktop\\DATA ANALYTICS\\ML_investigator\\ml_failure_engine_reorganized\\.venv311\\Lib\\site-packages\\sklearn\\model_selection\\_validation.py\", line 888, in _fit_and_score\n    estimator.fit(X_train, y_train, **fit_params)\n  File \"C:\\Users\\arman\\OneDrive\\Desktop\\DATA ANALYTICS\\ML_investigator\\ml_failure_engine_reorganized\\.venv311\\Lib\\site-packages\\sklearn\\base.py\", line 1473, in wrapper\n    return fit_method(estimator, *args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\arman\\OneDrive\\Desktop\\DATA ANALYTICS\\ML_investigator\\ml_failure_engine_reorganized\\.venv311\\Lib\\site-packages\\sklearn\\ensemble\\_forest.py\", line 363, in fit\n    X, y = self._validate_data(\n           ^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\arman\\OneDrive\\Desktop\\DATA ANALYTICS\\ML_investigator\\ml_failure_engine_reorganized\\.venv311\\Lib\\site-packages\\sklearn\\base.py\", line 650, in _validate_data\n    X, y = check_X_y(X, y, **check_params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\arman\\OneDrive\\Desktop\\DATA ANALYTICS\\ML_investigator\\ml_failure_engine_reorganized\\.venv311\\Lib\\site-packages\\sklearn\\utils\\validation.py\", line 1301, in check_X_y\n    X = check_array(\n        ^^^^^^^^^^^^\n  File \"C:\\Users\\arman\\OneDrive\\Desktop\\DATA ANALYTICS\\ML_investigator\\ml_failure_engine_reorganized\\.venv311\\Lib\\site-packages\\sklearn\\utils\\validation.py\", line 1012, in check_array\n    array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\arman\\OneDrive\\Desktop\\DATA ANALYTICS\\ML_investigator\\ml_failure_engine_reorganized\\.venv311\\Lib\\site-packages\\sklearn\\utils\\_array_api.py\", line 745, in _asarray_with_order\n    array = numpy.asarray(array, order=order, dtype=dtype)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nValueError: could not convert string to float: np.str_('yes')\n"
+        ]
+    },
+    "slice": {
+        "module": "SlicerEngine",
+        "timestamp": "2026-06-21T13:36:53",
+        "severity": "MEDIUM",
+        "passed": false,
+        "findings": {
+            "slices": [
+                {
+                    "predicate": {
+                        "predicted_price_binned": "predicted_price_bin2"
+                    },
+                    "description": "Slice(predicted_price_binned=predicted_price_bin2)",
+                    "size": 136,
+                    "effect_size": 0.6294,
+                    "slice_loss": 0.26471,
+                    "rest_loss": 0.04645,
+                    "p_value": 0.0,
+                    "severity": "MEDIUM"
+                }
+            ],
+            "n_slices_found": 1,
+            "worst_slice": {
+                "predicate": {
+                    "predicted_price_binned": "predicted_price_bin2"
+                },
+                "description": "Slice(predicted_price_binned=predicted_price_bin2)",
+                "size": 136,
+                "effect_size": 0.6294,
+                "slice_loss": 0.26471,
+                "rest_loss": 0.04645,
+                "p_value": 0.0,
+                "severity": "MEDIUM"
+            },
+            "overall_loss": 0.10092,
+            "task": "classification",
+            "n_samples": 545,
+            "recommendations": [
+                "Slice 'Slice(predicted_price_binned=predicted_price_bin2)': loss=0.265 (effect=0.63, n=136). Investigate data quality and representation for this subgroup."
+            ]
+        },
+        "log": [
+            "[13:36:32] [INFO] [SlicerEngine] Starting SlicerEngine",
+            "[13:36:32] [INFO] [SlicerEngine] Slicing: n=545, k=5, effect_threshold=0.2",
+            "[13:36:32] [INFO] [SlicerEngine] Overall classification loss: 0.1009",
+            "[13:36:53] [INFO] [SlicerEngine] Found 1 slices. Worst effect=0.629"
+        ]
+    },
+    "label_noise": {
+        "module": "LabelNoiseEngine",
+        "timestamp": "2026-06-21T13:36:53",
+        "severity": "HIGH",
+        "passed": false,
+        "findings": {
+            "num_errors_detected": 218,
+            "total_samples": 545,
+            "estimated_noise_fraction": 0.4,
+            "is_asymmetric": false,
+            "noise_severity": 0.0060975609756097615,
+            "avg_label_quality": 0.7019852686031404,
+            "error_indices": [
+                8,
+                87,
+                117,
+                130,
+                131,
+                137,
+                143,
+                144,
+                145,
+                146,
+                150,
+                151,
+                154,
+                156,
+                157,
+                158,
+                159,
+                167,
+                168,
+                170,
+                171,
+                173,
+                174,
+                176,
+                177,
+                180,
+                182,
+                183,
+                184,
+                185,
+                186,
+                187,
+                188,
+                189,
+                191,
+                192,
+                193,
+                195,
+                196,
+                197,
+                198,
+                199,
+                200,
+                201,
+                202,
+                203,
+                204,
+                205,
+                206,
+                207,
+                208,
+                209,
+                210,
+                211,
+                212,
+                213,
+                214,
+                215,
+                216,
+                218,
+                219,
+                221,
+                223,
+                224,
+                225,
+                227,
+                228,
+                229,
+                230,
+                231,
+                232,
+                233,
+                234,
+                235,
+                236,
+                237,
+                238,
+                239,
+                240,
+                241,
+                242,
+                243,
+                244,
+                245,
+                246,
+                247,
+                248,
+                249,
+                250,
+                251,
+                252,
+                253,
+                254,
+                255,
+                256,
+                257,
+                258,
+                259,
+                260,
+                261
+            ]
+        },
+        "log": [
+            "[13:36:53] [INFO] [LabelNoiseEngine] Starting LabelNoiseEngine",
+            "[13:36:53] [INFO] [LabelNoiseEngine] Starting Label Noise audit...",
+            "[13:36:53] [INFO] [LabelNoiseEngine] Audit complete. Detected 218 errors."
+        ]
+    },
+    "leakage": {
+        "module": "LeakageEngine",
+        "timestamp": "2026-06-21T13:36:53",
+        "severity": "HIGH",
+        "passed": false,
+        "findings": {
+            "summary": "Detected 2 potential leakage issues:\n- [HIGH] price: target_leakage (Score: 1.00)\n- [HIGH] predicted_price: target_leakage (Score: 0.98)",
+            "num_suspects": 2,
+            "suspects": [
+                {
+                    "feature": "price",
+                    "score": 1.0,
+                    "type": "target_leakage",
+                    "severity": "HIGH"
+                },
+                {
+                    "feature": "predicted_price",
+                    "score": 0.983011604252148,
+                    "type": "target_leakage",
+                    "severity": "HIGH"
+                }
+            ],
+            "full_report": {
+                "target_leakage": {
+                    "scores": {
+                        "price": 1.0,
+                        "area": 0.4603565741683037,
+                        "bedrooms": 0.2841842413207892,
+                        "bathrooms": 0.40187911282755656,
+                        "stories": 0.3316644605451207,
+                        "mainroad": 0.23238337943209883,
+                        "guestroom": 0.2063650924827811,
+                        "basement": 0.13983314756063864,
+                        "hotwaterheating": 0.06628953210355211,
+                        "airconditioning": 0.35319395643251134,
+                        "parking": 0.3057439453003989,
+                        "prefarea": 0.25020108352418663,
+                        "furnishingstatus": 0.24742061555505812,
+                        "predicted_price": 0.983011604252148
+                    }
+                },
+                "temporal_leakage": {}
+            }
+        },
+        "log": [
+            "[13:36:53] [INFO] [LeakageEngine] Starting LeakageEngine",
+            "[13:36:53] [INFO] [LeakageEngine] Starting Leakage scan...",
+            "[13:36:53] [INFO] [LeakageEngine] Leakage scan complete. Found 2 suspects."
+        ]
+    },
+    "missing_data": {
+        "module": "MissingDataEngine",
+        "timestamp": "2026-06-21T13:36:53",
+        "severity": "NONE",
+        "passed": true,
+        "findings": {
+            "missingness_rates": {
+                "area": 0.0,
+                "bedrooms": 0.0,
+                "bathrooms": 0.0,
+                "stories": 0.0,
+                "mainroad": 0.0,
+                "guestroom": 0.0,
+                "basement": 0.0,
+                "hotwaterheating": 0.0,
+                "airconditioning": 0.0,
+                "parking": 0.0,
+                "prefarea": 0.0,
+                "furnishingstatus": 0.0,
+                "predicted_price": 0.0
+            },
+            "mechanisms": {
+                "area": "NONE",
+                "bedrooms": "NONE",
+                "bathrooms": "NONE",
+                "stories": "NONE",
+                "mainroad": "NONE",
+                "guestroom": "NONE",
+                "basement": "NONE",
+                "hotwaterheating": "NONE",
+                "airconditioning": "NONE",
+                "parking": "NONE",
+                "prefarea": "NONE",
+                "furnishingstatus": "NONE",
+                "predicted_price": "NONE"
+            },
+            "global_mcar": {
+                "statistic": 0.0,
+                "pvalue": 1.0,
+                "mcar_likely": true,
+                "df": 0,
+                "error": "Insufficient degrees of freedom"
+            },
+            "signal_strength": {},
+            "max_missing_rate": 0.0
+        },
+        "log": [
+            "[13:36:53] [INFO] [MissingDataEngine] Starting MissingDataEngine",
+            "[13:36:53] [INFO] [MissingDataEngine] Starting Missing Data audit...",
+            "[13:36:53] [INFO] [MissingDataEngine] Missing Data audit complete. Max rate: 0.00%"
+        ]
+    },
+    "root_cause": {
+        "investigation_id": "inv_b7adbc580011",
+        "health_status": "Critical",
+        "confidence": 100,
+        "root_causes": [
+            {
+                "cause": "area feature drift",
+                "score": 100,
+                "severity": "CRITICAL",
+                "evidence": [
+                    "PSI=1.457, KS=0.512"
+                ],
+                "category": "feature_drift",
+                "source_modules": [
+                    "drift_engine"
+                ]
+            },
+            {
+                "cause": "bedrooms feature drift",
+                "score": 100,
+                "severity": "CRITICAL",
+                "evidence": [
+                    "PSI=0.586, KS=0.307"
+                ],
+                "category": "feature_drift",
+                "source_modules": [
+                    "drift_engine"
+                ]
+            },
+            {
+                "cause": "bathrooms feature drift",
+                "score": 100,
+                "severity": "CRITICAL",
+                "evidence": [
+                    "PSI=0.607, KS=0.324"
+                ],
+                "category": "feature_drift",
+                "source_modules": [
+                    "drift_engine"
+                ]
+            },
+            {
+                "cause": "stories feature drift",
+                "score": 100,
+                "severity": "CRITICAL",
+                "evidence": [
+                    "PSI=2.850, KS=0.228"
+                ],
+                "category": "feature_drift",
+                "source_modules": [
+                    "drift_engine"
+                ]
+            },
+            {
+                "cause": "parking feature drift",
+                "score": 100,
+                "severity": "HIGH",
+                "evidence": [
+                    "PSI=0.325, KS=0.266"
+                ],
+                "category": "feature_drift",
+                "source_modules": [
+                    "drift_engine"
+                ]
+            },
+            {
+                "cause": "predicted_price feature drift",
+                "score": 100,
+                "severity": "CRITICAL",
+                "evidence": [
+                    "PSI=12.802, KS=0.872"
+                ],
+                "category": "feature_drift",
+                "source_modules": [
+                    "drift_engine"
+                ]
+            },
+            {
+                "cause": "Slice failure: Slice(predicted_price_binned=predicted_price_bin2)",
+                "score": 85,
+                "severity": "MEDIUM",
+                "evidence": [
+                    "Effect size=0.63, loss gap=0.164"
+                ],
+                "category": "slice_degradation",
+                "source_modules": [
+                    "slicer_engine"
+                ]
+            },
+            {
+                "cause": "Calibration degradation",
+                "score": 50,
+                "severity": "HIGH",
+                "evidence": [
+                    "ECE=0.1873, Brier=0.0000"
+                ],
+                "category": "calibration",
+                "source_modules": [
+                    "calibration_engine"
+                ]
+            }
+        ],
+        "evidence": [
+            "6 features show drift. 1 problematic data slices. calibration degradation detected."
+        ],
+        "recommended_actions": [
+            "area distribution shifted significantly (PSI=1.457, KS=0.512). Collect recent samples from the affected segment before retraining.",
+            "bedrooms distribution shifted significantly (PSI=0.586, KS=0.307). Collect recent samples from the affected segment before retraining.",
+            "bathrooms distribution shifted significantly (PSI=0.607, KS=0.324). Collect recent samples from the affected segment before retraining.",
+            "stories distribution shifted significantly (PSI=2.850, KS=0.228). Collect recent samples from the affected segment before retraining.",
+            "parking distribution shifted significantly (PSI=0.325, KS=0.266). Collect recent samples from the affected segment before retraining."
+        ],
+        "generated_at": "2026-06-21T13:36:53.773201",
+        "module": "AutoRootCauseEngine",
+        "metadata": {
+            "evidence_summary": "6 features show drift. 1 problematic data slices. calibration degradation detected."
+        }
+    },
+    "ai_investigator": {
+        "executive_summary": "The model shows critical degradation requiring immediate attention. Primary issue appears to be distributional drift in area. Investigation confidence is high (100%) due to multiple supporting signals. Immediate action is recommended to prevent further degradation.",
+        "investigation_findings": "The model degradation appears to be primarily driven by the following factors:\n\n1. area feature drift\n   Evidence:\n   \u2022 PSI=1.457, KS=0.512\n   Source: drift_engine\n\n2. bedrooms feature drift\n   Evidence:\n   \u2022 PSI=0.586, KS=0.307\n   Source: drift_engine\n\n3. bathrooms feature drift\n   Evidence:\n   \u2022 PSI=0.607, KS=0.324\n   Source: drift_engine\n\n4. stories feature drift\n   Evidence:\n   \u2022 PSI=2.850, KS=0.228\n   Source: drift_engine\n\n5. parking feature drift\n   Evidence:\n   \u2022 PSI=0.325, KS=0.266\n   Source: drift_engine",
+        "impact_assessment": "Distributional drift may affect predictions for segments of the population that differ from training data. Specific customer segments may experience reduced prediction accuracy. Probability estimates may be less reliable for decision-making. \n\n7 high-severity issue(s) detected, indicating significant impact on model performance.",
+        "confidence_explanation": "Investigation confidence is 100% based on:\n\n\u2022 Number of identified issues: 8\n\u2022 High-severity issues: 7\n\u2022 Evidence strength: Strong (multiple supporting signals)\n\nHigh confidence indicates consistent findings across multiple analysis engines.",
+        "recommended_actions": [
+            "area distribution shifted significantly (PSI=1.457, KS=0.512). Collect recent samples from the affected segment before retraining.",
+            "bedrooms distribution shifted significantly (PSI=0.586, KS=0.307). Collect recent samples from the affected segment before retraining.",
+            "bathrooms distribution shifted significantly (PSI=0.607, KS=0.324). Collect recent samples from the affected segment before retraining.",
+            "stories distribution shifted significantly (PSI=2.850, KS=0.228). Collect recent samples from the affected segment before retraining.",
+            "parking distribution shifted significantly (PSI=0.325, KS=0.266). Collect recent samples from the affected segment before retraining."
+        ],
+        "technical_notes": "Technical Summary:\n\nFEATURE_DRIFT:\n  \u2022 area feature drift (Score: 100, Severity: CRITICAL)\n  \u2022 bedrooms feature drift (Score: 100, Severity: CRITICAL)\n  \u2022 bathrooms feature drift (Score: 100, Severity: CRITICAL)\n\nSLICE_DEGRADATION:\n  \u2022 Slice failure: Slice(predicted_price_binned=predicted_price_bin2) (Score: 85, Severity: MEDIUM)\n\nCALIBRATION:\n  \u2022 Calibration degradation (Score: 50, Severity: HIGH)\n\nAnalysis Engines Used: calibration_engine, drift_engine, slicer_engine\n\nInvestigation ID: inv_b7adbc580011\nGenerated At: 2026-06-21T13:36:53.773201\n",
+        "risk_level": "CRITICAL",
+        "generated_at": "2026-06-21T13:37:07.754885",
+        "investigation_id": "inv_b7adbc580011"
+    },
+    "charts": {
+        "prediction_dist": "{\"data\": [{\"marker\": {\"color\": \"#3b82f6\"}, \"name\": \"Predicted Probabilities\", \"nbinsx\": 30, \"opacity\": 0.7, \"x\": [0.05499609846066538, 0.16300264882070878, 0.2484780213284149, 0.34946126162504115, 0.4564534298077605, 0.5359553704435596, 0.6534596013336169, 0.7687604712801565, 0.8285204298786976, 0.9458772592848073], \"type\": \"histogram\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Prediction Confidence Distribution\"}, \"xaxis\": {\"title\": {\"text\": \"Predicted Probability\"}}, \"yaxis\": {\"title\": {\"text\": \"Frequency\"}}, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "residuals": "{\"data\": [{\"marker\": {\"color\": \"#f97316\", \"opacity\": 0.6, \"size\": 8}, \"mode\": \"markers\", \"name\": \"Residuals\", \"x\": [0.05499609846066538, 0.16300264882070878, 0.2484780213284149, 0.34946126162504115, 0.4564534298077605, 0.5359553704435596, 0.6534596013336169, 0.7687604712801565, 0.8285204298786976, 0.9458772592848073], \"y\": [-0.05499609846066538, -0.16300264882070878, -0.2484780213284149, -0.22638433854811807, 0.010213236858906183, 0.2783303438421547, 0.12431817644416088, 0.2198758923562072, 0.15064623678796907, 0.05412274071519274], \"type\": \"scatter\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"shapes\": [{\"line\": {\"color\": \"#64748b\", \"dash\": \"dash\"}, \"type\": \"line\", \"x0\": 0, \"x1\": 1, \"xref\": \"x domain\", \"y0\": 0, \"y1\": 0, \"yref\": \"y\"}], \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Residuals Plot (Actual - Predicted)\"}, \"xaxis\": {\"title\": {\"text\": \"Predicted Probability\"}}, \"yaxis\": {\"title\": {\"text\": \"Residual\"}}, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "psi_heatmap": "{\"data\": [{\"colorbar\": {\"thickness\": 15, \"title\": {\"text\": \"PSI\"}}, \"colorscale\": [[0.0, \"rgb(0,104,55)\"], [0.1, \"rgb(26,152,80)\"], [0.2, \"rgb(102,189,99)\"], [0.3, \"rgb(166,217,106)\"], [0.4, \"rgb(217,239,139)\"], [0.5, \"rgb(255,255,191)\"], [0.6, \"rgb(254,224,139)\"], [0.7, \"rgb(253,174,97)\"], [0.8, \"rgb(244,109,67)\"], [0.9, \"rgb(215,48,39)\"], [1.0, \"rgb(165,0,38)\"]], \"x\": [\"area\", \"bedrooms\", \"bathrooms\", \"stories\", \"parking\", \"predicted_price\"], \"y\": [\"PSI\"], \"z\": [[1.4574, 0.5857, 0.6066, 2.8502, 0.3248, 12.8016]], \"type\": \"heatmap\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Population Stability Index (PSI)\"}, \"xaxis\": {\"title\": {\"text\": \"Feature\"}}, \"height\": 250, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "ks_ranked": "{\"data\": [{\"marker\": {\"color\": \"#ea580c\"}, \"name\": \"KS Statistic\", \"orientation\": \"h\", \"x\": [0.8716, 0.512, 0.3239, 0.3073, 0.2659, 0.2281], \"y\": [\"predicted_price\", \"area\", \"bathrooms\", \"bedrooms\", \"parking\", \"stories\"], \"type\": \"bar\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"KS Statistic Ranked by Feature\"}, \"xaxis\": {\"title\": {\"text\": \"KS Statistic\"}}, \"yaxis\": {\"title\": {\"text\": \"Feature\"}}, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "noise_score_dist": "{\"data\": [{\"marker\": {\"color\": \"#10b981\"}, \"name\": \"Noise Score\", \"nbinsx\": 30, \"x\": [0.2367760980560297, 0.048543107802793195, 0.23165126610381978, 0.21683855727934734, 0.06304366363896031, 0.00852584949423858, 0.08856981190034026, 0.16400037123514455, 0.9056301162129359, 0.19072008630956996, 0.16043684410594197, 0.09301593700631945, 0.25479185450333697, 0.27911200030153094, 0.024342188783021943, 0.19225951416965884, 0.11530423820442876, 0.09755648602026208, 0.18627021010209818, 0.1485471498915481, 0.047207965312915844, 0.2802906715436485, 0.12526315475035452, 0.12840938929039403, 0.2733877897974073, 0.09444678981899816, 0.12966286078157013, 0.21881616546098726, 0.26140477497135367, 0.19245219660451754, 0.11431372482730402, 0.12531485463769257, 0.05663741818158027, 0.29482004533318534, 0.061296011598992714, 0.19550641863010923, 0.17894359172458163, 0.2146623867530563, 0.21961316414444088, 0.12479256914934038, 0.017090335266608025, 0.206750772064958, 0.08146227634358488, 0.2868668672971041, 0.28784826276907016, 0.20379348041131204, 0.07021231602495155, 0.05600242990060519, 0.15158025408145911, 0.016248608721369105, 0.21239667395596196, 0.1350881792598649, 0.23720673156426472, 0.23919042733896162, 0.2895103145656029, 0.05902041579363465, 0.06522814405421339, 0.2699961213469606, 0.20086845840582535, 0.20913023570013922, 0.037808041024546345, 0.14308991028339701, 0.17464218074059798, 0.014841630059396593, 0.2689234439229489, 0.2096162517200715, 0.001743449765807392, 0.11266716869613241, 0.08286194285940941, 0.2096774505181893, 0.11704905599551498, 0.22679660500369508, 0.2770392436760142, 0.030428597494981856, 0.06447967371152628, 0.24988574694926732, 0.19520359652404295, 0.2739318794348937, 0.019252667462979677, 0.1551193479264189, 0.2074082785054325, 0.23404642699195113, 0.2631579598796614, 0.17773667311339494, 0.08097270776954979, 0.008229468602275603, 0.004718552137139309, 0.7309057228319934, 0.29381243098507975, 0.05890004012630022, 0.08929469574739242, 0.1568866866937565, 0.027560389363704474, 0.20054836366638468, 0.08129498003543463, 0.20465961677159825, 0.0829411318812308, 0.06753525352120941, 0.2545904888511609, 0.29152142933511355, 0.06108577736390721, 0.023725038220086047, 0.13696471151059514, 0.23820465543073915, 0.23880998408778714, 0.19484320673952746, 0.17225670638928517, 0.15478048449940224, 0.033448394528756926, 0.18204755775499437, 0.16113476289215434, 0.19152518845764385, 0.08828178825749039, 0.006158112683987548, 0.009232595080888095, 0.17937724161262716, 0.227272068302245, 0.9557691402357318, 0.07491250018005033, 0.28777477419137526, 0.1238658165961576, 0.04143909599832102, 0.2967019939262273, 0.08173448391849265, 0.011796669883494515, 0.12187175020008628, 0.27124851832262464, 0.12658479694794267, 0.2304252646159748, 0.11125460535044773, 0.9738469321585497, 0.8678861882319943, 0.19502853409307816, 0.21172026734484656, 0.17640325340084664, 0.046192971323090214, 0.11862384414833015, 0.7304280056988525, 0.24067524606069665, 0.06624692305689663, 0.23293343392830046, 0.16880227069099094, 0.0672930658578981, 0.9219063046717849, 0.9074536277175285, 0.9704983766694077, 0.749585864997364, 0.26764099744910463, 0.04036859853725853, 0.08503474975683976, 0.7061063550350588, 0.9219139127793251, 0.023173325619732708, 0.11411148211215918, 0.9530028337254746, 0.2503606523423162, 0.933412988838411, 0.8207177839650731, 0.7327870237697945, 0.8108239706541869, 0.2207164484685248, 0.23470788578137322, 0.06238147360986709, 0.24994272733550973, 0.14946676182994592, 0.15256599781004004, 0.2925882188034747, 0.7323796708809968, 0.9895955034415447, 0.16365514095639858, 0.747246479837332, 0.8570598923132701, 0.12324298554048654, 0.8565670777977411, 0.8524964263686043, 0.24326209146769331, 0.9159753004137362, 0.86668221386646, 0.060259319487849024, 0.060833413551110035, 0.9636147082483946, 0.10046646668970341, 0.9888909451132116, 0.9982763191634497, 0.7960123874910414, 0.7651531618467923, 0.8658676063979459, 0.9141581218907139, 0.9715224728199685, 0.8858746886630321, 0.012955031744446876, 0.8689482264558595, 0.8609366351224798, 0.752017190610776, 0.21818996716106667, 0.7277464920088798, 0.7858465932888306, 0.9516646379189286, 0.7555286917948805, 0.7107967277075753, 0.8745873735495893, 0.7375405860129017, 0.8543401040542941, 0.7598210579579191, 0.8325605626829384, 0.8681095831959192, 0.7366823491044849, 0.7081762400673053, 0.8897371765588933, 0.8024518491974039, 0.9873647320279607, 0.7543987662729174, 0.8162415944317152, 0.7253367294291803, 0.7668545837842159, 0.7647231585488038, 0.7959518477310725, 0.17531809042889038, 0.8222750445974965, 0.8970128163190687, 0.003899908516068373, 0.9025514156952366, 0.03395392378026383, 0.8708197672221025, 0.877235569598003, 0.9058030079312496, 0.20744855105406554, 0.7463323596159432, 0.8248051458691747, 0.8663652165212385, 0.737397438330769, 0.9814449540830118, 0.988913186264673, 0.8640901022147778, 0.9263361538249095, 0.7706521694140875, 0.7188566303036106, 0.8127032554218383, 0.7299589487158834, 0.7967032782081105, 0.8959443097980506, 0.9770276868250306, 0.9535761106427483, 0.7206226833643374, 0.7675748189671855, 0.7285778503051493, 0.9015661030625551, 0.7130896270073167, 0.7209817426615962, 0.8598535043965299, 0.9772377924881582, 0.7661089000949217, 0.9523856121987029, 0.9476440661897629, 0.9864918781390615, 0.945481549059777, 0.9698637176175643, 0.7722478557187851, 0.8624531073051793, 0.7740471388101374, 0.7979672651283278, 0.9406781564177811, 0.07750673637358281, 0.26199338304287206, 0.10821513905694886, 0.21904924364788822, 0.1910146135369547, 0.17985403669145858, 0.11368251579842245, 0.12395672029202709, 0.14691317261691494, 0.12279278178113127, 0.2620791357305091, 0.09759272094839094, 0.1386276338271263, 0.2684178677143067, 0.027579742544362382, 0.015030555721694238, 0.21068296010582, 0.09234224625793334, 0.2975410963508868, 0.24802067017209933, 0.026601108081632952, 0.060422069663981566, 0.048663913947484046, 0.014292182246131357, 0.05940518392447566, 0.0031358330617981653, 0.04530348614192021, 0.22639127615325297, 0.15963479128071645, 0.23929575246223395, 0.16911690953680994, 0.1851973242463088, 0.13196950348656297, 0.22838330227381343, 0.02863662095843935, 0.2927907696721044, 0.1370710447837428, 0.20397785167487584, 0.29232946631354134, 0.21156829365762128, 0.1600978333901214, 0.2908668983360917, 0.24454481055009927, 0.17201990846743248, 0.25333155894488946, 0.20263527892599886, 0.13387407200807397, 0.26749289147372896, 0.2079471973794468, 0.19241530173341884, 0.042810025806577556, 0.05115225747546329, 0.2934878763895467, 0.2686653018875459, 0.17707012999317848, 0.1986617073786697, 0.20762318005740354, 0.294311112350549, 0.20603172097481673, 0.11431406212765041, 0.18593021765959591, 0.06995215082433666, 0.09646904062565963, 0.2299365035073647, 0.06705043858515423, 0.12571516232752367, 0.19896959392041894, 0.19947412146527307, 0.1856393703499717, 0.21580908991841574, 0.2694204662938895, 0.02877236495451012, 0.01882616601608291, 0.2925568611548818, 0.2783096553088285, 0.08304376201683346, 0.03431965562215811, 0.06851503055486488, 0.17317052693646337, 0.18998934473836318, 0.28773692581384464, 0.21855546159341524, 0.2386284265570191, 0.15527590455963464, 0.17549466591769364, 0.28011681928970544, 0.12666602947241648, 0.23250828391212097, 0.07893524044787421, 0.11313997649795432, 0.29021109043146887, 0.03644838902809154, 0.08038120126935419, 0.19291023769355137, 0.0770325198990873, 0.24711377625953446, 0.29417228043410787, 0.1551991638356415, 0.11414416076374506, 0.03441011134295959, 0.2647252172564008, 0.06503950698018589, 0.21532746026831925, 0.22316588063538242, 0.09382493792186546, 0.08474718046004488, 0.11654706840091736, 0.2669743424269194, 0.02271717573608616, 0.03320786824955607, 0.25473622118680816, 0.0904933043235643, 0.1692379090975837, 0.13098598329750152, 0.16567261905620087, 0.1571598886697736, 0.032028572610536474, 0.24752800178930645, 0.018970288379067935, 0.020373436081366426, 0.14055898191981295, 0.23337934650486508, 0.004880695373023591, 0.08382313664651468, 0.008488212968523133, 0.22762506519591408, 0.25821248149206505, 0.10539045122673242, 0.03708204709942688, 0.11218112890890479, 0.22950390716508046, 0.046913345608482246, 0.07933525499636518, 0.18955902355089646, 0.04011015647349494, 0.06898700303981174, 0.1073963038887036, 0.21097604332893669, 0.28526588972890593, 0.12022370031650735, 0.20868332408578455, 0.29257628495349347, 0.043646421047476715, 0.0058776148735160015, 0.2807862799101576, 0.17659674417048224, 0.07879855810070378, 0.18231246898203937, 0.24561716832163527, 0.02286072364011734, 0.28133497384345924, 0.2351159443908915, 0.1887712389107335, 0.2326769047247497, 0.27341659976974614, 0.16180443028955285, 0.2610017601403846, 0.052818371378115625, 0.19117865375048668, 0.28448072256535223, 0.053339013612427766, 0.11071357041631859, 0.23895649601494523, 0.21091106028588713, 0.29698943068641703, 0.11653642680039718, 0.2302433837550214, 0.27262346559152617, 0.11727903676714715, 0.1491199722818302, 0.23701245938103963, 0.13324052026341013, 0.08763892168541768, 0.0833581628640512, 0.10218751482593207, 0.16584673027809455, 0.03773152517733077, 0.2003419091546443, 0.17569230077409922, 0.14803827462266045, 0.25555139853107933, 0.15766175501645474, 0.2452105754658554, 0.2498837003136127, 0.027827458852936724, 0.0888404043790348, 0.08224857512544932, 0.09110724622174979, 0.12128392936701253, 0.18869301660412002, 0.11766138256465941, 0.2643572941036622, 0.17772234519684366, 0.21555288698443362, 0.05171667256623697, 0.05883602673730619, 0.02164851653748515, 0.0294943822774513, 0.05185125946061329, 0.042560341526204123, 0.28771492729349046, 0.012008637857353599, 0.2601954613140674, 0.22200819406517813, 0.2389059107198866, 0.22093086233042772, 0.01982986032511146, 0.26544837318846787, 0.2672085778927201, 0.1496577715864484, 0.10934197888140053, 0.1759762721325622, 0.1561700075226702, 0.15512840768836636, 0.13246676723037135, 0.2987190999230843, 0.28150082652664826, 0.270109489496401, 0.09581642239212765, 0.1114102548409747, 0.2255940132399034, 0.1797870097421035, 0.07317885909852051, 0.175556509598162, 0.2965171794649344, 0.18591074591878332, 0.05756525060432205, 0.09828963060189146, 0.29192625669406425, 0.11756001570372476, 0.08416128358257728, 0.2111423355423196, 0.26997649487291836, 0.12353090944258142, 0.09888146082744893, 0.2617058403711625, 0.06645507869249419, 0.11740793017867535, 0.07181407011586106, 0.18678122501433256, 0.2891675855122452, 0.29760064874100395, 0.0890994168338995, 0.00675762395114955, 0.18134902755832497, 0.08272855044427696, 0.269476373484953, 0.10172640920821541, 0.2791324481158144, 0.2388555414430648, 0.10765705165830532, 0.2621101533591367, 0.17123221286208443, 0.06380453283431277, 0.22161302184497836, 0.2488239224304404, 0.07169110968490507, 0.17819680330436938, 0.25785405795174393, 0.24846052575545377, 0.2894645777980625, 0.1528361587832603, 0.24923885824224698, 0.18951952690908316, 0.15795386003086834, 0.28223043637090733, 0.06577912080137051, 0.11156254853749531, 0.21764043527612978, 0.2877523376081641, 0.2653365031125297, 0.2890432606961494, 0.0616687899680874, 0.16675105124299378, 0.09528512094708667, 0.2991307491950827, 0.11955691918448928, 0.2775023399044313, 0.02955017226225154, 0.008732658693675255, 0.009234779644055623, 0.21855160151214312, 0.22603111818881141], \"type\": \"histogram\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Label Noise Score Distribution\"}, \"xaxis\": {\"title\": {\"text\": \"Noise Score\"}}, \"yaxis\": {\"title\": {\"text\": \"Frequency\"}}, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "leakage_scores": "{\"data\": [{\"marker\": {\"color\": \"#f97316\"}, \"name\": \"Leakage Score\", \"x\": [\"price\", \"predicted_price\"], \"y\": [1.0, 0.983011604252148], \"type\": \"bar\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Feature Leakage Scores\"}, \"xaxis\": {\"title\": {\"text\": \"Feature\"}}, \"yaxis\": {\"title\": {\"text\": \"Leakage Score\"}}, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "correlation_heatmap": "{\"data\": [{\"colorbar\": {\"thickness\": 15, \"title\": {\"text\": \"Correlation\"}}, \"colorscale\": [[0.0, \"rgb(103,0,31)\"], [0.1, \"rgb(178,24,43)\"], [0.2, \"rgb(214,96,77)\"], [0.3, \"rgb(244,165,130)\"], [0.4, \"rgb(253,219,199)\"], [0.5, \"rgb(247,247,247)\"], [0.6, \"rgb(209,229,240)\"], [0.7, \"rgb(146,197,222)\"], [0.8, \"rgb(67,147,195)\"], [0.9, \"rgb(33,102,172)\"], [1.0, \"rgb(5,48,97)\"]], \"x\": [\"price\", \"area\", \"bedrooms\", \"bathrooms\", \"stories\", \"parking\", \"predicted_price\"], \"y\": [\"price\", \"area\", \"bedrooms\", \"bathrooms\", \"stories\", \"parking\", \"predicted_price\"], \"z\": [[1.0, 0.54, 0.37, 0.52, 0.42, 0.38, 0.98], [0.54, 1.0, 0.15, 0.19, 0.08, 0.35, 0.6], [0.37, 0.15, 1.0, 0.37, 0.41, 0.14, 0.4], [0.52, 0.19, 0.37, 1.0, 0.33, 0.18, 0.56], [0.42, 0.08, 0.41, 0.33, 1.0, 0.05, 0.46], [0.38, 0.35, 0.14, 0.18, 0.05, 1.0, 0.42], [0.98, 0.6, 0.4, 0.56, 0.46, 0.42, 1.0]], \"zmid\": 0, \"type\": \"heatmap\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Feature Correlation Matrix\"}, \"xaxis\": {\"title\": {\"text\": \"Feature\"}}, \"yaxis\": {\"title\": {\"text\": \"Feature\"}}, \"height\": 500, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}",
+        "missing_data": "{\"data\": [{\"marker\": {\"color\": \"#64748b\"}, \"name\": \"Missing Rate\", \"x\": [\"area\", \"bedrooms\", \"bathrooms\", \"stories\", \"mainroad\", \"guestroom\", \"basement\", \"hotwaterheating\", \"airconditioning\", \"parking\", \"prefarea\", \"furnishingstatus\", \"predicted_price\"], \"y\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], \"type\": \"bar\"}], \"layout\": {\"template\": {\"data\": {\"histogram2dcontour\": [{\"type\": \"histogram2dcontour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"choropleth\": [{\"type\": \"choropleth\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"histogram2d\": [{\"type\": \"histogram2d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"heatmap\": [{\"type\": \"heatmap\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"contourcarpet\": [{\"type\": \"contourcarpet\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"contour\": [{\"type\": \"contour\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"surface\": [{\"type\": \"surface\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}], \"mesh3d\": [{\"type\": \"mesh3d\", \"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}], \"scatter\": [{\"fillpattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}, \"type\": \"scatter\"}], \"parcoords\": [{\"type\": \"parcoords\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolargl\": [{\"type\": \"scatterpolargl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"bar\"}], \"scattergeo\": [{\"type\": \"scattergeo\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterpolar\": [{\"type\": \"scatterpolar\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"histogram\": [{\"marker\": {\"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"histogram\"}], \"scattergl\": [{\"type\": \"scattergl\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatter3d\": [{\"type\": \"scatter3d\", \"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermap\": [{\"type\": \"scattermap\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattermapbox\": [{\"type\": \"scattermapbox\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scatterternary\": [{\"type\": \"scatterternary\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"scattercarpet\": [{\"type\": \"scattercarpet\", \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}, \"pattern\": {\"fillmode\": \"overlay\", \"size\": 10, \"solidity\": 0.2}}, \"type\": \"barpolar\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}]}, \"layout\": {\"autotypenumbers\": \"strict\", \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"hovermode\": \"closest\", \"hoverlabel\": {\"align\": \"left\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"bgcolor\": \"#E5ECF6\", \"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"ternary\": {\"bgcolor\": \"#E5ECF6\", \"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]]}, \"xaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"yaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"automargin\": true, \"zerolinewidth\": 2}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\", \"gridwidth\": 2}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"geo\": {\"bgcolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"subunitcolor\": \"white\", \"showland\": true, \"showlakes\": true, \"lakecolor\": \"white\"}, \"title\": {\"x\": 0.05}, \"mapbox\": {\"style\": \"light\"}}}, \"font\": {\"family\": \"Inter, sans-serif\", \"color\": \"white\"}, \"margin\": {\"l\": 50, \"r\": 50, \"t\": 60, \"b\": 50}, \"title\": {\"text\": \"Missing Data (%)\"}, \"xaxis\": {\"title\": {\"text\": \"Feature\"}}, \"yaxis\": {\"title\": {\"text\": \"Missing Percentage (%)\"}}, \"paper_bgcolor\": \"rgba(0,0,0,0)\", \"plot_bgcolor\": \"rgba(0,0,0,0)\", \"showlegend\": true}}"
+    }
+}

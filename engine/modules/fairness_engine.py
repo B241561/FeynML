@@ -137,17 +137,16 @@ class FairnessEngine:
             per_axis[ax] = audit_by_group(
                 y_true, y_pred,
                 groups=cfg["labels"],
-                axis_name=ax,
-                privileged_group=cfg["privileged"],
-                unprivileged_group=cfg["unprivileged"],
-                threshold=threshold,
+                group_name=ax,
+                y_prob=y_prob,
+                privileged=cfg["privileged"],
             )
 
         # ── aggregate summary ─────────────────────────────────────────
         all_violations = []
         all_warnings   = []
         for ax, result in per_axis.items():
-            for v in result["violations"]:
+            for v in result.get("violations", []):
                 all_violations.append(f"[{ax.upper()}] {v}")
             for w in result["warnings"]:
                 all_warnings.append(f"[{ax.upper()}] {w}")

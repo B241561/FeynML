@@ -18,6 +18,23 @@
                     <li><a class="dropdown-item py-2 text-main" href="{{ url_for('export_pdf', report_id=report_id) }}"><i class="bi bi-filetype-pdf me-2 text-indigo-500"></i>Full PDF</a></li>
                 </ul>
             </div>
+            <div class="dropdown">
+                <button class="btn btn-outline-indigo dropdown-toggle rounded-pill" type="button" data-bs-toggle="dropdown" id="audienceDropdown">
+                    <i class="bi bi-people me-2"></i>
+                    <span id="current-audience-label">{{ selected_audience | default('Audience') }}</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 bg-card">
+            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="ML Engineer" href="#"><i class="bi bi-cpu me-2 text-indigo-500"></i>ML Engineer</a></li>
+            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Executive" href="#"><i class="bi bi-briefcase me-2 text-indigo-500"></i>Executive</a></li>
+            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Doctor" href="#"><i class="bi bi-heart-pulse me-2 text-indigo-500"></i>Doctor</a></li>
+            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Loan Officer" href="#"><i class="bi bi-bank me-2 text-indigo-500"></i>Loan Officer</a></li>
+            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Student" href="#"><i class="bi bi-mortarboard me-2 text-indigo-500"></i>Student</a></li>
+            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="HR Manager" href="#"><i class="bi bi-people me-2 text-indigo-500"></i>HR Manager</a></li>
+            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Insurance Analyst" href="#"><i class="bi bi-shield me-2 text-indigo-500"></i>Insurance Analyst</a></li>
+            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Legal / Compliance Officer" href="#"><i class="bi bi-balance-scale me-2 text-indigo-500"></i>Legal / Compliance Officer</a></li>
+            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Researcher" href="#"><i class="bi bi-microscope me-2 text-indigo-500"></i>Researcher</a></li>
+        </ul>
+            </div>
             <div class="text-end">
                 <div class="label text-muted small fw-bold text-uppercase opacity-50 mb-1">Global Status</div>
                 {% set r_color = 'critical' if risk_level == 'CRITICAL' else 'high' if risk_level == 'HIGH' else 'medium' if risk_level == 'MEDIUM' else 'low' if risk_level == 'LOW' else 'none' %}
@@ -60,8 +77,23 @@
                 <div class="label">Label Noise</div>
                 {% set noise_findings = data.get('label_noise', {}).get('findings', {}) %}
                 {% set noise = noise_findings.get('estimated_noise_fraction', 0) %}
-                <div class="metric">{{ (noise * 100) | round(1) }}%</div>
+                {% set num_errors = noise_findings.get('num_errors_detected', 0) %}
+                {% set total_samples = noise_findings.get('total_samples', 0) %}
+                {% set noise_percent = noise * 100 %}
+                
+                {% if noise_percent > 15 %}
+                    {% set metric_color = 'text-danger' %}
+                {% elif noise_percent >= 5 %}
+                    {% set metric_color = 'text-warning' %}
+                {% else %}
+                    {% set metric_color = 'text-success' %}
+                {% endif %}
+                
+                <div class="metric {{ metric_color }}">{{ (noise_percent) | round(1) }}%</div>
                 <div class="small text-muted mt-2">Noise Fraction</div>
+                {% if num_errors > 0 %}
+                <div class="small text-muted mt-1">{{ num_errors }} of {{ total_samples }} samples flagged</div>
+                {% endif %}
             </div>
         </div>
         <div class="col-md">
@@ -69,8 +101,16 @@
                 <div class="label">Leakage</div>
                 {% set leakage_findings = data.get('leakage', {}).get('findings', {}) %}
                 {% set suspects = leakage_findings.get('num_suspects', 0) %}
+                {% set suspect_list = leakage_findings.get('suspects', []) %}
                 <div class="metric">{{ suspects }}</div>
                 <div class="small text-muted mt-2">Suspect Columns</div>
+                {% if suspect_list %}
+                <div class="mt-3 d-flex flex-wrap gap-2">
+                    {% for suspect in suspect_list[:3] %}
+                    <span class="badge bg-secondary text-xs">{{ suspect.feature }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
         </div>
         <div class="col-md">
@@ -138,6 +178,7 @@
         </div>
         
         <!-- Phase 2 Card -->
+        {% if data.get('fairness') and data.fairness.status != 'SKIPPED' %}
         <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -145,29 +186,29 @@
                     <i class="bi bi-activity text-indigo-500"></i>
                 </div>
                 <div class="card-body">
-                    {% if data.get('fairness') and data.fairness.status != 'SKIPPED' %}
                     <div class="row text-center g-4">
                         <div class="col-4">
                             <div class="label text-muted small mb-1">Detected Bias</div>
-                            <div class="metric h2 fw-bold mb-0">{% if data.fairness.findings.get('disparity_ratio') is defined %}{{ data.fairness.findings.disparity_ratio | round(2) }}{% else %}0.0{% endif %}</div>
+                            <div class="metric h2 fw-bold mb-0">{% if data.fairness.get('findings', {}).get('disparity_ratio') %}{{ data.fairness.get('findings', {}).get('disparity_ratio') | round(2) }}{% else %}0.0{% endif %}</div>
                         </div>
                         <div class="col-4 border-start border-end">
                             <div class="label text-muted small mb-1">Impacted Groups</div>
-                            <div class="metric h2 fw-bold mb-0">{% if data.fairness.findings.get('groups') is defined %}{{ data.fairness.findings.groups | length }}{% else %}0{% endif %}</div>
+                            <div class="metric h2 fw-bold mb-0">{% if data.fairness.get('findings', {}).get('groups') %}{{ data.fairness.get('findings', {}).get('groups') | length }}{% else %}0{% endif %}</div>
                         </div>
                         <div class="col-4">
                             <div class="label text-muted small mb-1">Disparity Index</div>
-                            <div class="metric h2 fw-bold mb-0">{% if data.fairness.findings.get('max_disparity') is defined %}{{ (data.fairness.findings.max_disparity * 100) | round(1) }}%{% else %}0%{% endif %}</div>
+                            <div class="metric h2 fw-bold mb-0">{% if data.fairness.get('findings', {}).get('max_disparity') %}{{ (data.fairness.get('findings', {}).get('max_disparity') * 100) | round(1) }}%{% else %}0%{% endif %}</div>
                         </div>
                     </div>
-                    {% else %}
-                    <div class="d-flex align-items-center justify-content-center h-100">
-                        <p class="text-fairness-muted fst-italic mb-0">Fairness audit not configured.</p>
+                    {% if data.fairness.auto_detected %}
+                    <div class="mt-3 text-center small text-muted">
+                        <i class="bi bi-info-circle me-1"></i>Auto-detected sensitive feature: {{ data.fairness.auto_detected_column }}
                     </div>
                     {% endif %}
                 </div>
             </div>
         </div>
+        {% endif %}
 
         <div class="col-md-6">
             <div class="card h-100">
@@ -179,7 +220,7 @@
                     <div class="row align-items-center">
                         <div class="col-auto">
                             {% set drift_findings = data.get('drift', {}).get('findings', {}) %}
-                            <div class="metric display-6 fw-bold">{% if drift_findings.get('domain_auc') is defined %}{{ drift_findings.domain_auc | round(3) }}{% else %}0.0{% endif %}</div>
+                            <div class="metric display-6 fw-bold">{% if drift_findings.get('domain_auc') is defined and drift_findings.domain_auc is number %}{{ drift_findings.domain_auc | round(3) }}{% else %}0.0{% endif %}</div>
                             <div class="label text-muted small mt-1">Domain AUC</div>
                         </div>
                         <div class="col border-start ms-3">
@@ -188,13 +229,120 @@
                         </div>
                         <div class="col border-start">
                             <div class="label text-muted small mb-1">Mean PSI</div>
-                            <div class="metric h5 mb-0">{{ drift_findings.get('mean_psi', 0) | round(3) }}</div>
+                            <div class="metric h5 mb-0">{{ drift_findings.get('mean_psi', 0) | round(3) if drift_findings.get('mean_psi') is number else '0.0' }}</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Leakage Details Expandable Section -->
+    {% if suspect_list %}
+    <div class="card mb-4 mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer;" 
+             data-bs-toggle="collapse" data-bs-target="#leakageDetails" aria-expanded="false" aria-controls="leakageDetails">
+            <span class="fw-bold">Leakage Details</span>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="collapse" id="leakageDetails">
+            <div class="card-body p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Column Name</th>
+                                <th>Leakage Type</th>
+                                <th>Confidence</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for suspect in suspect_list %}
+                            <tr>
+                                <td class="fw-bold">{{ suspect.feature }}</td>
+                                <td>
+                                    {% set type_map = {
+                                        'target_leakage': {'badge': 'bg-danger', 'label': 'Target Leakage'},
+                                        'temporal_leakage': {'badge': 'bg-warning', 'label': 'Temporal Leakage'},
+                                        'id_leakage': {'badge': 'bg-info', 'label': 'ID Leakage'}
+                                    } %}
+                                    {% set type_info = type_map.get(suspect.type, {'badge': 'bg-secondary', 'label': suspect.type}) %}
+                                    <span class="badge {{ type_info.badge }}">{{ type_info.label }}</span>
+                                </td>
+                                <td>{{ (suspect.score * 100) | round(1) }}%</td>
+                                <td class="text-muted small">
+                                    {% if suspect.type == 'target_leakage' %}
+                                        {{ (suspect.score * 100) | round(0) }}% correlation with target — likely encodes the answer directly
+                                    {% elif suspect.type == 'temporal_leakage' %}
+                                        Uses future information that wouldn't be available at prediction time
+                                    {% else %}
+                                        High leakage score detected
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Label Noise Details Expandable Section -->
+    {% set error_details = noise_findings.get('error_details', []) %}
+    {% set per_class = noise_findings.get('per_class_noise', []) %}
+    {% if error_details or per_class %}
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer;" 
+             data-bs-toggle="collapse" data-bs-target="#labelNoiseDetails" aria-expanded="false" aria-controls="labelNoiseDetails">
+            <span class="fw-bold">Label Noise Details</span>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="collapse" id="labelNoiseDetails">
+            <div class="card-body p-4">
+                {% if per_class %}
+                    {% set worst_class = per_class | sort(attribute='error_rate', reverse=True) | first %}
+                    <p class="mb-4">
+                        Class {{ worst_class.class_label }} has highest mislabeling rate ({{ (worst_class.error_rate * 100) | round(1) }}%).
+                        Review labeling process for this class.
+                    </p>
+                    
+                    {% if charts.get('label_noise_per_class') %}
+                        <div id="chart-label-noise-per-class" style="width:100%; height:350px;"></div>
+                    {% endif %}
+                {% endif %}
+                
+                {% if error_details %}
+                <h6 class="fw-bold small text-muted text-uppercase mb-3 mt-4">Top 10 Suspected Mislabeled Samples</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Sample Index</th>
+                                <th>True Label</th>
+                                <th>Predicted Label</th>
+                                <th>Noise Probability</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for err in error_details %}
+                            <tr>
+                                <td>{{ err.sample_index }}</td>
+                                <td>{{ err.true_label }}</td>
+                                <td>{{ err.predicted_label }}</td>
+                                <td>{{ (err.noise_probability * 100) | round(1) }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Bottom Action Row -->
     <div class="card audit-banner p-4 shadow-lg">
@@ -240,6 +388,286 @@
         </div>
     </section>
 
+    <!-- Phase 4: Root Cause Analysis -->
+    <section class="mt-5">
+        <div class="container">
+            <h3 class="fw-bold mb-3">Phase 4: Root Cause Analysis</h3>
+            <div class="card">
+                <div class="card-header">Auto Root Cause Analysis</div>
+                <div class="card-body p-4">
+                    {% set root_cause_data = data.get('root_cause', {}) %}
+                    {% if root_cause_data %}
+                        <div class="row align-items-center mb-4">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="h3 fw-bold mb-0 me-3">{{ root_cause_data.get('health_status', 'Unknown') }}</div>
+                                    <div class="text-muted small">Model Health Status</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="h3 fw-bold mb-0 me-3">{{ root_cause_data.get('confidence', 0) }}%</div>
+                                    <div class="text-muted small">Confidence Score</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if root_cause_data.get('root_causes') %}
+                        <h6 class="fw-bold small text-muted text-uppercase mb-3">Top Root Causes</h6>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-hover table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Cause</th>
+                                        <th>Score</th>
+                                        <th>Severity</th>
+                                        <th>Evidence</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cause in root_cause_data.root_causes[:5] %}
+                                    <tr>
+                                        <td class="fw-bold">{{ cause.get('cause', 'N/A') }}</td>
+                                        <td>{{ cause.get('score', 0) }}</td>
+                                        <td>
+                                            <span class="badge-pill badge-{{ 'critical' if cause.get('severity') == 'CRITICAL' else 'high' if cause.get('severity') == 'HIGH' else 'medium' if cause.get('severity') == 'MEDIUM' else 'none' }}">
+                                                {{ cause.get('severity', 'LOW') }}
+                                            </span>
+                                        </td>
+                                        <td class="small text-muted">
+                                            {% for evidence in cause.get('evidence', [])[:2] %}
+                                                {{ evidence }}{% if not loop.last %}; {% endif %}
+                                            {% endfor %}
+                                        </td>
+                                    </tr>
+                                    {% if cause.get('domain_translation') %}
+                                    <tr>
+                                        <td colspan="4" style="
+                                            font-style: italic;
+                                            color: #a0aec0;
+                                            font-size: 0.825rem;
+                                            padding: 2px 16px 10px;
+                                            border-top: none;">
+                                            💬 {{ cause.get('domain_translation') }}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+
+                        {% if root_cause_data.get('recommended_actions') %}
+                        <h6 class="fw-bold small text-muted text-uppercase mb-3">Recommended Actions</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for action in root_cause_data.recommended_actions %}
+                            <li class="list-group-item">
+                                <i class="bi bi-lightbulb-fill me-2 text-warning"></i>{{ action }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted italic">Root cause analysis not available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Investigator Section -->
+    <section class="mt-5">
+        <div class="container">
+            <h3 class="fw-bold mb-3">AI Investigator Report</h3>
+            <div class="card">
+                <div class="card-header">AI Investigator Report</div>
+                <div class="card-body p-4">
+                    <div id="audience-content">
+                        {% set selected_audience = data.get('selected_audience', 'ML Engineer') %}
+                        {% set ai_by_audience = data.get('ai_investigator_by_audience', {}) %}
+                        {% set ai_investigator_data = ai_by_audience.get(selected_audience, data.get('ai_investigator', {})) %}
+                        {% set audience_reports = data.get('audience_reports', {}) %}
+                        {% if ai_investigator_data %}
+                            <div class="row align-items-center mb-4">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <div class="h3 fw-bold mb-0 me-3">{{ ai_investigator_data.get('risk_level', 'UNKNOWN') }}</div>
+                                        <div class="text-muted small">Risk Level</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="text-muted small">
+                                        Investigation ID: {{ ai_investigator_data.get('investigation_id', 'N/A') }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold small text-muted text-uppercase mb-3">Executive Summary</h6>
+                            <p class="mb-4" id="audience-executive-summary">{{ ai_investigator_data.get('executive_summary', '') }}</p>
+
+                            <h6 class="fw-bold small text-muted text-uppercase mb-3">Investigation Findings</h6>
+                            <div class="bg-dark p-3 rounded mb-4" style="background-color: #1a1a2a !important;" id="audience-findings">
+                                {{ ai_investigator_data.get('investigation_findings', '') | replace('\n', '<br>') | safe }}
+                            </div>
+
+                            {% if ai_investigator_data.get('impact_assessment') %}
+                            <h6 class="fw-bold small text-muted text-uppercase mb-3">Impact Assessment</h6>
+                            <p class="mb-4" id="audience-impact">{{ ai_investigator_data.get('impact_assessment') }}</p>
+                            {% endif %}
+
+                            {% if ai_investigator_data.get('confidence_explanation') %}
+                            <h6 class="fw-bold small text-muted text-uppercase mb-3">Confidence Explanation</h6>
+                            <div class="bg-dark p-3 rounded mb-4" style="background-color: #1a1a2a !important;" id="audience-confidence">
+                                {{ ai_investigator_data.get('confidence_explanation') | replace('\n', '<br>') | safe }}
+                            </div>
+                            {% endif %}
+
+                            <h6 class="fw-bold small text-muted text-uppercase mb-3">Recommended Actions</h6>
+                            <ul class="list-group list-group-flush mb-4" id="audience-recommendations">
+                                {% for action in ai_investigator_data.get('recommended_actions', []) %}
+                                <li class="list-group-item">
+                                    <i class="bi bi-lightbulb-fill me-2 text-warning"></i>{{ action }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+
+                            {% if ai_investigator_data.get('technical_notes') %}
+                            <h6 class="fw-bold small text-muted text-uppercase mb-3">Technical Notes</h6>
+                            <div class="bg-dark p-3 rounded" style="background-color: #1a1a2a !important; font-family: monospace; font-size: 0.9em;" id="audience-technical">
+                                {{ ai_investigator_data.get('technical_notes') | replace('\n', '<br>') | safe }}
+                            </div>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-muted italic">AI Investigator report not available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+    // Audience Translation JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        const audienceReports = {{ data.get('audience_reports', {}) | tojson | safe }};
+        const selectedAudience = "{{ selected_audience | default('ML Engineer') }}";
+        console.log('[AUDIENCE DEBUG] audienceReports loaded:', audienceReports);
+        console.log('[AUDIENCE DEBUG] Keys in audienceReports:', Object.keys(audienceReports));
+        console.log('[AUDIENCE DEBUG] DOM loaded, checking for elements...');
+        
+        // Check if elements exist
+        console.log('[AUDIENCE DEBUG] audience-executive-summary exists:', !!document.getElementById('audience-executive-summary'));
+        console.log('[AUDIENCE DEBUG] audience-findings exists:', !!document.getElementById('audience-findings'));
+        console.log('[AUDIENCE DEBUG] audience-recommendations exists:', !!document.getElementById('audience-recommendations'));
+        
+        document.querySelectorAll('.audience-option').forEach(option => {
+            console.log('[AUDIENCE DEBUG] Found audience option:', option.getAttribute('data-audience'));
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                const audience = this.getAttribute('data-audience');
+                console.log('[AUDIENCE DEBUG] Clicked audience:', audience);
+                // Save audience to session
+                fetch('/set-audience', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'audience': audience
+                    })
+                }).then(response => response.json())
+                  .then(data => console.log('[AUDIENCE DEBUG] Audience saved to session:', data))
+                  .catch(error => console.error('[AUDIENCE DEBUG] Error saving audience:', error));
+                updateAudienceContent(audience);
+            });
+        });
+        
+        function updateAudienceContent(audience) {
+            console.log('[AUDIENCE DEBUG] updateAudienceContent called with:', audience);
+            document.getElementById('current-audience-label').textContent = audience;
+            const report = audienceReports[audience];
+            console.log('[AUDIENCE DEBUG] Report object:', report);
+            if (!report) {
+                console.log('[AUDIENCE DEBUG] Report not found for audience:', audience);
+                return;
+            }
+            
+            // Update executive summary
+            const execSummaryEl = document.getElementById('audience-executive-summary');
+            console.log('[AUDIENCE DEBUG] execSummaryEl found:', !!execSummaryEl);
+            if (execSummaryEl && report.executive_summary) {
+                console.log('[AUDIENCE DEBUG] Updating executive summary from:', execSummaryEl.textContent.substring(0, 50));
+                execSummaryEl.textContent = report.executive_summary;
+                console.log('[AUDIENCE DEBUG] Updated executive summary to:', execSummaryEl.textContent.substring(0, 50));
+            } else {
+                console.log('[AUDIENCE DEBUG] Skipping executive summary update - element not found or data missing');
+            }
+            
+            // Update findings
+            const findingsEl = document.getElementById('audience-findings');
+            console.log('[AUDIENCE DEBUG] findingsEl found:', !!findingsEl);
+            if (findingsEl && report.findings) {
+                console.log('[AUDIENCE DEBUG] Updating findings');
+                findingsEl.innerHTML = report.findings.replace(/\n/g, '<br>');
+            } else {
+                console.log('[AUDIENCE DEBUG] Skipping findings update - element not found or data missing');
+            }
+            
+            // Update impact assessment
+            const impactEl = document.getElementById('audience-impact');
+            console.log('[AUDIENCE DEBUG] impactEl found:', !!impactEl);
+            if (impactEl && report.impact_assessment) {
+                console.log('[AUDIENCE DEBUG] Updating impact assessment');
+                impactEl.textContent = report.impact_assessment;
+                // Make sure the element is visible
+                impactEl.parentElement.style.display = 'block';
+            } else if (impactEl) {
+                impactEl.parentElement.style.display = 'none';
+            }
+            
+            // Update confidence explanation
+            const confidenceEl = document.getElementById('audience-confidence');
+            console.log('[AUDIENCE DEBUG] confidenceEl found:', !!confidenceEl);
+            if (confidenceEl && report.confidence_explanation) {
+                console.log('[AUDIENCE DEBUG] Updating confidence explanation');
+                confidenceEl.innerHTML = report.confidence_explanation.replace(/\n/g, '<br>');
+                confidenceEl.parentElement.style.display = 'block';
+            } else if (confidenceEl) {
+                confidenceEl.parentElement.style.display = 'none';
+            }
+            
+            // Update recommendations
+            const recommendationsEl = document.getElementById('audience-recommendations');
+            console.log('[AUDIENCE DEBUG] recommendationsEl found:', !!recommendationsEl);
+            if (recommendationsEl && report.recommendations) {
+                console.log('[AUDIENCE DEBUG] Updating recommendations');
+                recommendationsEl.innerHTML = report.recommendations.map(action => 
+                    `<li class="list-group-item"><i class="bi bi-lightbulb-fill me-2 text-warning"></i>${action}</li>`
+                ).join('');
+            } else {
+                console.log('[AUDIENCE DEBUG] Skipping recommendations update - element not found or data missing');
+            }
+            
+            // Update technical notes
+            const technicalEl = document.getElementById('audience-technical');
+            console.log('[AUDIENCE DEBUG] technicalEl found:', !!technicalEl);
+            if (technicalEl && report.technical_notes) {
+                console.log('[AUDIENCE DEBUG] Updating technical notes');
+                technicalEl.innerHTML = report.technical_notes.replace(/\n/g, '<br>');
+                technicalEl.parentElement.style.display = 'block';
+            } else if (technicalEl) {
+                technicalEl.parentElement.style.display = 'none';
+            }
+        }
+        
+        // Initial load: show server-selected audience report
+        if (audienceReports && Object.keys(audienceReports).length > 0) {
+            updateAudienceContent(selectedAudience);
+        }
+    });
+    </script>
+
 {% if charts %}
 <script>
     // Initialize Plotly Charts with theme awareness
@@ -273,6 +701,12 @@
     var driftChart = {{ charts.drift | safe }};
     Object.assign(driftChart.layout, baseLayout);
     Plotly.newPlot('chart-drift', driftChart.data, driftChart.layout, {responsive: true, displayModeBar: false});
+    {% endif %}
+
+    {% if charts.get('label_noise_per_class') %}
+    var lnChart = {{ charts.label_noise_per_class | safe }};
+    Object.assign(lnChart.layout, baseLayout);
+    Plotly.newPlot('chart-label-noise-per-class', lnChart.data, lnChart.layout, {responsive: true, displayModeBar: false});
     {% endif %}
 </script>
 {% endif %}

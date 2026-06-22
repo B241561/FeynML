@@ -8,6 +8,8 @@ Aggregates findings from:
   • Validator     (data quality, leakage, drift)
   • FairnessEngine (fairness audit across axes)
   • CalibrationEngine (calibration quality)
+  • AutoRootCauseEngine (root cause analysis)
+  • AIInvestigator (AI-powered investigation analysis)
 
 Outputs:
   • JSON report   — machine-readable structured findings
@@ -22,6 +24,8 @@ Usage:
     re.add_section("fairness",     fairness_report)
     re.add_section("calibration",  cal_report)
     re.add_section("validation",   val_report)
+    re.add_section("root_cause",   root_cause_report)
+    re.add_section("ai_investigator", ai_investigator_report)
     re.save_html("reports/investigation.html")
     re.save_json("reports/findings.json")
     print(re.text_summary())
@@ -252,6 +256,134 @@ class ReportEngine:
                                 f"{'✓' if check['status']=='OK' else '✗'} "
                                 f"<b>{check.get('check','')}</b>: "
                                 f"{check.get('detail','')}</p>")
+
+            # Root Cause section
+            elif name == "root_cause":
+                health_status = data.get("health_status", "Unknown")
+                confidence = data.get("confidence", 0)
+                root_causes = data.get("root_causes", [])
+                recommended_actions = data.get("recommended_actions", [])
+                
+                # Health status badge with visual indicator
+                health_colors = {
+                    "Healthy": "#27ae60",
+                    "Warning": "#f0ad4e",
+                    "Critical": "#e74c3c",
+                    "Unknown": "#7f8c8d"
+                }
+                health_color = health_colors.get(health_status, "#7f8c8d")
+                health_icon = "✓" if health_status == "Healthy" else "!" if health_status == "Warning" else "✗"
+                
+                content += f"<div style='display:flex;align-items:center;gap:12px;margin:12px 0'>"
+                content += f"<div style='font-size:2em;color:{health_color};font-weight:bold'>{health_icon}</div>"
+                content += f"<div>"
+                content += f"<p style='font-size:1.1em;margin:0'>"
+                content += f"<b>Health Status:</b> {_badge(health_status, health_color)} "
+                content += f"<b>Confidence:</b> {confidence}%"
+                content += "</p>"
+                content += "</div>"
+                content += "</div>"
+                
+                # Root causes with severity indicators
+                if root_causes:
+                    content += "<h4 style='margin:16px 0 8px'>Top Root Causes</h4>"
+                    content += "<table style='width:100%;border-collapse:collapse'>"
+                    content += "<tr style='background:#2a2a3a'><th>Cause</th><th>Score</th><th>Severity</th><th>Source</th><th>Evidence</th></tr>"
+                    for i, cause in enumerate(root_causes[:5]):
+                        severity = cause.get("severity", "LOW")
+                        sev_color = _severity_color(severity)
+                        sev_icon = "●" if severity == "LOW" else "●●" if severity == "MEDIUM" else "●●●" if severity == "HIGH" else "●●●●"
+                        evidence = cause.get("evidence", [])
+                        evidence_str = "; ".join(evidence[:2]) if evidence else "N/A"
+                        source_modules = cause.get("source_modules", [])
+                        source_str = ", ".join(source_modules) if source_modules else "N/A"
+                        
+                        # Add row with severity color
+                        row_bg = "#3a1a1a" if severity == "CRITICAL" else "#2a2a1a" if severity == "HIGH" else "#1a2a1a" if severity == "MEDIUM" else ""
+                        content += f"<tr style='{row_bg}'>"
+                        content += f"<td>{cause.get('cause', 'N/A')}</td>"
+                        content += f"<td>{cause.get('score', 0)}</td>"
+                        content += f"<td>{_badge(severity, sev_color)} <span style='color:{sev_color}'>{sev_icon}</span></td>"
+                        content += f"<td style='font-size:0.85em;color:#aaa'>{source_str}</td>"
+                        content += f"<td style='font-size:0.85em'>{evidence_str}</td>"
+                        content += f"</tr>"
+                    content += "</table>"
+                
+                # Recommended actions
+                if recommended_actions:
+                    content += "<h4 style='margin:16px 0 8px'>Recommended Actions</h4>"
+                    content += "<ul style='margin:8px 0;padding-left:20px'>"
+                    for action in recommended_actions:
+                        content += f"<li style='margin:6px 0'>{action}</li>"
+                    content += "</ul>"
+            
+            # AI Investigator section
+            elif name == "ai_investigator":
+                risk_level = data.get("risk_level", "UNKNOWN")
+                executive_summary = data.get("executive_summary", "")
+                investigation_findings = data.get("investigation_findings", "")
+                impact_assessment = data.get("impact_assessment", "")
+                confidence_explanation = data.get("confidence_explanation", "")
+                recommended_actions = data.get("recommended_actions", [])
+                technical_notes = data.get("technical_notes", "")
+                
+                # Risk level badge
+                risk_colors = {
+                    "LOW": "#27ae60",
+                    "MEDIUM": "#f0ad4e",
+                    "HIGH": "#e67e22",
+                    "CRITICAL": "#e74c3c",
+                    "UNKNOWN": "#7f8c8d"
+                }
+                risk_color = risk_colors.get(risk_level, "#7f8c8d")
+                
+                content += f"<div style='display:flex;align-items:center;gap:12px;margin:12px 0'>"
+                content += f"<div style='font-size:1.5em;color:{risk_color};font-weight:bold'>⚠</div>"
+                content += f"<div>"
+                content += f"<p style='font-size:1.1em;margin:0'>"
+                content += f"<b>Risk Level:</b> {_badge(risk_level, risk_color)}"
+                content += "</p>"
+                content += "</div>"
+                content += "</div>"
+                
+                # Executive Summary
+                if executive_summary:
+                    content += "<h4 style='margin:16px 0 8px'>Executive Summary</h4>"
+                    content += f"<p style='line-height:1.6'>{executive_summary}</p>"
+                
+                # Investigation Findings
+                if investigation_findings:
+                    content += "<h4 style='margin:16px 0 8px'>Investigation Findings</h4>"
+                    content += f"<div style='background:#1a1a2a;padding:12px;border-radius:4px;margin:8px 0'>"
+                    content += investigation_findings.replace("\n", "<br>")
+                    content += "</div>"
+                
+                # Impact Assessment
+                if impact_assessment:
+                    content += "<h4 style='margin:16px 0 8px'>Impact Assessment</h4>"
+                    content += f"<p style='line-height:1.6'>{impact_assessment}</p>"
+                
+                # Confidence Explanation
+                if confidence_explanation:
+                    content += "<h4 style='margin:16px 0 8px'>Confidence Explanation</h4>"
+                    content += f"<div style='background:#1a1a2a;padding:12px;border-radius:4px;margin:8px 0'>"
+                    content += confidence_explanation.replace("\n", "<br>")
+                    content += "</div>"
+                
+                # Recommended Actions
+                if recommended_actions:
+                    content += "<h4 style='margin:16px 0 8px'>Recommended Actions</h4>"
+                    content += "<ul style='margin:8px 0;padding-left:20px'>"
+                    for action in recommended_actions:
+                        content += f"<li style='margin:6px 0'>{action}</li>"
+                    content += "</ul>"
+                
+                # Technical Notes
+                if technical_notes:
+                    content += "<h4 style='margin:16px 0 8px'>Technical Notes</h4>"
+                    content += f"<div style='background:#1a1a2a;padding:12px;border-radius:4px;margin:8px 0;font-family:monospace;font-size:0.9em'>"
+                    content += technical_notes.replace("\n", "<br>")
+                    content += "</div>"
 
             # Generic fallback
             else:

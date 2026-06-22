@@ -189,14 +189,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             typing.classList.add('d-none');
 
-            if (data.reply) {
+            if (data.success && data.reply) {
                 appendMessage('ai', data.reply);
             } else {
-                appendMessage('ai', "Sorry, I'm having trouble connecting to my brain right now. Please try again later.");
+                const errorMsg = data.error || "Sorry, I'm having trouble connecting to my brain right now. Please try again later.";
+                appendMessage('ai', `**Assistant Error:** ${errorMsg}`);
             }
         } catch (err) {
             typing.classList.add('d-none');
-            appendMessage('ai', "Error connecting to FeynML engine. Please check your connection.");
+            appendMessage('ai', "**Connection Error:** Could not reach the FeynML engine. If you are running locally, check your terminal. If deployed, verify the server is active.");
         }
         
         scrollToBottom();

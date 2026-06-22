@@ -167,6 +167,37 @@ class DriftEngine(BaseModule):
         self._reference      = None
         self._feature_names  = None
         self._categorical    = set()
+        self._excluded_features = set()
+        self._audit_log = []
+
+    def _is_identifier_column(self, feature_name: str) -> bool:
+        """
+        Detect if a column is an identifier column that should be excluded from analysis.
+
+        Args:
+            feature_name: Name of the feature column
+
+        Returns:
+            True if the column is an identifier, False otherwise
+        """
+        if not feature_name:
+            return False
+
+        feature_lower = feature_name.lower()
+
+        # Direct matches
+        if feature_lower in ["id", "studentid", "userid", "customerid", "recordid"]:
+            return True
+
+        # Pattern matches: *_id
+        if feature_lower.endswith("_id"):
+            return True
+
+        # Pattern matches: id_*
+        if feature_lower.startswith("id_"):
+            return True
+
+        return False
 
     def set_reference(self, X_reference, feature_names=None, categorical_cols=None):
         """
@@ -179,6 +210,15 @@ class DriftEngine(BaseModule):
         self._reference     = X_reference
         n_feat = len(X_reference[0]) if X_reference else 0
         self._feature_names = feature_names or [f"f{i}" for i in range(n_feat)]
+        
+        # Detect and exclude identifier columns
+        self._excluded_features = set()
+        for fname in self._feature_names:
+            if self._is_identifier_column(fname):
+                self._excluded_features.add(fname)
+                self._audit_log.append(f"[Feature Excluded] {fname} (Identifier Column)")
+                self._log(f"Excluding identifier column: {fname}")
+        
         if categorical_cols:
             if isinstance(categorical_cols[0], str):
                 self._categorical = {
@@ -187,8 +227,11 @@ class DriftEngine(BaseModule):
                 }
             else:
                 self._categorical = set(categorical_cols)
+        
+        n_analyzed = n_feat - len(self._excluded_features)
         self._log(f"Reference set: {len(X_reference)} samples, "
-                  f"{n_feat} features, {len(self._categorical)} categorical.")
+                  f"{n_feat} features ({n_analyzed} analyzed, {len(self._excluded_features)} excluded), "
+                  f"{len(self._categorical)} categorical.")
 
     # ── Main run ─────────────────────────────────────────────────────────────
 
@@ -219,6 +262,10 @@ class DriftEngine(BaseModule):
         drifted, warned = [], []
 
         for j, fname in enumerate(self._feature_names):
+            # Skip excluded identifier columns
+            if fname in self._excluded_features:
+                continue
+            
             is_cat = j in self._categorical
             ref_col = _feature_column(self._reference, j, categorical=is_cat)
             cur_col = _feature_column(X_current, j, categorical=is_cat)
@@ -307,6 +354,8 @@ class DriftEngine(BaseModule):
             "num_drifted_features": len(drifted),
             "num_warned_features":  len(warned),
             "alerts": self._build_alerts(drifted, warned, domain_auc, mean_psi),
+            "excluded_features": list(self._excluded_features),
+            "audit_log": self._audit_log,
         }
 
         return self._result(findings, severity=sev, module_name="DriftEngine")

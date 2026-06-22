@@ -34,6 +34,22 @@
                     <button class="btn btn-indigo px-4 rounded-pill" onclick="window.print()">
                         <i class="bi bi-printer me-2"></i>Print PDF
                     </button>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-indigo dropdown-toggle rounded-pill" type="button" data-bs-toggle="dropdown" id="audienceDropdown">
+                            <i class="bi bi-people me-2"></i>Audience
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 bg-card">
+                            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="ML Engineer" href="#"><i class="bi bi-cpu me-2 text-indigo-500"></i>ML Engineer</a></li>
+                            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Executive" href="#"><i class="bi bi-briefcase me-2 text-indigo-500"></i>Executive</a></li>
+                            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Doctor" href="#"><i class="bi bi-heart-pulse me-2 text-indigo-500"></i>Doctor</a></li>
+                            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Loan Officer" href="#"><i class="bi bi-bank me-2 text-indigo-500"></i>Loan Officer</a></li>
+                            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Student" href="#"><i class="bi bi-mortarboard me-2 text-indigo-500"></i>Student</a></li>
+                            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="HR Manager" href="#"><i class="bi bi-people me-2 text-indigo-500"></i>HR Manager</a></li>
+                            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Insurance Analyst" href="#"><i class="bi bi-shield me-2 text-indigo-500"></i>Insurance Analyst</a></li>
+                            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Legal / Compliance Officer" href="#"><i class="bi bi-balance-scale me-2 text-indigo-500"></i>Legal / Compliance Officer</a></li>
+                            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Researcher" href="#"><i class="bi bi-microscope me-2 text-indigo-500"></i>Researcher</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
@@ -106,16 +122,19 @@
                             {% endif %}
                         {% endif %}
                     </div>
+                    {% if data.get('fairness') and data.fairness.get('status') != 'SKIPPED' %}
                     <div class="col-md-6 border-start">
                         <h6 class="fw-bold text-uppercase small text-muted mb-3">Fairness Audit</h6>
                         {% set fair_findings = data.get('fairness', {}).get('findings', {}) %}
-                        {% if data.get('fairness') and data.fairness.get('status') != 'SKIPPED' and fair_findings %}
+                        {% if fair_findings %}
                             <div class="h3 fw-bold mb-1">{{ fair_findings.get('max_disparity', 0) | round(4) if fair_findings.get('max_disparity') is number else 'N/A' }}</div>
                             <p class="small text-muted mb-0">Max Demographic Disparity</p>
-                        {% else %}
-                            <p class="text-fairness-muted fst-italic mb-0">Fairness audit not configured.</p>
+                            {% if data.fairness.auto_detected %}
+                            <p class="small text-muted mt-2"><i class="bi bi-info-circle me-1"></i>Auto-detected sensitive feature: {{ data.fairness.auto_detected_column }}</p>
+                            {% endif %}
                         {% endif %}
                     </div>
+                    {% endif %}
                 </div>
             </div>
             
@@ -228,7 +247,7 @@
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between px-0">
                                     <span>Estimated Noise</span>
-                                    <strong>{{ (ln_findings.estimated_noise_fraction * 100) | round(2) }}%</strong>
+                                    <strong>{{ (ln_findings.estimated_noise_fraction * 100) | round(2) if ln_findings.estimated_noise_fraction is number else 'N/A' }}%</strong>
                                 </li>
                             </ul>
                         {% else %}
@@ -255,7 +274,7 @@
         </div>
 
         <!-- Leakage Section -->
-        <div class="row g-4 mb-5">
+        <div class="row g-4 mb-4">
             <div class="col-lg-6">
                 <div class="card h-100">
                     <div class="card-header">Feature Leakage Scan</div>
@@ -273,7 +292,7 @@
                                     {% for suspect in leakage_findings.suspects %}
                                     <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                                         <span class="fw-bold">{{ suspect.feature }}</span>
-                                        <span class="badge bg-danger-soft text-danger">{{ suspect.score | round(4) }}</span>
+                                        <span class="badge bg-danger-soft text-danger">{{ suspect.score | round(4) if suspect.score is number else 'N/A' }}</span>
                                     </div>
                                     {% endfor %}
                                 </div>
@@ -306,6 +325,149 @@
                     <p class="text-muted small mb-0">Leakage visualization not available.</p>
                 </div>
                 {% endif %}
+            </div>
+        </div>
+
+        <!-- Auto Root Cause Analysis -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header">Auto Root Cause Analysis</div>
+                    <div class="card-body p-4">
+                        {% set root_cause_data = data.get('root_cause', {}) %}
+                        {% if root_cause_data %}
+                            <div class="row align-items-center mb-4">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <div class="h3 fw-bold mb-0 me-3">{{ root_cause_data.get('health_status', 'Unknown') }}</div>
+                                        <div class="text-muted small">Model Health Status</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <div class="h3 fw-bold mb-0 me-3">{{ root_cause_data.get('confidence', 0) }}%</div>
+                                        <div class="text-muted small">Confidence Score</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if root_cause_data.get('root_causes') %}
+                            <h6 class="fw-bold small text-muted text-uppercase mb-3">Top Root Causes</h6>
+                            <div class="table-responsive mb-4">
+                                <table class="table table-hover table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Cause</th>
+                                            <th>Score</th>
+                                            <th>Severity</th>
+                                            <th>Evidence</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for cause in root_cause_data.root_causes[:5] %}
+                                        <tr>
+                                            <td class="fw-bold">{{ cause.get('cause', 'N/A') }}</td>
+                                            <td>{{ cause.get('score', 0) }}</td>
+                                            <td>
+                                                <span class="badge-pill badge-{{ 'critical' if cause.get('severity') == 'CRITICAL' else 'high' if cause.get('severity') == 'HIGH' else 'medium' if cause.get('severity') == 'MEDIUM' else 'none' }}">
+                                                    {{ cause.get('severity', 'LOW') }}
+                                                </span>
+                                            </td>
+                                            <td class="small text-muted">
+                                                {% for evidence in cause.get('evidence', [])[:2] %}
+                                                    {{ evidence }}{% if not loop.last %}; {% endif %}
+                                                {% endfor %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% endif %}
+
+                            {% if root_cause_data.get('recommended_actions') %}
+                            <h6 class="fw-bold small text-muted text-uppercase mb-3">Recommended Actions</h6>
+                            <ul class="list-group list-group-flush">
+                                {% for action in root_cause_data.recommended_actions %}
+                                <li class="list-group-item">
+                                    <i class="bi bi-lightbulb-fill me-2 text-warning"></i>{{ action }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-muted italic">Root cause analysis not available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Investigator Section -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header">AI Investigator Report</div>
+                    <div class="card-body p-4">
+                        <div id="audience-content">
+                            {% set ai_investigator_data = data.get('ai_investigator', {}) %}
+                            {% set audience_reports = data.get('audience_reports', {}) %}
+                            {% if ai_investigator_data %}
+                                <div class="row align-items-center mb-4">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center">
+                                            <div class="h3 fw-bold mb-0 me-3">{{ ai_investigator_data.get('risk_level', 'UNKNOWN') }}</div>
+                                            <div class="text-muted small">Risk Level</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="text-muted small">
+                                            Investigation ID: {{ ai_investigator_data.get('investigation_id', 'N/A') }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h6 class="fw-bold small text-muted text-uppercase mb-3">Executive Summary</h6>
+                                <p class="mb-4" id="audience-executive-summary">{{ ai_investigator_data.get('executive_summary', '') }}</p>
+
+                                <h6 class="fw-bold small text-muted text-uppercase mb-3">Investigation Findings</h6>
+                                <div class="bg-dark p-3 rounded mb-4" style="background-color: #1a1a2a !important;" id="audience-findings">
+                                    {{ ai_investigator_data.get('investigation_findings', '') | replace('\n', '<br>') | safe }}
+                                </div>
+
+                                {% if ai_investigator_data.get('impact_assessment') %}
+                                <h6 class="fw-bold small text-muted text-uppercase mb-3">Impact Assessment</h6>
+                                <p class="mb-4" id="audience-impact">{{ ai_investigator_data.get('impact_assessment') }}</p>
+                                {% endif %}
+
+                                {% if ai_investigator_data.get('confidence_explanation') %}
+                                <h6 class="fw-bold small text-muted text-uppercase mb-3">Confidence Explanation</h6>
+                                <div class="bg-dark p-3 rounded mb-4" style="background-color: #1a1a2a !important;" id="audience-confidence">
+                                    {{ ai_investigator_data.get('confidence_explanation') | replace('\n', '<br>') | safe }}
+                                </div>
+                                {% endif %}
+
+                                <h6 class="fw-bold small text-muted text-uppercase mb-3">Recommended Actions</h6>
+                                <ul class="list-group list-group-flush mb-4" id="audience-recommendations">
+                                    {% for action in ai_investigator_data.get('recommended_actions', []) %}
+                                    <li class="list-group-item">
+                                        <i class="bi bi-lightbulb-fill me-2 text-warning"></i>{{ action }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+
+                                {% if ai_investigator_data.get('technical_notes') %}
+                                <h6 class="fw-bold small text-muted text-uppercase mb-3">Technical Notes</h6>
+                                <div class="bg-dark p-3 rounded" style="background-color: #1a1a2a !important; font-family: monospace; font-size: 0.9em;" id="audience-technical">
+                                    {{ ai_investigator_data.get('technical_notes') | replace('\n', '<br>') | safe }}
+                                </div>
+                                {% endif %}
+                            {% else %}
+                                <p class="text-muted italic">AI Investigator report not available.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -486,6 +648,113 @@
                 safeNewPlot('chart-missing-data', {{ charts.missing_data | safe }});
             {% endif %}
         });
+    </script>
+
+    <script>
+    // Audience Translation JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        const audienceReports = {{ data.get('audience_reports', {}) | tojson | safe }};
+        console.log('[AUDIENCE DEBUG] audienceReports loaded:', audienceReports);
+        console.log('[AUDIENCE DEBUG] Keys in audienceReports:', Object.keys(audienceReports));
+        console.log('[AUDIENCE DEBUG] DOM loaded, checking for elements...');
+        
+        // Check if elements exist
+        console.log('[AUDIENCE DEBUG] audience-executive-summary exists:', !!document.getElementById('audience-executive-summary'));
+        console.log('[AUDIENCE DEBUG] audience-findings exists:', !!document.getElementById('audience-findings'));
+        console.log('[AUDIENCE DEBUG] audience-recommendations exists:', !!document.getElementById('audience-recommendations'));
+        
+        document.querySelectorAll('.audience-option').forEach(option => {
+            console.log('[AUDIENCE DEBUG] Found audience option:', option.getAttribute('data-audience'));
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                const audience = this.getAttribute('data-audience');
+                console.log('[AUDIENCE DEBUG] Clicked audience:', audience);
+                updateAudienceContent(audience);
+            });
+        });
+        
+        function updateAudienceContent(audience) {
+            console.log('[AUDIENCE DEBUG] updateAudienceContent called with:', audience);
+            const report = audienceReports[audience];
+            console.log('[AUDIENCE DEBUG] Report object:', report);
+            if (!report) {
+                console.log('[AUDIENCE DEBUG] Report not found for audience:', audience);
+                return;
+            }
+            
+            // Update executive summary
+            const execSummaryEl = document.getElementById('audience-executive-summary');
+            console.log('[AUDIENCE DEBUG] execSummaryEl found:', !!execSummaryEl);
+            if (execSummaryEl && report.executive_summary) {
+                console.log('[AUDIENCE DEBUG] Updating executive summary from:', execSummaryEl.textContent.substring(0, 50));
+                execSummaryEl.textContent = report.executive_summary;
+                console.log('[AUDIENCE DEBUG] Updated executive summary to:', execSummaryEl.textContent.substring(0, 50));
+            } else {
+                console.log('[AUDIENCE DEBUG] Skipping executive summary update - element not found or data missing');
+            }
+            
+            // Update findings
+            const findingsEl = document.getElementById('audience-findings');
+            console.log('[AUDIENCE DEBUG] findingsEl found:', !!findingsEl);
+            if (findingsEl && report.findings) {
+                console.log('[AUDIENCE DEBUG] Updating findings');
+                findingsEl.innerHTML = report.findings.replace(/\n/g, '<br>');
+            } else {
+                console.log('[AUDIENCE DEBUG] Skipping findings update - element not found or data missing');
+            }
+            
+            // Update impact assessment
+            const impactEl = document.getElementById('audience-impact');
+            console.log('[AUDIENCE DEBUG] impactEl found:', !!impactEl);
+            if (impactEl && report.impact_assessment) {
+                console.log('[AUDIENCE DEBUG] Updating impact assessment');
+                impactEl.textContent = report.impact_assessment;
+                impactEl.parentElement.style.display = 'block';
+            } else if (impactEl) {
+                impactEl.parentElement.style.display = 'none';
+            }
+            
+            // Update confidence explanation
+            const confidenceEl = document.getElementById('audience-confidence');
+            console.log('[AUDIENCE DEBUG] confidenceEl found:', !!confidenceEl);
+            if (confidenceEl && report.confidence_explanation) {
+                console.log('[AUDIENCE DEBUG] Updating confidence explanation');
+                confidenceEl.innerHTML = report.confidence_explanation.replace(/\n/g, '<br>');
+                confidenceEl.parentElement.style.display = 'block';
+            } else if (confidenceEl) {
+                confidenceEl.parentElement.style.display = 'none';
+            }
+            
+            // Update recommendations
+            const recommendationsEl = document.getElementById('audience-recommendations');
+            console.log('[AUDIENCE DEBUG] recommendationsEl found:', !!recommendationsEl);
+            if (recommendationsEl && report.recommendations) {
+                console.log('[AUDIENCE DEBUG] Updating recommendations');
+                recommendationsEl.innerHTML = report.recommendations.map(action => 
+                    `<li class="list-group-item"><i class="bi bi-lightbulb-fill me-2 text-warning"></i>${action}</li>`
+                ).join('');
+            } else {
+                console.log('[AUDIENCE DEBUG] Skipping recommendations update - element not found or data missing');
+            }
+            
+            // Update technical notes
+            const technicalEl = document.getElementById('audience-technical');
+            console.log('[AUDIENCE DEBUG] technicalEl found:', !!technicalEl);
+            if (technicalEl && report.technical_notes) {
+                console.log('[AUDIENCE DEBUG] Updating technical notes');
+                technicalEl.innerHTML = report.technical_notes.replace(/\n/g, '<br>');
+                technicalEl.parentElement.style.display = 'block';
+            } else if (technicalEl) {
+                technicalEl.parentElement.style.display = 'none';
+            }
+        }
+        
+        // Initial load: show ML Engineer audience report
+        if (audienceReports && Object.keys(audienceReports).length > 0) {
+            updateAudienceContent('ML Engineer');
+        }
+        }
+    });
     </script>
 {% else %}
     {% if print_on_load %}
