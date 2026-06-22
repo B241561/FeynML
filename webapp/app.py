@@ -2602,6 +2602,7 @@ def settings():
 
     return render_template('settings.html')
 
-
+with app.app_context():
+    db.create_all()
 if __name__ == '__main__':
     app.run(debug=True, port=5000, use_reloader=True, reloader_options={"exclude_patterns": [".venv*"]})
