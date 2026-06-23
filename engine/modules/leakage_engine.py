@@ -33,16 +33,40 @@ class LeakageEngine(BaseModule):
         suspects = rank_leakage_suspects(report)
         summary = leakage_summary(report)
         
-        # Determine severity
+        # Determine severity based on suspect confidence scores (explicit thresholds)
         severity = "NONE"
-        if suspects:
-            # Map highest severity from suspects
-            severity_map = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1, "NONE": 0}
-            max_s = "NONE"
+        num_suspects = len(suspects)
+        if num_suspects == 0:
+            severity = "NONE"
+        else:
+            # Extract scores robustly (some scanners use 'score' or 'confidence')
+            scores = []
             for s in suspects:
-                if severity_map[s['severity']] > severity_map[max_s]:
-                    max_s = s['severity']
-            severity = max_s
+                sc = None
+                if isinstance(s, dict):
+                    sc = s.get('score') if 'score' in s else s.get('confidence')
+                else:
+                    # Fallback if suspect is an object with attributes
+                    sc = getattr(s, 'score', None) if hasattr(s, 'score') else getattr(s, 'confidence', None)
+                try:
+                    sc = float(sc) if sc is not None else None
+                except Exception:
+                    sc = None
+                if sc is not None:
+                    scores.append(sc)
+
+            # Default to LOW if suspects present but no numeric scores found
+            if not scores:
+                severity = "LOW"
+            else:
+                if any(s >= 0.85 for s in scores):
+                    severity = "CRITICAL"
+                elif any(s >= 0.70 for s in scores):
+                    severity = "HIGH"
+                elif any(s >= 0.50 for s in scores):
+                    severity = "MEDIUM"
+                else:
+                    severity = "LOW"
 
         findings = {
             "summary": summary,
