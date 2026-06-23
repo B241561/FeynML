@@ -43,6 +43,19 @@ try:
 except ImportError:
     from investigation import Investigation, RootCause
 
+# Evidence registry and validator (Sprint 3A Phase 2 integration)
+try:
+    from .evidence_registry import EvidenceRegistry
+    from .fact_validator import validate as validate_facts
+except Exception:
+    # Fallback for environments where module path resolution differs
+    try:
+        from evidence_registry import EvidenceRegistry
+        from fact_validator import validate as validate_facts
+    except Exception:
+        EvidenceRegistry = None
+        validate_facts = None
+
 
 class AutoRootCauseEngine:
     """
@@ -63,6 +76,13 @@ class AutoRootCauseEngine:
         self._scoring_rules = self._init_scoring_rules()
         self._excluded_features = set()
         self._audit_log = []
+        # Evidence registry for Sprint 3A Phase 2 (non-blocking)
+        if EvidenceRegistry is not None:
+            self._evidence_registry = EvidenceRegistry()
+        else:
+            self._evidence_registry = None
+        # Store last validation result for introspection (do not expose in public APIs)
+        self._last_claim_validation: Optional[Dict[str, Any]] = None
 
     def _log(self, msg: str):
         """Log message if verbose mode is enabled."""
@@ -243,6 +263,15 @@ class AutoRootCauseEngine:
 
         # Attach risk into investigation metadata and result envelope
         investigation.metadata = {**investigation.metadata, 'risk': risk}
+
+        # Validate registered claims from EvidenceRegistry (non-blocking)
+        try:
+            if validate_facts is not None and self._evidence_registry is not None:
+                claims = self._evidence_registry.get_claims()
+                self._last_claim_validation = validate_facts(claims)
+        except Exception:
+            # Store a minimal failure record internally; do not change external outputs
+            self._last_claim_validation = {"valid": False, "issues": ["validation_error"]}
 
         result = investigation.to_dict()
         # Build a concise human-readable "why" explanation using available evidence
@@ -693,14 +722,28 @@ class AutoRootCauseEngine:
                 score = self._scoring_rules["leakage"]["leakage_confidence_gt_050"]["score"]
             
             if score > 0:
-                scored_causes.append({
+                rec = {
                     "cause": f"{leak['feature']} target leakage",
                     "score": score,
                     "severity": severity,
                     "evidence": [leak["evidence"]],
                     "category": "target_leakage",
                     "source_modules": ["leakage_engine"]
-                })
+                }
+                scored_causes.append(rec)
+                # Register claim in EvidenceRegistry if available
+                try:
+                    if self._evidence_registry is not None:
+                        self._evidence_registry.register(
+                            claim=rec['cause'],
+                            category=rec['category'],
+                            evidence=rec['evidence'],
+                            source_module='root_cause_engine',
+                            confidence=rec.get('score')
+                        )
+                except Exception:
+                    # non-blocking: do not change main behavior on registry errors
+                    pass
         
         # Score feature drift
         for drift in evidence["feature_drift"]:
@@ -708,16 +751,28 @@ class AutoRootCauseEngine:
             ks = drift.get("ks_stat", 0)
             
             severity, score = self._calculate_severity(psi, ks)
-            
+
             if severity != "NONE":
-                scored_causes.append({
+                rec = {
                     "cause": f"{drift['feature']} feature drift",
                     "score": score,
                     "severity": severity,
                     "evidence": [drift["evidence"]],
                     "category": "feature_drift",
                     "source_modules": ["drift_engine"]
-                })
+                }
+                scored_causes.append(rec)
+                try:
+                    if self._evidence_registry is not None:
+                        self._evidence_registry.register(
+                            claim=rec['cause'],
+                            category=rec['category'],
+                            evidence=rec['evidence'],
+                            source_module='root_cause_engine',
+                            confidence=rec.get('score')
+                        )
+                except Exception:
+                    pass
         
         # Score slice degradation
         for sl in evidence["slice_degradation"]:
@@ -745,14 +800,26 @@ class AutoRootCauseEngine:
                                key=lambda x: ["LOW", "MEDIUM", "HIGH", "CRITICAL"].index(x))
             
             if score > 0:
-                scored_causes.append({
+                rec = {
                     "cause": f"Slice failure: {sl['slice']}",
                     "score": min(score, 100),
                     "severity": severity,
                     "evidence": [sl["evidence"]],
                     "category": "slice_degradation",
                     "source_modules": source_modules
-                })
+                }
+                scored_causes.append(rec)
+                try:
+                    if self._evidence_registry is not None:
+                        self._evidence_registry.register(
+                            claim=rec['cause'],
+                            category=rec['category'],
+                            evidence=rec['evidence'],
+                            source_module='root_cause_engine',
+                            confidence=rec.get('score')
+                        )
+                except Exception:
+                    pass
         
         # Score calibration issues
         for cal in evidence["calibration"]:
@@ -770,14 +837,26 @@ class AutoRootCauseEngine:
                 severity = self._scoring_rules["calibration"]["ece_increase_gt_005"]["severity"]
             
             if score > 0:
-                scored_causes.append({
+                rec = {
                     "cause": "Calibration degradation",
                     "score": min(score, 100),
                     "severity": severity,
                     "evidence": [cal["evidence"]],
                     "category": "calibration",
                     "source_modules": source_modules
-                })
+                }
+                scored_causes.append(rec)
+                try:
+                    if self._evidence_registry is not None:
+                        self._evidence_registry.register(
+                            claim=rec['cause'],
+                            category=rec['category'],
+                            evidence=rec['evidence'],
+                            source_module='root_cause_engine',
+                            confidence=rec.get('score')
+                        )
+                except Exception:
+                    pass
         
         # Score missing values
         for mv in evidence["missing_values"]:
@@ -795,14 +874,26 @@ class AutoRootCauseEngine:
                 severity = self._scoring_rules["missing_values"]["missing_rate_gt_10"]["severity"]
             
             if score > 0:
-                scored_causes.append({
+                rec = {
                     "cause": f"Missing values in {mv['feature']}",
                     "score": min(score, 100),
                     "severity": severity,
                     "evidence": [mv["evidence"]],
                     "category": "missing_values",
                     "source_modules": source_modules
-                })
+                }
+                scored_causes.append(rec)
+                try:
+                    if self._evidence_registry is not None:
+                        self._evidence_registry.register(
+                            claim=rec['cause'],
+                            category=rec['category'],
+                            evidence=rec['evidence'],
+                            source_module='root_cause_engine',
+                            confidence=rec.get('score')
+                        )
+                except Exception:
+                    pass
         
         # Score outliers
         for out in evidence["outliers"]:
@@ -820,14 +911,26 @@ class AutoRootCauseEngine:
                 severity = self._scoring_rules["outliers"]["outlier_increase_gt_20"]["severity"]
             
             if score > 0:
-                scored_causes.append({
+                rec = {
                     "cause": f"Outlier increase in {out['feature']}",
                     "score": min(score, 100),
                     "severity": severity,
                     "evidence": [out["evidence"]],
                     "category": "outliers",
                     "source_modules": source_modules
-                })
+                }
+                scored_causes.append(rec)
+                try:
+                    if self._evidence_registry is not None:
+                        self._evidence_registry.register(
+                            claim=rec['cause'],
+                            category=rec['category'],
+                            evidence=rec['evidence'],
+                            source_module='root_cause_engine',
+                            confidence=rec.get('score')
+                        )
+                except Exception:
+                    pass
         
         # Score importance drift
         for imp_drift in evidence["importance_drift"]:
@@ -848,14 +951,26 @@ class AutoRootCauseEngine:
                 severity = self._scoring_rules["importance_drift"]["importance_change_gt_010"]["severity"]
             
             if score > 0:
-                scored_causes.append({
+                rec = {
                     "cause": f"Feature importance drift: {imp_drift['feature']}",
                     "score": min(score, 100),
                     "severity": severity,
                     "evidence": [imp_drift["evidence"]],
                     "category": "importance_drift",
                     "source_modules": source_modules
-                })
+                }
+                scored_causes.append(rec)
+                try:
+                    if self._evidence_registry is not None:
+                        self._evidence_registry.register(
+                            claim=rec['cause'],
+                            category=rec['category'],
+                            evidence=rec['evidence'],
+                            source_module='root_cause_engine',
+                            confidence=rec.get('score')
+                        )
+                except Exception:
+                    pass
         
         # Sort by score descending
         scored_causes.sort(key=lambda x: x["score"], reverse=True)
