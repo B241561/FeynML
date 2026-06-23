@@ -53,7 +53,7 @@ def compute_error_embeddings(X, y_true, y_pred, n_components=2, n_neighbors=15, 
     try:
         import umap
         import numpy as np
-        
+
         X_np = np.array(X)
         reducer = umap.UMAP(
             n_components=n_components,
@@ -61,19 +61,23 @@ def compute_error_embeddings(X, y_true, y_pred, n_components=2, n_neighbors=15, 
             min_dist=min_dist,
             random_state=seed
         )
-        embeddings = reducer.fit_transform(X_np)
-        
-        return {
-            "embeddings": embeddings.tolist(),
-            "error_labels": error_labels,
-            "method": "umap-learn",
-            "n_samples": n_samples,
-            "n_features": n_features,
-            "n_components": n_components,
-            "error_rate": round(sum(1 for e in error_labels if e == "error") / n_samples, 4),
-        }
-    except ImportError:
-        # Fallback: simplified PCA-like projection
+        try:
+            embeddings = reducer.fit_transform(X_np)
+            return {
+                "embeddings": embeddings.tolist(),
+                "error_labels": error_labels,
+                "method": "umap-learn",
+                "n_samples": n_samples,
+                "n_features": n_features,
+                "n_components": n_components,
+                "error_rate": round(sum(1 for e in error_labels if e == "error") / n_samples, 4),
+            }
+        except Exception:
+            # UMAP failed during fit (version incompatibility or sklearn mismatch).
+            # Fall back to simplified PCA projection to ensure robustness.
+            return _simple_pca_projection(X, error_labels, n_components, seed)
+    except Exception:
+        # Fallback: simplified PCA-like projection for import errors or other failures
         return _simple_pca_projection(X, error_labels, n_components, seed)
 
 

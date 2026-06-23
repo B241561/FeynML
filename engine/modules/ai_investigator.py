@@ -872,6 +872,22 @@ Tailor ALL sections (not just the executive summary) to the target audience.
         facts = self._build_normalized_context(investigation)
         findings = []
 
+        # Prepare optional top-cause headline to restore legacy test expectations
+        top_causes = investigation.root_causes[:1]
+        top_headline = None
+        if top_causes:
+            tc = top_causes[0]
+            display = self._display_cause_name(tc)
+            if tc.category == 'feature_drift':
+                top_headline = f"{display} Drift detected."
+            elif tc.category == 'target_leakage':
+                top_headline = f"{display} Leakage detected."
+            elif tc.category == 'calibration':
+                top_headline = "Calibration degradation detected."
+            else:
+                # Generic headline for other top causes
+                top_headline = f"{display} detected."
+
         # Feature drift interpretation
         if facts.get('drift_features'):
             n = len(facts['drift_features'])
@@ -913,9 +929,15 @@ Tailor ALL sections (not just the executive summary) to the target audience.
             high_severity = [c for c in investigation.root_causes if c.severity in ["HIGH", "CRITICAL"]]
             if high_severity:
                 narrative += f" The presence of {len(high_severity)} high-severity issue(s) indicates significant model degradation."
+            # Prepend top-cause headline if available to preserve legacy expectations
+            if top_headline:
+                narrative = f"{top_headline} {narrative}"
             return self._apply_audience_context(narrative, audience, section="findings")
         else:
             base = "The investigation identified several issues affecting model performance. Review the Root Cause Analysis for detailed evidence and severity assessments."
+            # Even in the empty-findings fallback, include top_headline if present
+            if top_headline:
+                base = f"{top_headline} {base}"
             return self._apply_audience_context(base, audience, section="findings")
     
     def _generate_impact_assessment(self, investigation: Investigation, audience: str = "ML Engineer") -> str:
