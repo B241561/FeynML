@@ -140,11 +140,23 @@ class RiskScorer:
         weighted_numeric = 0.0
         max_possible = 0.0
         max_sev = max(self.severity_map.values()) if self.severity_map else 4
+
+        # Component-level transparency details
+        component_details = {}
         for comp, sev_label in breakdown.items():
             weight = float(self.component_weights.get(comp, 1.0))
             sev_val = float(self._map_severity(sev_label))
-            weighted_numeric += sev_val * weight
+            contribution = sev_val * weight
+            weighted_numeric += contribution
             max_possible += max_sev * weight
+
+            component_details[comp] = {
+                "severity": sev_label,
+                "severity_value": sev_val,
+                "weight": weight,
+                "contribution": round(contribution, 3),
+                "max_contribution": round(max_sev * weight, 3),
+            }
 
         # Convert to percentage (0-100)
         pct_score = (weighted_numeric / max_possible * 100.0) if max_possible > 0 else 0.0
@@ -162,11 +174,23 @@ class RiskScorer:
             if sev and sev != 'NONE':
                 reasons.append({'component': comp, 'severity': sev, 'weight': self.component_weights.get(comp, 1.0)})
 
+        # Human-readable breakdown details (list)
+        risk_breakdown_details = []
+        for comp, det in component_details.items():
+            risk_breakdown_details.append({
+                'component': comp,
+                'severity': det.get('severity'),
+                'weight': det.get('weight'),
+                'contribution': det.get('contribution'),
+            })
+
         return {
             'score': round(weighted_numeric, 3),
             'score_pct': round(pct_score, 2),
             'level': level,
             'breakdown': breakdown,
+            'component_details': component_details,
+            'risk_breakdown_details': risk_breakdown_details,
             'reasons': reasons,
             'percent_thresholds': self.percent_thresholds,
             'severity_map': self.severity_map,

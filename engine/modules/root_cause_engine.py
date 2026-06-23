@@ -210,7 +210,8 @@ class AutoRootCauseEngine:
             metadata={
                 "evidence_summary": self._summarize_evidence(evidence),
                 "excluded_features": list(self._excluded_features),
-                "audit_log": self._audit_log
+                "audit_log": self._audit_log,
+                "canonical_drift_count": evidence.get('canonical_drift_count', 0)
             }
         )
         
@@ -269,8 +270,8 @@ class AutoRootCauseEngine:
             except Exception:
                 pass
 
-            # Drift
-            n_drift = len(evidence.get('feature_drift', []))
+            # Drift - use canonical drift count (only explicit DRIFT status)
+            n_drift = evidence.get('canonical_drift_count', len(evidence.get('feature_drift', [])))
             if n_drift > 0:
                 why_lines.append(f"{n_drift} drifted feature(s) detected.")
 
@@ -332,7 +333,7 @@ class AutoRootCauseEngine:
                     else:
                         fb.append("Label noise detected")
                 if rb.get('drift') and rb.get('drift') != 'NONE':
-                    n_drift = len(evidence.get('feature_drift', []))
+                    n_drift = evidence.get('canonical_drift_count', len(evidence.get('feature_drift', [])))
                     fb.append(f"{n_drift} drifted feature(s) detected")
                 if rb.get('calibration') and rb.get('calibration') != 'NONE':
                     try:
@@ -404,7 +405,10 @@ class AutoRootCauseEngine:
                     per_feature = findings.get("per_feature", [])
                     if per_feature and isinstance(per_feature, list):
                         for feat in per_feature:
-                            if isinstance(feat, dict) and feat.get("status") in ["DRIFT", "WARN"]:
+                            if isinstance(feat, dict):
+                                status = feat.get("status")
+                                if status not in ("DRIFT", "WARN"):
+                                    continue
                                 feature_name = feat.get("feature", "unknown")
                                 
                                 # Skip identifier columns
@@ -414,16 +418,28 @@ class AutoRootCauseEngine:
                                         self._audit_log.append(f"[Feature Excluded] {feature_name} (Identifier Column)")
                                         self._log(f"Excluding identifier column from root cause: {feature_name}")
                                     continue
-                                
+
                                 psi_val = feat.get("psi", 0)
                                 ks_val = feat.get("ks_stat", 0)
-                                evidence["feature_drift"].append({
-                                    "feature": feature_name,
-                                    "psi": psi_val,
-                                    "ks_stat": ks_val,
-                                    "status": feat.get("status"),
-                                    "evidence": f"PSI={psi_val:.3f}, KS={ks_val:.3f}"
-                                })
+
+                                # Only treat explicit DRIFT as canonical drift evidence
+                                if status == "DRIFT":
+                                    evidence["feature_drift"].append({
+                                        "feature": feature_name,
+                                        "psi": psi_val,
+                                        "ks_stat": ks_val,
+                                        "status": status,
+                                        "evidence": f"PSI={psi_val:.3f}, KS={ks_val:.3f}"
+                                    })
+                                else:
+                                    # Preserve WARN entries separately to avoid losing metadata
+                                    evidence.setdefault("feature_warn", []).append({
+                                        "feature": feature_name,
+                                        "psi": psi_val,
+                                        "ks_stat": ks_val,
+                                        "status": status,
+                                        "evidence": f"PSI={psi_val:.3f}, KS={ks_val:.3f}"
+                                    })
         except Exception as e:
             self._log(f"Warning: Error processing drift report: {e}")
         
@@ -532,6 +548,12 @@ class AutoRootCauseEngine:
                                     "category": "target_leakage"
                                 })
                                 self._audit_log.append(f"[Leakage Detected] {feature_name} (Confidence: {leakage_confidence:.3f})")
+            # After processing per_feature, compute canonical drift count
+            try:
+                canonical_drift_count = sum(1 for f in per_feature if isinstance(f, dict) and f.get("status") == "DRIFT")
+                evidence["canonical_drift_count"] = canonical_drift_count
+            except Exception:
+                evidence["canonical_drift_count"] = 0
         except Exception as e:
             self._log(f"Warning: Error processing leakage report: {e}")
         
@@ -851,8 +873,9 @@ class AutoRootCauseEngine:
         Returns:
             Tuple of (health_status, confidence)
         """
+        # If no causes detected, be conservative: moderate baseline confidence
         if not scored_causes:
-            return "Healthy", 100
+            return "Healthy", 50
         
         # Calculate weighted score based on top causes
         top_causes = scored_causes[:3]
@@ -860,7 +883,7 @@ class AutoRootCauseEngine:
         max_possible = len(top_causes) * 100
         avg_score = total_score / max(len(top_causes), 1)
         
-        # Determine health status
+        # Determine health status from average top-cause strength
         if avg_score < 30:
             health_status = "Healthy"
         elif avg_score < 60:
@@ -868,100 +891,122 @@ class AutoRootCauseEngine:
         else:
             health_status = "Critical"
         
-        # Confidence is based on number of high-severity causes
+        # Confidence calibration — avoid unrealistic certainty
+        # Evidence considered:
+        #  - number of high-severity findings (HIGH or CRITICAL)
+        #  - number of critical findings
+        #  - average root-cause score (strength)
         high_severity_count = sum(1 for c in scored_causes if c["severity"] in ["HIGH", "CRITICAL"])
-        confidence = min(100, 50 + high_severity_count * 10)
-        
+        critical_count = sum(1 for c in scored_causes if c["severity"] == "CRITICAL")
+        avg_score_all = (sum(c.get("score", 0) for c in scored_causes) / max(len(scored_causes), 1))
+
+        confidence = 50
+        # Evidence strength from number of serious findings (cap contribution)
+        confidence += min(20, high_severity_count * 4)
+        # Additional confidence from critical findings (cap contribution)
+        confidence += min(15, critical_count * 3)
+        # Additional confidence from average root-cause strength (score in 0-100)
+        confidence += min(10, avg_score_all / 10)
+        # Never claim certainty — cap at 95
+        confidence = min(95, confidence)
+
         return health_status, int(confidence)
     
     def _generate_recommendations(self, scored_causes: List[Dict], leakage_evidence: List[Dict]) -> List[str]:
         """
         Generate context-aware recommended actions based on root causes.
-        
-        Args:
-            scored_causes: List of scored root causes
-            leakage_evidence: List of leakage evidence items
-        
-        Returns:
-            List of recommended actions
+
+        This implementation deduplicates causes by category and consolidates
+        recommendations to avoid repetition (e.g., multiple drift findings ->
+        single consolidated drift recommendation).
         """
+        from collections import defaultdict
+
         recommendations = []
-        
+
         if not scored_causes:
             return ["No critical issues detected. Continue monitoring model performance."]
-        
-        # Get top causes
-        top_causes = scored_causes[:5]
-        
-        # Check if there are any leakage issues
-        has_leakage = any(cause.get("category") == "target_leakage" for cause in top_causes)
-        
-        for cause in top_causes:
-            category = cause.get("category", "")
-            cause_text = cause.get("cause", "")
-            severity = cause.get("severity", "LOW")
-            evidence = cause.get("evidence", [])
-            
-            if category == "target_leakage":
-                # Extract feature name from cause text
-                feature = cause_text.replace(" target leakage", "")
-                evidence_str = evidence[0] if evidence else ""
-                recommendations.append(
-                    f"Exclude {feature} from training immediately ({evidence_str}). "
-                    f"Retrain model without this feature and revalidate metrics."
-                )
-            elif category == "feature_drift":
-                # Extract feature name from cause text
-                feature = cause_text.replace(" feature drift", "")
-                evidence_str = evidence[0] if evidence else ""
-                recommendations.append(
-                    f"{feature} distribution shifted significantly ({evidence_str}). "
-                    f"Collect recent samples from the affected segment before retraining."
-                )
-            elif category == "slice_degradation":
-                # Extract slice description
-                slice_desc = cause_text.replace("Slice failure: ", "")
-                evidence_str = evidence[0] if evidence else ""
-                recommendations.append(
-                    f"Slice failure detected: {slice_desc} ({evidence_str}). "
-                    f"Investigate affected customer segments and consider targeted data collection."
-                )
-            elif category == "calibration":
-                evidence_str = evidence[0] if evidence else ""
-                recommendations.append(
-                    f"Calibration degradation detected ({evidence_str}). "
-                    f"Apply post-hoc calibration (Platt scaling or isotonic regression) to improve probability estimates."
-                )
-            elif category == "missing_values":
-                feature = cause_text.replace("Missing values in ", "")
-                evidence_str = evidence[0] if evidence else ""
-                recommendations.append(
-                    f"Missing value increase in {feature} ({evidence_str}). "
-                    f"Investigate upstream data pipeline and implement imputation strategy."
-                )
-            elif category == "outliers":
-                feature = cause_text.replace("Outlier increase in ", "")
-                evidence_str = evidence[0] if evidence else ""
-                recommendations.append(
-                    f"Outlier increase in {feature} ({evidence_str}). "
-                    f"Review data ingestion process and consider outlier detection and filtering."
-                )
-            elif category == "importance_drift":
-                feature = cause_text.replace("Feature importance drift: ", "")
-                evidence_str = evidence[0] if evidence else ""
-                recommendations.append(
-                    f"Feature importance changed significantly for {feature} ({evidence_str}). "
-                    f"Model behavior has shifted - investigate data distribution changes and consider retraining."
-                )
-        
-        # Add general recommendation if multiple issues
-        if len(top_causes) >= 3:
+
+        # Group causes by category for consolidation
+        causes_by_category = defaultdict(list)
+        for c in scored_causes:
+            cat = c.get('category') or 'other'
+            causes_by_category[cat].append(c)
+
+        # Consolidate feature drift recommendations
+        if causes_by_category.get('feature_drift'):
+            drifts = causes_by_category['feature_drift']
+            n = len(drifts)
+            # Extract feature names (strip ' feature drift') and sort by score desc
+            feats = [d.get('cause', '').replace(' feature drift', '') for d in drifts]
+            # preserve ordering by score
+            feats_sorted = [d.get('cause', '').replace(' feature drift', '') for d in sorted(drifts, key=lambda x: x.get('score',0), reverse=True)]
+            top3 = feats_sorted[:3]
+            features_str = ', '.join(top3)
+
             recommendations.append(
-                f"Multiple issues detected (severity: {top_causes[0]['severity']}). "
-                f"Prioritize addressing the highest-scoring root causes first."
+                f"{n} features show significant drift.\n\nMost affected: {features_str}.\n\nCollect fresh production samples, validate feature distributions, and retrain the model using recent data."
             )
-        
-        return recommendations[:5]
+
+        # Consolidate leakage recommendations
+        if causes_by_category.get('target_leakage'):
+            leaks = causes_by_category['target_leakage']
+            n = len(leaks)
+            recommendations.append(
+                f"Target leakage detected in {n} feature(s).\n\nRemove leakage sources, retrain the model, and revalidate all performance metrics."
+            )
+
+        # Consolidate missing values recommendations
+        if causes_by_category.get('missing_values'):
+            mvs = causes_by_category['missing_values']
+            n = len(mvs)
+            recommendations.append(
+                f"Missing value increases detected in {n} feature(s).\n\nInvestigate upstream data pipelines and implement consistent imputation."
+            )
+
+        # Consolidate outliers recommendations
+        if causes_by_category.get('outliers'):
+            outs = causes_by_category['outliers']
+            n = len(outs)
+            recommendations.append(
+                f"Outlier growth detected across {n} feature(s).\n\nReview data ingestion quality and strengthen anomaly detection."
+            )
+
+        # Consolidate importance drift recommendations
+        if causes_by_category.get('importance_drift'):
+            imps = causes_by_category['importance_drift']
+            n = len(imps)
+            top3 = [d.get('cause', '').replace('Feature importance drift: ', '') for d in sorted(imps, key=lambda x: x.get('score',0), reverse=True)][:3]
+            top3_str = ', '.join(top3)
+            recommendations.append(
+                f"Model behavior shifted across {n} important feature(s).\n\nInvestigate concept drift and consider model retraining.\nTop impacted: {top3_str}."
+            )
+
+        # Consolidate calibration recommendations (single message)
+        if causes_by_category.get('calibration'):
+            recommendations.append(
+                "Calibration degradation detected.\n\nApply post-hoc calibration (Platt scaling or isotonic regression) and validate probability estimates."
+            )
+
+        # Consolidate slice_degradation as individual recommendations but limit spam
+        if causes_by_category.get('slice_degradation'):
+            slices = causes_by_category['slice_degradation']
+            for sl in slices[:3]:
+                desc = sl.get('cause') if sl.get('cause') else sl.get('evidence', 'Slice issue')
+                recommendations.append(f"Slice issue: {desc}. Investigate affected segments and consider targeted data collection.")
+
+        # If nothing consolidated above (other categories), fall back to per-cause recommendations
+        other_categories = set(c.get('category') for c in scored_causes) - set(['feature_drift','target_leakage','missing_values','outliers','importance_drift','calibration','slice_degradation'])
+        for cat in other_categories:
+            for c in causes_by_category.get(cat, [])[:3]:
+                recommendations.append(f"{c.get('cause')}: {', '.join(c.get('evidence', []))}")
+
+        # Limit total recommendations to avoid overwhelming the user
+        # Prefer consolidated messages; do not add extra generic 'multiple issues' text when a single consolidated category exists
+        if len(recommendations) > 5:
+            recommendations = recommendations[:5]
+
+        return recommendations
     
     def _summarize_evidence(self, evidence: Dict) -> str:
         """
@@ -975,8 +1020,9 @@ class AutoRootCauseEngine:
         """
         summary_parts = []
         
-        if evidence["feature_drift"]:
-            n_drift = len(evidence["feature_drift"])
+        # Use canonical drift count (explicit DRIFT status) for summaries
+        n_drift = evidence.get("canonical_drift_count", len(evidence.get("feature_drift", [])))
+        if n_drift:
             summary_parts.append(f"{n_drift} features show drift")
         
         if evidence["slice_degradation"]:
@@ -1001,14 +1047,13 @@ class AutoRootCauseEngine:
     
     def generate_investigation_summary(self, result: Dict) -> str:
         """
-        Generate a formatted investigation summary.
-        
-        Args:
-            result: Result from run() method
-        
-        Returns:
-            Formatted summary string
+        Generate a formatted investigation summary with deduplication of root causes by category.
+
+        If multiple root causes belong to the same category (e.g., many feature drifts),
+        summarize them rather than listing each individually to avoid repetition.
         """
+        from collections import defaultdict
+
         lines = [
             "INVESTIGATION SUMMARY",
             "",
@@ -1017,23 +1062,47 @@ class AutoRootCauseEngine:
             "",
             "Evidence:"
         ]
-        
+
         for evidence in result.get("evidence_summary", "").split(". "):
             if evidence:
                 lines.append(f"  • {evidence}")
-        
+
         lines.append("")
-        lines.append("Most Likely Causes:")
-        
-        for i, cause in enumerate(result.get("root_causes", [])[:3], 1):
-            lines.append(f"  {i}. {cause['cause']} (score: {cause['score']}, severity: {cause['severity']})")
-            for ev in cause.get("evidence", []):
-                lines.append(f"     - {ev}")
-        
+        lines.append("Primary concerns:")
+
+        # Group root causes by category
+        causes = result.get('root_causes', []) or []
+        by_cat = defaultdict(list)
+        for c in causes:
+            cat = c.get('category', 'other')
+            by_cat[cat].append(c)
+
+        # If feature_drift dominates, produce a consolidated block
+        if by_cat.get('feature_drift') and len(by_cat['feature_drift']) > 1:
+            n = len(by_cat['feature_drift'])
+            top3 = [c.get('cause','').replace(' feature drift','') for c in sorted(by_cat['feature_drift'], key=lambda x: x.get('score',0), reverse=True)[:3]]
+            lines.append(f"  Primary concern: Feature drift affecting {n} features.")
+            lines.append(f"  Most impacted: {', '.join(top3)}")
+        else:
+            # Otherwise list up to three most likely causes (deduplicated by category)
+            listed = 0
+            for cat, items in sorted(by_cat.items(), key=lambda kv: -len(kv[1])):
+                if listed >= 3:
+                    break
+                if len(items) == 1:
+                    c = items[0]
+                    lines.append(f"  - {c.get('cause')} (score: {c.get('score')}, severity: {c.get('severity')})")
+                    listed += 1
+                else:
+                    # Consolidated category summary
+                    lines.append(f"  - {cat.replace('_',' ').title()}: {len(items)} related findings")
+                    listed += 1
+
         lines.append("")
         lines.append("Recommended Actions:")
-        
+
+        # Deduplicated recommendations already provided in recommended_actions
         for action in result.get("recommended_actions", []):
             lines.append(f"  • {action}")
-        
+
         return "\n".join(lines)

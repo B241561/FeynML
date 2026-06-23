@@ -464,15 +464,27 @@ def calibration_summary(y_true, y_prob, n_bins=10, label="model"):
     bss   = brier_skill_score(y_true, y_prob)
     curve = reliability_curve(y_true, y_prob, n_bins)
 
-    # Severity classification
-    if ece < 0.02:
-        severity = "EXCELLENT"
-    elif ece < 0.05:
-        severity = "GOOD"
+    # Severity classification — align with FeynML platform standard
+    # Platform standard:
+    # ECE < 0.05       -> NONE
+    # 0.05 <= ECE <0.10 -> LOW
+    # 0.10 <= ECE <0.20 -> HIGH
+    # ECE >= 0.20       -> CRITICAL
+    if ece < 0.05:
+        severity = "NONE"
     elif ece < 0.10:
-        severity = "MODERATE"
+        severity = "LOW"
+    elif ece < 0.20:
+        severity = "HIGH"
     else:
-        severity = "POOR"
+        severity = "CRITICAL"
+
+    interpretation_map = {
+        "NONE":     "ECE < 5%  — calibration is good; no action required.",
+        "LOW":      "ECE 5–10% — acceptable but consider monitoring or light recalibration.",
+        "HIGH":     "ECE 10–20% — calibration is degraded; recalibration recommended.",
+        "CRITICAL": "ECE >=20% — calibration severely degraded; recalibration required before deployment.",
+    }
 
     return {
         "label":    label,
@@ -484,12 +496,7 @@ def calibration_summary(y_true, y_prob, n_bins=10, label="model"):
         "bss":      round(bss, 6),
         "severity": severity,
         "curve":    curve,
-        "interpretation": {
-            "EXCELLENT": "ECE < 2%  — production-ready calibration.",
-            "GOOD":      "ECE 2–5%  — acceptable for most use cases.",
-            "MODERATE":  "ECE 5–10% — consider recalibration.",
-            "POOR":      "ECE > 10% — recalibration strongly recommended.",
-        }[severity],
+        "interpretation": interpretation_map.get(severity, ""),
     }
 
 

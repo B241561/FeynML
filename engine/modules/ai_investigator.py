@@ -1013,36 +1013,96 @@ Tailor ALL sections (not just the executive summary) to the target audience.
     
     def _generate_confidence_explanation(self, investigation: Investigation) -> str:
         """
-        Generate confidence explanation.
-        
-        Args:
-            investigation: Investigation object
-        
-        Returns:
-            Confidence explanation string
+        Generate confidence explanation grounded in investigation evidence.
+
+        Uses normalized facts built from the investigation object to assemble
+        a concise, evidence-aware explanation for the computed confidence.
         """
         confidence = investigation.confidence
-        cause_count = len(investigation.root_causes)
-        high_severity_count = len(investigation.get_high_severity_causes())
-        
-        explanation = f"Investigation confidence is {confidence}% based on:\n\n"
-        
-        explanation += f"• Number of identified issues: {cause_count}\n"
-        explanation += f"• High-severity issues: {high_severity_count}\n"
-        
-        if cause_count > 0:
-            explanation += f"• Evidence strength: Strong (multiple supporting signals)\n"
-        else:
-            explanation += f"• Evidence strength: Limited (no issues detected)\n"
-        
-        if confidence >= 80:
-            explanation += "\nHigh confidence indicates consistent findings across multiple analysis engines."
-        elif confidence >= 60:
-            explanation += "\nModerate confidence indicates some uncertainty in root cause attribution."
-        else:
-            explanation += "\nLow confidence indicates limited evidence or conflicting signals."
-        
-        return explanation
+
+        # Build normalized facts (uses same extraction logic as other sections)
+        facts = self._build_normalized_context(investigation)
+
+        evidence_lines = []
+
+        # High-severity findings
+        try:
+            hcount = int(facts.get('high_severity_count', 0) or 0)
+            if hcount > 0:
+                evidence_lines.append(f"{hcount} high-severity findings")
+        except Exception:
+            pass
+
+        # Drift
+        try:
+            df = facts.get('drift_features') or []
+            if df:
+                evidence_lines.append(f"{len(df)} drifted features detected")
+        except Exception:
+            pass
+
+        # Label noise
+        try:
+            ln = facts.get('label_noise_rate')
+            if ln:
+                # Expect ln like '34.9%'
+                evidence_lines.append(f"{ln} estimated label noise")
+        except Exception:
+            pass
+
+        # Calibration metric
+        try:
+            cal = facts.get('calibration_metric')
+            if not cal:
+                # Try to extract from investigation metadata directly if present
+                md = getattr(investigation, 'metadata', {}) or {}
+                cal_md = md.get('calibration') or {}
+                if isinstance(cal_md, dict):
+                    findings = cal_md.get('findings') or cal_md
+                    if isinstance(findings, dict):
+                        val = findings.get('ece') or findings.get('best_ece') or findings.get('raw_ece')
+                        if val is not None:
+                            try:
+                                v = float(val)
+                                if v <= 1:
+                                    cal = f"{round(v*100,2)}%"
+                                else:
+                                    cal = f"{round(v,2)}%"
+                            except Exception:
+                                cal = str(val)
+            if cal:
+                evidence_lines.append(f"Calibration ECE of {cal}")
+        except Exception:
+            pass
+
+        # Leakage
+        try:
+            leaks = facts.get('leakage_features') or []
+            if leaks:
+                evidence_lines.append(f"Target leakage detected in {len(leaks)} feature(s)")
+            else:
+                evidence_lines.append("No target leakage detected")
+        except Exception:
+            evidence_lines.append("No target leakage detected")
+
+        # Compose the explanation
+        text = (
+            f"Confidence score of {confidence}% is based on:\n\n"
+            + "\n".join(f"• {item}" for item in evidence_lines)
+        )
+
+        # Evidence quality summary
+        try:
+            if confidence >= 85:
+                text += "\n\nEvidence quality is strong and supports a high-confidence diagnosis."
+            elif confidence >= 70:
+                text += "\n\nEvidence quality is moderate-to-strong and supports the investigation findings."
+            else:
+                text += "\n\nEvidence quality is limited; findings should be interpreted cautiously."
+        except Exception:
+            text += "\n\nEvidence quality is moderate."
+
+        return text
     
     def _generate_technical_notes(self, investigation: Investigation) -> str:
         """
