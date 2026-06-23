@@ -779,115 +779,50 @@ Tailor ALL sections (not just the executive summary) to the target audience.
             "top_cause_names": top_cause_names,
         }
 
-        issue_clauses: List[str] = []
+        # Build concise executive summary (max 3 sentences) per new guidance.
+        # Sentence 1: Overall risk level + confidence
+        # Sentence 2: Top 2 most critical issues only
+        # Sentence 3: Single most important action
 
-        if leakage_features:
-            issue_clauses.append(f"target leakage in {self._join_names(leakage_features[:3])}")
-        if label_noise_rate:
-            issue_clauses.append(f"an estimated label noise rate of {label_noise_rate}")
+        # Determine primary concerns: prefer high/critical severity root causes
+        critical_or_high = [c for c in investigation.root_causes if c.severity in ("CRITICAL", "HIGH")]
+        primary_issues = []
+        if critical_or_high:
+            # order by severity then score
+            primary_sorted = sorted(critical_or_high, key=lambda c: (0 if c.severity == 'CRITICAL' else 1, -getattr(c, 'score', 0)))
+            primary_issues = [self._display_cause_name(c) for c in primary_sorted[:2]]
+        else:
+            # fallback to top causes by score
+            primary_issues = [self._display_cause_name(c) for c in investigation.root_causes[:2]]
 
-        other_top_names = []
-        for name in top_cause_names:
-            if name in leakage_features or name in drift_features:
-                continue
-            if name == "label noise" and label_noise_rate:
-                continue
-            if name == "calibration degradation" and calibration_status == "issue":
-                continue
-            other_top_names.append(name)
-        if other_top_names:
-            issue_clauses.append(f"findings include {self._join_names(other_top_names[:3])}")
+        # Prepare action
+        top_action = None
+        try:
+            if investigation.recommendations and len(investigation.recommendations) > 0:
+                top_action = investigation.recommendations[0]
+        except Exception:
+            top_action = None
 
-        if drift_features:
-            if len(drift_features) == 1:
-                issue_clauses.append(f"{drift_features[0]} exhibits measurable drift")
+        # Sentence constructions
+        sent1 = f"Model health is {risk_level} with {investigation.confidence}% confidence."
+
+        if primary_issues:
+            if len(primary_issues) == 1:
+                sent2 = f"Primary concerns: {primary_issues[0]}."
             else:
-                shown = self._join_names(drift_features[:3])
-                issue_clauses.append(
-                    f"{len(drift_features)} features ({shown}) exhibit measurable drift"
-                )
+                sent2 = f"Primary concerns: {primary_issues[0]} and {primary_issues[1]}."
+        else:
+            sent2 = "Primary concerns: none identified."
 
-        if calibration_status == "issue":
-            metric = calibration_metric or "elevated ECE"
-            issue_clauses.append(f"calibration degradation (ECE={metric})")
-        elif calibration_status == "strong":
-            metric = calibration_metric or "low ECE"
-            issue_clauses.append(f"calibration remains strong (ECE={metric})")
+        if top_action:
+            # Keep action short (single sentence)
+            action = top_action if len(top_action) <= 120 else (top_action[:117].rstrip() + "...")
+            sent3 = f"Immediate action required: {action}."
+        else:
+            sent3 = "Immediate action required: review root cause analysis for next steps."
 
-        # --- Audit quality checks: enforce mention rules ---
-        # Rule 1: If calibration ECE < 1% mention healthy calibration
-        try:
-            if calibration_metric:
-                # calibration_metric may be like '0.58%' or '0.005' etc.
-                cm = str(calibration_metric).replace('%', '')
-                cmf = float(cm)
-                # If it's in fraction form (<=1) convert to percent
-                if cmf <= 1.0:
-                    cm_pct = cmf * 100 if cmf <= 1.0 else cmf
-                else:
-                    cm_pct = cmf
-                if cm_pct < 1.0:
-                    # ensure a clause exists stating calibration healthy
-                    found = any('calibration remains strong' in c or 'calibration' in c for c in issue_clauses)
-                    if not found:
-                        issue_clauses.append(f"calibration remains strong (ECE={round(cm_pct,2)}%)")
-        except Exception:
-            pass
-
-        # Rule 2: If leakage exists, ensure it's mentioned (already added via leakage_features)
-        # Rule 3: If label noise > 10% ensure it is mentioned
-        try:
-            if label_noise_rate:
-                ln_str = str(label_noise_rate).replace('%', '')
-                ln_val = float(ln_str)
-                if ln_val > 10 and not any('label noise' in c or 'label noise' in c for c in issue_clauses):
-                    issue_clauses.append(f"an estimated label noise rate of {label_noise_rate}")
-        except Exception:
-            pass
-
-        # Rule 4: If drifted features > 0 ensure mention
-        try:
-            if drift_features and len(drift_features) > 0 and not any('drift' in c for c in issue_clauses):
-                if len(drift_features) == 1:
-                    issue_clauses.append(f"{drift_features[0]} exhibits measurable drift")
-                else:
-                    shown = self._join_names(drift_features[:3])
-                    issue_clauses.append(f"{len(drift_features)} features ({shown}) exhibit measurable drift")
-        except Exception:
-            pass
-
-        # Rule 5: If fairness disparity == 0 do not imply fairness concerns
-        try:
-            md = getattr(investigation, 'metadata', {}) or {}
-            fairness_md = md.get('fairness') or {}
-            if isinstance(fairness_md, dict):
-                sev = fairness_md.get('severity') or fairness_md.get('status')
-                # If fairness shows no severity/OK/none, remove any fairness mentions (none present by default)
-                if sev and str(sev).upper() in ('NONE', 'OK', 'LOW'):
-                    # no-op because we don't add fairness mentions unless present
-                    pass
-        except Exception:
-            pass
-        if not issue_clauses:
-            issue_clauses.append(
-                f"top findings are {self._join_names(top_cause_names[:3])}"
-            )
-
-        severity_phrase = self._severity_count_phrase(len(high_severity))
-        findings_text = self._join_issue_clauses(issue_clauses)
-        summary = f"{opener} {severity_phrase}: {findings_text}."
-
-        rationale = self._build_risk_rationale(investigation, risk_level, facts)
-        summary += f" {risk_prefix} {risk_level} because {rationale}."
-
-        if investigation.recommendations and len(summary.split()) < 95:
-            top_rec = investigation.recommendations[0]
-            if len(top_rec) > 80:
-                top_rec = top_rec[:77].rstrip() + "..."
-            summary += f" Priority action: {top_rec}."
-
-        summary += f" Confidence: {investigation.confidence}%."
-        return self._truncate_to_word_limit(summary, 120)
+        concise = " ".join([sent1, sent2, sent3])
+        return concise
 
     @staticmethod
     def _join_issue_clauses(clauses: List[str]) -> str:
