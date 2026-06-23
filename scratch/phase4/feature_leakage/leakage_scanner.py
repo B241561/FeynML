@@ -32,6 +32,51 @@ def scan(X, y, df, model=None, feature_names=None, time_col=None, train_idx=None
         X_proc = df.drop(columns=[time_col] if time_col else [], errors='ignore')
         # If 'target' is in df, drop it to avoid self-correlation
         X_proc = X_proc.drop(columns=['target'], errors='ignore')
+
+        # Heuristic: drop any column that exactly matches provided y (likely the true target column)
+        try:
+            for col in list(X_proc.columns):
+                try:
+                    col_vals = X_proc[col].values
+                    # Ensure length matches y
+                    if len(col_vals) == len(y):
+                        # Compare after handling NaNs
+                        mask_col = pd.isna(col_vals)
+                        mask_y = pd.isna(y)
+                        if np.array_equal(col_vals[~mask_col], y[~mask_y]):
+                            X_proc = X_proc.drop(columns=[col], errors='ignore')
+                            continue
+                except Exception:
+                    # If comparison fails, skip
+                    continue
+
+            # Heuristic: drop likely prediction columns by name patterns
+            pred_name_candidates = ['pred', 'prediction', 'predicted', 'y_pred', 'yhat']
+            for col in list(X_proc.columns):
+                lname = str(col).lower()
+                if any(p in lname for p in pred_name_candidates):
+                    # drop prediction-like columns to avoid flagging them as leakage
+                    X_proc = X_proc.drop(columns=[col], errors='ignore')
+                    continue
+
+            # Heuristic: drop numeric columns that look like probabilities (floats in [0,1] with many unique values)
+            for col in list(X_proc.columns):
+                try:
+                    if np.issubdtype(X_proc[col].dtype, np.floating):
+                        vals = X_proc[col].dropna().values
+                        if len(vals) > 0:
+                            vmin = float(np.min(vals))
+                            vmax = float(np.max(vals))
+                            uniq = np.unique(vals)
+                            if 0.0 <= vmin and vmax <= 1.0 and len(uniq) > 10:
+                                X_proc = X_proc.drop(columns=[col], errors='ignore')
+                                continue
+                except Exception:
+                    continue
+        except Exception:
+            # If any of the heuristics fail, proceed with original X_proc
+            pass
+
     elif isinstance(X, pd.DataFrame):
         X_proc = X.copy()
     else:
