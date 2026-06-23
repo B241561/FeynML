@@ -60,6 +60,15 @@
                 {% set ece = data.calibration.get('ece', data.calibration.get('findings', {}).get('ece', 0)) %}
                 <div class="metric">{{ (ece * 100) | round(1) }}%</div>
                 <div class="small text-muted mt-2">Expected Error (ECE)</div>
+                {# ECE status line: <2% Well calibrated, 2-5% Acceptable, >5% Needs attention #}
+                {% set ece_pct = (ece * 100) %}
+                {% if ece_pct < 2 %}
+                    <div class="small text-success mt-1">Well calibrated ✓</div>
+                {% elif ece_pct >= 2 and ece_pct <= 5 %}
+                    <div class="small text-warning mt-1">Acceptable</div>
+                {% else %}
+                    <div class="small text-danger mt-1">Needs attention</div>
+                {% endif %}
                 {% endif %}
             </div>
         </div>
@@ -158,7 +167,22 @@
                         <div class="mb-2">Weighted Score: {{ rb.get('score_pct', rb.get('score', 0)) }}{% if rb.get('score_pct') %}%{% endif %}</div>
                         <ul class="list-unstyled small mb-0">
                             {% for comp, sev in (rb.get('breakdown') or {}).items() %}
-                                <li><strong>{{ comp.replace('_',' ').title() }}:</strong> {{ sev }}</li>
+                                {% set comp_key = comp.lower() %}
+                                <li>
+                                    <strong>{{ comp.replace('_',' ').title() }}:</strong>
+                                    {% if comp_key == 'calibration' %}
+                                        {# determine ECE for display; fallback to 0 #}
+                                        {% set ece_rb = data.get('calibration', {}).get('ece', data.get('calibration', {}).get('findings', {}).get('ece', 0)) %}
+                                        {% set ece_pct_rb = (ece_rb * 100) %}
+                                        {% if (sev|string).upper() in ['NONE', 'OK'] and ece_pct_rb < 5 %}
+                                            <span class="badge-pill badge-success">Good</span>
+                                        {% else %}
+                                            <span>{{ sev }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span>{{ sev }}</span>
+                                    {% endif %}
+                                </li>
                             {% endfor %}
                         </ul>
                     {% else %}
