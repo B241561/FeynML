@@ -815,9 +815,19 @@ Tailor ALL sections (not just the executive summary) to the target audience.
             sent2 = "Primary concerns: none identified."
 
         if top_action:
-            # Keep action short (single sentence)
-            action = top_action if len(top_action) <= 120 else (top_action[:117].rstrip() + "...")
-            sent3 = f"Immediate action required: {action}."
+            # Truncate action to max 80 chars and ensure it ends with a period (no ellipses)
+            try:
+                if len(top_action) <= 80:
+                    action = top_action.rstrip()
+                    if not action.endswith('.'):
+                        action = action + '.'
+                else:
+                    # Truncate at word boundary within 80 chars and append period
+                    action = top_action[:80].rsplit(' ', 1)[0] + '.'
+            except Exception:
+                # Fallback to a safe short action
+                action = (top_action[:80].rsplit(' ', 1)[0] + '.') if top_action else 'Review root cause analysis for next steps.'
+            sent3 = f"Immediate action required: {action}"
         else:
             sent3 = "Immediate action required: review root cause analysis for next steps."
 
