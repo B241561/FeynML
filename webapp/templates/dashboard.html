@@ -143,23 +143,8 @@
                 </div>
                 <div class="small text-muted mt-2">Explanation derived from combined findings and root cause analysis.</div>
                 <div class="mt-3">
-                    {% set fairness_bias = data.get('fairness', {}).get('findings', {}).get('disparity_ratio', 0) or data.get('fairness', {}).get('summary', {}).get('di_ratio', 0) %}
                     {% if why_risk %}
-                        {% if fairness_bias == 0 or fairness_bias is none %}
-                            {# Remove any explicit fairness severity mentions from why_risk and append authoritative NONE #}
-                            {% set sanitized = why_risk %}
-                            {% for sev in ['CRITICAL','HIGH','MEDIUM','LOW','NONE','OK'] %}
-                                {% set sanitized = sanitized.replace('Fairness severity: ' ~ sev, '') %}
-                            {% endfor %}
-                            {% set sanitized = sanitized.strip() %}
-                            {% if not sanitized %}
-                                <p class="mb-0">Fairness: NONE</p>
-                            {% else %}
-                                <p class="mb-0">{{ sanitized }}{% if not sanitized.endswith('.') %}.{% endif %} Fairness: NONE.</p>
-                            {% endif %}
-                        {% else %}
-                            <p class="mb-0">{{ why_risk }}</p>
-                        {% endif %}
+                        <p class="mb-0">{{ why_risk }}</p>
                     {% else %}
                         <p class="text-muted small mb-0">No concise explanation available.</p>
                     {% endif %}
@@ -174,7 +159,6 @@
                 </div>
                 <div class="mt-3 small text-muted">
                     {% set rb = data.get('risk_breakdown', {}) %}
-                    {% set fairness_bias = data.get('fairness', {}).get('findings', {}).get('disparity_ratio', 0) or data.get('fairness', {}).get('summary', {}).get('di_ratio', 0) %}
                     {% if rb %}
                         <div class="d-flex justify-content-between mb-2">
                             <div>Overall Level</div>
@@ -186,13 +170,7 @@
                                 {% set comp_key = comp.lower() %}
                                 <li>
                                     <strong>{{ comp.replace('_',' ').title() }}:</strong>
-                                    {% if comp_key == 'fairness' %}
-                                        {% if fairness_bias == 0 or fairness_bias is none %}
-                                            <span>NONE</span>
-                                        {% else %}
-                                            <span>{{ sev }}</span>
-                                        {% endif %}
-                                    {% elif comp_key == 'calibration' %}
+                                    {% if comp_key == 'calibration' %}
                                         {# determine ECE for display; fallback to 0 #}
                                         {% set ece_rb = data.get('calibration', {}).get('ece', data.get('calibration', {}).get('findings', {}).get('ece', 0)) %}
                                         {% set ece_pct_rb = (ece_rb * 100) %}
