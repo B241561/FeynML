@@ -198,20 +198,35 @@ class FairnessEngine:
                 groups = ax_res.get('group_names') or list((ax_res.get('per_group_rates') or {}).keys())
                 impacted = len(groups) if groups is not None else 0
 
-                # Apply mapping
-                if di_ratio == 0 or impacted == 0:
+                # Check if all groups have zero base rate or zero selection rate
+                per_group_rates = ax_res.get('per_group_rates', {}) or {}
+                try:
+                    all_zero_base = all(v.get('base_rate', 0) == 0 for v in per_group_rates.values()) if per_group_rates else False
+                except Exception:
+                    all_zero_base = False
+                try:
+                    all_zero_selection = all(v.get('selection_rate', 0) == 0 for v in per_group_rates.values()) if per_group_rates else False
+                except Exception:
+                    all_zero_selection = False
+
+                if all_zero_base or all_zero_selection:
+                    # No positive labels or no selections across groups -> no meaningful fairness signal
                     new_sev = 'NONE'
-                elif di_ratio is None:
-                    # Fall back to previously computed severity when DI unavailable
-                    new_sev = ax_res.get('severity', 'NONE')
-                elif di_ratio < 0.1:
-                    new_sev = 'LOW'
-                elif di_ratio < 0.2:
-                    new_sev = 'MEDIUM'
-                elif di_ratio < 0.3:
-                    new_sev = 'HIGH'
                 else:
-                    new_sev = 'CRITICAL'
+                    # Apply mapping
+                    if di_ratio == 0 or impacted == 0:
+                        new_sev = 'NONE'
+                    elif di_ratio is None:
+                        # Fall back to previously computed severity when DI unavailable
+                        new_sev = ax_res.get('severity', 'NONE')
+                    elif di_ratio < 0.1:
+                        new_sev = 'LOW'
+                    elif di_ratio < 0.2:
+                        new_sev = 'MEDIUM'
+                    elif di_ratio < 0.3:
+                        new_sev = 'HIGH'
+                    else:
+                        new_sev = 'CRITICAL'
 
                 # Assign back to per-axis result
                 ax_res['severity'] = new_sev
