@@ -152,13 +152,51 @@ class ReportEngine:
 
     def get_findings(self) -> dict:
         severity = _overall_severity(self._sections)
-        return {
+        findings = {
             "project":   self.project_name,
             "model":     self.model_name,
             "timestamp": self.timestamp,
             "severity":  severity,
             "sections":  _json_safe(self._sections),
         }
+
+        # Attach audit validation metadata if a precomputed validation result is available
+        # Look for evidence_validation in known locations within provided sections.
+        def _extract_validation(sections: dict):
+            # Priority: root_cause.metadata.evidence_validation, any_section.metadata.evidence_validation,
+            # any_section.evidence_validation, any_section.get('_claim_validation')
+            # Do not expose raw registry records.
+            # Return the first found validation dict or None.
+            if not sections:
+                return None
+            # Prefer root_cause section
+            rc = sections.get("root_cause")
+            if isinstance(rc, dict):
+                md = rc.get("metadata") if isinstance(rc.get("metadata"), dict) else None
+                if md and isinstance(md.get("evidence_validation"), dict):
+                    return md.get("evidence_validation")
+                if isinstance(rc.get("evidence_validation"), dict):
+                    return rc.get("evidence_validation")
+                if isinstance(rc.get("_claim_validation"), dict):
+                    return rc.get("_claim_validation")
+            # Scan other sections
+            for s in sections.values():
+                if not isinstance(s, dict):
+                    continue
+                md = s.get("metadata") if isinstance(s.get("metadata"), dict) else None
+                if md and isinstance(md.get("evidence_validation"), dict):
+                    return md.get("evidence_validation")
+                if isinstance(s.get("evidence_validation"), dict):
+                    return s.get("evidence_validation")
+                if isinstance(s.get("_claim_validation"), dict):
+                    return s.get("_claim_validation")
+            return None
+
+        validation = _extract_validation(self._sections)
+        if validation is not None:
+            findings["audit_metadata"] = {"evidence_validation": _json_safe(validation)}
+
+        return findings
 
     # ── TEXT SUMMARY ─────────────────────────────────────────────────────
 
