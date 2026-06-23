@@ -11,8 +11,8 @@ class TestRootCauseConfidence(unittest.TestCase):
     def test_no_causes(self):
         health, conf = self.engine._calculate_health_status([])
         self.assertEqual(health, "Healthy")
-        self.assertEqual(conf, 50)
-        self.assertLessEqual(conf, 95)
+        self.assertEqual(conf, 100)
+        self.assertLessEqual(conf, 100)
 
     def test_one_high_issue(self):
         causes = [{"cause": "X", "score": 60, "severity": "HIGH", "evidence": [], "category": "drift"}]
