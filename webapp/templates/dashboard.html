@@ -360,12 +360,13 @@
                 {% endif %}
                 
                 {% if error_details %}
-                <h6 class="fw-bold small text-muted text-uppercase mb-3 mt-4">Top 10 Suspected Mislabeled Samples</h6>
+                <h6 class="fw-bold small text-muted text-uppercase mb-3 mt-4">Top 10 Label Quality Issues</h6>
                 <div class="table-responsive">
                     <table class="table table-hover table-sm mb-0">
                         <thead>
                             <tr>
                                 <th>Sample Index</th>
+                                <th>Type</th>
                                 <th>True Label</th>
                                 <th>Predicted Label</th>
                                 <th>Noise Probability</th>
@@ -375,6 +376,13 @@
                             {% for err in error_details %}
                             <tr>
                                 <td>{{ err.sample_index }}</td>
+                                <td>
+                                    {% if err.true_label != err.predicted_label %}
+                                        <span class="badge bg-danger">Mislabeled</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Uncertain</span>
+                                    {% endif %}
+                                </td>
                                 <td>{{ err.true_label }}</td>
                                 <td>{{ err.predicted_label }}</td>
                                 <td>{{ (err.noise_probability * 100) | round(1) }}%</td>
@@ -382,6 +390,9 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                </div>
+                <div class="small text-muted mt-2">
+                    <em>Note:</em> Uncertain samples are correctly predicted but have low label confidence. Mislabeled samples have incorrect ground truth labels.
                 </div>
                 {% endif %}
             </div>
