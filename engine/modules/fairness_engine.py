@@ -177,12 +177,6 @@ class FairnessEngine:
 
         # Recompute per-axis severity using explicit disparity-based rules to avoid
         # logical contradictions (e.g., zero bias with CRITICAL severity).
-        # Mapping:
-        # if disparity_ratio == 0 or impacted_groups == 0: NONE
-        # elif disparity_ratio < 0.1: LOW
-        # elif disparity_ratio < 0.2: MEDIUM
-        # elif disparity_ratio < 0.3: HIGH
-        # else: CRITICAL
         try:
             # Update per-axis severity according to the new rules
             for ax_name, ax_res in per_axis.items():
@@ -209,21 +203,26 @@ class FairnessEngine:
                 except Exception:
                     all_zero_selection = False
 
-                if all_zero_base or all_zero_selection:
-                    # No positive labels or no selections across groups -> no meaningful fairness signal
+                # If no meaningful groups or no positives, treat as NONE
+                if all_zero_base or all_zero_selection or impacted == 0:
                     new_sev = 'NONE'
                 else:
-                    # Apply mapping
-                    if di_ratio == 0 or impacted == 0:
+                    # Fairness severity based on Disparate Impact Ratio (DI)
+                    # 1.0 = perfect fairness; lower DI indicates more bias.
+                    # Map DI into severity bands where lower DI => higher severity.
+                    # Defensive guards ensure DI==1.0 or impacted==0 cannot produce CRITICAL.
+                    if di_ratio == 1.0:
                         new_sev = 'NONE'
                     elif di_ratio is None:
                         # Fall back to previously computed severity when DI unavailable
                         new_sev = ax_res.get('severity', 'NONE')
-                    elif di_ratio < 0.1:
+                    elif di_ratio >= 0.90:
+                        new_sev = 'NONE'
+                    elif di_ratio >= 0.80:
                         new_sev = 'LOW'
-                    elif di_ratio < 0.2:
+                    elif di_ratio >= 0.60:
                         new_sev = 'MEDIUM'
-                    elif di_ratio < 0.3:
+                    elif di_ratio >= 0.40:
                         new_sev = 'HIGH'
                     else:
                         new_sev = 'CRITICAL'
