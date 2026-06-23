@@ -59,14 +59,50 @@ class RiskScorer:
         return self.severity_map.get(sev.upper(), self.severity_map.get("NONE", 0))
 
     def _normalize_report_severity(self, report: Any) -> str:
-        """Extract severity label from a module report envelope if possible."""
+        """Extract severity label from a module report envelope if possible.
+
+        Adds extra safeguards for fairness-style reports where metric
+        computations can produce misleading defaults (e.g., DI=1.0 due
+        to division-by-zero). If the report indicates there are no
+        positive labels (all base_rate == 0) or no selections across
+        groups (all selection_rate == 0), treat severity as NONE.
+        """
         if not report:
             return "NONE"
         if isinstance(report, dict):
+            # Quick extract if severity explicitly provided
             sev = report.get('severity') or report.get('status')
+            # Detect per-group rates in common report shapes (audit_by_group / fairness)
+            per_group_rates = None
+            # report may contain per_group_rates at top level
+            if isinstance(report.get('per_group_rates'), dict):
+                per_group_rates = report.get('per_group_rates')
+            # or nested inside 'findings' or inside per-axis structures
+            findings = report.get('findings') if 'findings' in report else report
+            if isinstance(findings, dict):
+                if per_group_rates is None and isinstance(findings.get('per_group_rates'), dict):
+                    per_group_rates = findings.get('per_group_rates')
+                # If per-axis results exist, aggregate across axes
+                if per_group_rates is None and isinstance(report.get('per_axis'), dict):
+                    # Collect per_group_rates from first axis that has it
+                    for ax_res in report.get('per_axis', {}).values():
+                        if isinstance(ax_res, dict) and isinstance(ax_res.get('per_group_rates'), dict):
+                            per_group_rates = ax_res.get('per_group_rates')
+                            break
+            try:
+                if per_group_rates and isinstance(per_group_rates, dict):
+                    all_zero_base = all(v.get('base_rate', 0) == 0 for v in per_group_rates.values())
+                    all_zero_selection = all(v.get('selection_rate', 0) == 0 for v in per_group_rates.values())
+                    if all_zero_base or all_zero_selection:
+                        return 'NONE'
+            except Exception:
+                # If inspection fails, fall back to provided severity
+                pass
+
             if isinstance(sev, str):
                 return sev.upper()
-            findings = report.get('findings') if 'findings' in report else report
+
+            # Fallback to findings.severity if present
             if isinstance(findings, dict):
                 sev2 = findings.get('severity')
                 if isinstance(sev2, str):
