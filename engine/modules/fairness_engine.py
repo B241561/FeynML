@@ -174,6 +174,67 @@ class FairnessEngine:
                 f"{len(all_violations)} violations, {len(all_warnings)} warnings."
             )
         }
+
+        # Recompute per-axis severity using explicit disparity-based rules to avoid
+        # logical contradictions (e.g., zero bias with CRITICAL severity).
+        # Mapping:
+        # if disparity_ratio == 0 or impacted_groups == 0: NONE
+        # elif disparity_ratio < 0.1: LOW
+        # elif disparity_ratio < 0.2: MEDIUM
+        # elif disparity_ratio < 0.3: HIGH
+        # else: CRITICAL
+        try:
+            # Update per-axis severity according to the new rules
+            for ax_name, ax_res in per_axis.items():
+                summ = ax_res.get('summary', {}) or {}
+                # Preserve numerics safely (avoid falsy coercion)
+                di_ratio = summ.get('di_ratio', None)
+                try:
+                    di_ratio = float(di_ratio) if di_ratio is not None else None
+                except Exception:
+                    di_ratio = None
+
+                # Determine impacted groups
+                groups = ax_res.get('group_names') or list((ax_res.get('per_group_rates') or {}).keys())
+                impacted = len(groups) if groups is not None else 0
+
+                # Apply mapping
+                if di_ratio == 0 or impacted == 0:
+                    new_sev = 'NONE'
+                elif di_ratio is None:
+                    # Fall back to previously computed severity when DI unavailable
+                    new_sev = ax_res.get('severity', 'NONE')
+                elif di_ratio < 0.1:
+                    new_sev = 'LOW'
+                elif di_ratio < 0.2:
+                    new_sev = 'MEDIUM'
+                elif di_ratio < 0.3:
+                    new_sev = 'HIGH'
+                else:
+                    new_sev = 'CRITICAL'
+
+                # Assign back to per-axis result
+                ax_res['severity'] = new_sev
+                per_axis[ax_name] = ax_res
+
+            # Recompute overall worst severity based on updated per-axis severities
+            worst = 'NONE'
+            for r in per_axis.values():
+                s = r.get('severity', 'NONE')
+                if self._SEVERITY_RANK.get(s, 0) > self._SEVERITY_RANK.get(worst, 0):
+                    worst = s
+
+            self._results['per_axis'] = per_axis
+            self._results['severity'] = worst
+            # Update human summary
+            self._results['summary'] = (
+                f"Fairness audit across {len(self.axes)} axes. Severity: {worst}. "
+                f"{len(all_violations)} violations, {len(all_warnings)} warnings."
+            )
+        except Exception:
+            # Non-fatal: keep original severity
+            pass
+
         return self._results
 
     # ── THRESHOLD OPTIMIZATION ────────────────────────────────────────────

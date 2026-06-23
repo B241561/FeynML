@@ -33,6 +33,10 @@ Usage:
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 import json
+try:
+    from .risk_scorer import RiskScorer
+except ImportError:
+    from risk_scorer import RiskScorer
 
 try:
     from .investigation import Investigation, RootCause
@@ -153,7 +157,9 @@ class AutoRootCauseEngine:
             explainability_report: Optional[Dict] = None,
             training_importance: Optional[Dict] = None,
             production_importance: Optional[Dict] = None,
-            leakage_report: Optional[Dict] = None) -> Dict:
+            leakage_report: Optional[Dict] = None,
+            label_noise_report: Optional[Dict] = None,
+            fairness_report: Optional[Dict] = None) -> Dict:
         """
         Run the auto root cause analysis.
         
@@ -222,7 +228,145 @@ class AutoRootCauseEngine:
         self._log(f"Analysis complete. Health: {health_status}, Confidence: {confidence}")
         self._log(f"Excluded {len(self._excluded_features)} identifier columns: {list(self._excluded_features)}")
         
+        # Compute unified risk using RiskScorer so all systems share the same source
+        scorer = RiskScorer()
+        risk = scorer.score(
+            leakage_report=leakage_report,
+            label_noise_report=label_noise_report,
+            drift_report=drift_report,
+            calibration_report=calibration_report,
+            missing_data_report=data_quality_report,
+            fairness_report=fairness_report,
+            root_causes=[{"severity": c.get('severity')} for c in scored_causes]
+        )
+
+        # Attach risk into investigation metadata and result envelope
+        investigation.metadata = {**investigation.metadata, 'risk': risk}
+
         result = investigation.to_dict()
+        # Build a concise human-readable "why" explanation using available evidence
+        try:
+            why_lines = []
+            # Leakage
+            leaks = [e.get('feature') for e in evidence.get('leakage', []) if isinstance(e, dict) and e.get('feature')]
+            if leaks:
+                why_lines.append(f"Target leakage detected in {', '.join(leaks[:5])}.")
+
+            # Label noise
+            try:
+                ln = None
+                if label_noise_report and isinstance(label_noise_report, dict):
+                    ln_find = label_noise_report.get('findings') or label_noise_report.get('findings', {}) or label_noise_report
+                    if isinstance(ln_find, dict):
+                        ln_val = ln_find.get('estimated_noise_fraction') or ln_find.get('estimated_noise_rate')
+                        if ln_val is not None:
+                            if isinstance(ln_val, (int, float)) and ln_val <= 1:
+                                ln = f"{round(float(ln_val)*100,1)}%"
+                            else:
+                                ln = f"{ln_val}%" if isinstance(ln_val, (int, float)) else str(ln_val)
+                if ln:
+                    why_lines.append(f"Estimated label noise rate is {ln}.")
+            except Exception:
+                pass
+
+            # Drift
+            n_drift = len(evidence.get('feature_drift', []))
+            if n_drift > 0:
+                why_lines.append(f"{n_drift} drifted feature(s) detected.")
+
+            # Calibration
+            try:
+                cal_metric = None
+                if calibration_report and isinstance(calibration_report, dict):
+                    findings = calibration_report.get('findings') or calibration_report
+                    if isinstance(findings, dict):
+                        val = findings.get('ece') or findings.get('best_ece') or findings.get('raw_ece')
+                        if val is not None:
+                            if isinstance(val, (int, float)) and val <= 1:
+                                cal_metric = f"{round(float(val)*100,2)}%"
+                            else:
+                                cal_metric = f"{val}%"
+                if cal_metric:
+                    why_lines.append(f"Calibration reported ECE={cal_metric}.")
+            except Exception:
+                pass
+
+            # Fairness
+            try:
+                fair_msg = None
+                if fairness_report and isinstance(fairness_report, dict):
+                    sev = fairness_report.get('severity') or fairness_report.get('status')
+                    if sev and str(sev).upper() in ('NONE', 'OK'):
+                        fair_msg = "No fairness concerns detected"
+                    else:
+                        fair_msg = f"Fairness severity: {sev}"
+                if fair_msg:
+                    why_lines.append(fair_msg)
+            except Exception:
+                pass
+
+            # If we couldn't assemble evidence-specific lines, fall back to the
+            # unified risk breakdown produced by RiskScorer so the dashboard
+            # always has a concise explanation.
+            if not why_lines and isinstance(risk, dict):
+                rb = risk.get('breakdown', {}) or {}
+                # List human-friendly bullets
+                fb = []
+                if rb.get('leakage') and rb.get('leakage') != 'NONE':
+                    leaks = [e.get('feature') for e in evidence.get('leakage', []) if isinstance(e, dict) and e.get('feature')]
+                    fb.append(f"Target leakage detected in {', '.join(leaks[:3])}" if leaks else "Target leakage detected")
+                if rb.get('label_noise') and rb.get('label_noise') != 'NONE':
+                    ln_val = None
+                    try:
+                        ln_find = label_noise_report.get('findings') if label_noise_report and isinstance(label_noise_report, dict) else None
+                        if ln_find:
+                            ln_val = ln_find.get('estimated_noise_fraction') or ln_find.get('estimated_noise_rate')
+                    except Exception:
+                        ln_val = None
+                    if ln_val is not None:
+                        try:
+                            ln_pct = float(ln_val) * 100 if float(ln_val) <= 1 else float(ln_val)
+                            fb.append(f"Label noise rate {ln_pct:.1f}%")
+                        except Exception:
+                            fb.append(f"Label noise detected: {ln_val}")
+                    else:
+                        fb.append("Label noise detected")
+                if rb.get('drift') and rb.get('drift') != 'NONE':
+                    n_drift = len(evidence.get('feature_drift', []))
+                    fb.append(f"{n_drift} drifted feature(s) detected")
+                if rb.get('calibration') and rb.get('calibration') != 'NONE':
+                    try:
+                        cal_val = None
+                        cal_find = calibration_report.get('findings') if calibration_report and isinstance(calibration_report, dict) else calibration_report
+                        if isinstance(cal_find, dict):
+                            val = cal_find.get('ece') or cal_find.get('best_ece') or cal_find.get('raw_ece')
+                            if val is not None:
+                                cal_val = (float(val)*100) if float(val) <= 1 else float(val)
+                        if cal_val is not None:
+                            fb.append(f"Calibration ECE={cal_val:.2f}%")
+                        else:
+                            fb.append("Calibration concerns detected")
+                    except Exception:
+                        fb.append("Calibration concerns detected")
+                # Fairness
+                if rb.get('fairness') and rb.get('fairness') != 'NONE':
+                    fb.append(f"Fairness severity: {rb.get('fairness')}")
+                else:
+                    fb.append("No fairness concerns")
+
+                if fb:
+                    # Compose concise explanation
+                    risk_explanation = "; ".join(fb) + "."
+                else:
+                    risk_explanation = ""
+            else:
+                risk_explanation = " ".join(why_lines) if why_lines else ""
+
+            result['risk_explanation'] = risk_explanation
+            investigation.metadata['risk_explanation'] = risk_explanation
+        except Exception:
+            pass
+        result['risk'] = risk
         result["excluded_features"] = list(self._excluded_features)
         result["audit_log"] = self._audit_log
         

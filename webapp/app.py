@@ -1416,7 +1416,8 @@ def view_dashboard(report_id):
                            critical_count=critical_count,
                            alerts_count=alerts_count,
                            charts=charts,
-                           selected_audience=selected_audience)
+                           selected_audience=selected_audience,
+                           why_risk=data.get('why_risk'))
 
 
 @app.route('/dashboard')

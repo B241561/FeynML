@@ -23,6 +23,11 @@ class AudienceTranslator:
     
     def __init__(self, verbose: bool = False):
         self.verbose = verbose
+
+    @staticmethod
+    def _resolve_executive_summary(ai_investigator: Dict[str, Any]) -> str:
+        """Use evidence-grounded summary from AI Investigator when available."""
+        return (ai_investigator.get("executive_summary") or "").strip()
     
     def translate(
         self,
@@ -126,12 +131,12 @@ class AudienceTranslator:
         findings += f"\nOverall Risk Level: {risk_level}\n"
         findings += "\nNote: Always use HR judgment alongside model predictions."
         
-        if reliability in ["High Risk", "Unreliable"]:
-            executive_summary = f"HR decision support model reliability compromised. {len(root_causes)} factors affecting predictions. Immediate validation required. Confidence: {confidence}%."
-        elif reliability == "Needs Monitoring":
-            executive_summary = f"HR model requires monitoring. {len(root_causes)} factors identified affecting predictions. Review recommended. Confidence: {confidence}%."
-        else:
-            executive_summary = f"HR decision support model reliable. No significant issues detected. Continue normal operations. Confidence: {confidence}%."
+        executive_summary = self._resolve_executive_summary(ai_investigator)
+        if not executive_summary:
+            executive_summary = (
+                f"HR decision support model reliable. No significant issues detected. "
+                f"Continue normal operations. Confidence: {confidence}%."
+            )
         
         # HR recommendations
         hr_recommendations = []
@@ -197,12 +202,12 @@ class AudienceTranslator:
         findings += f"\nOverall Risk Level: {risk_level}\n"
         findings += "\nCompliance Note: Ensure model meets insurance regulatory requirements."
         
-        if assessment_risk in ["High Risk", "Moderate Risk"]:
-            executive_summary = f"Insurance risk model reliability compromised. {len(root_causes)} risk factors affecting underwriting. Immediate validation required. Risk level: {risk_level}."
-        elif assessment_risk == "Monitor Closely":
-            executive_summary = f"Insurance model requires monitoring. {len(root_causes)} risk factors identified. Review underwriting decisions. Risk level: {risk_level}."
-        else:
-            executive_summary = f"Insurance risk model reliable. No significant issues detected. Continue normal operations. Risk level: {risk_level}."
+        executive_summary = self._resolve_executive_summary(ai_investigator)
+        if not executive_summary:
+            executive_summary = (
+                f"Insurance risk model reliable. No significant issues detected. "
+                f"Continue normal operations. Risk level: {risk_level}."
+            )
         
         # Insurance recommendations
         insurance_recommendations = []
@@ -268,12 +273,12 @@ class AudienceTranslator:
         findings += f"\nOverall Risk Level: {risk_level}\n"
         findings += "\nNote: Document all findings and actions taken for audit trail purposes."
         
-        if assessment_status in ["Non-Compliant", "Potentially Non-Compliant"]:
-            executive_summary = f"Model compliance assessment: {assessment_status}. {len(root_causes)} compliance risks identified. Immediate action required. Risk level: {risk_level}."
-        elif assessment_status == "Needs Review":
-            executive_summary = f"Model compliance requires review. {len(root_causes)} potential risks identified. Document findings. Risk level: {risk_level}."
-        else:
-            executive_summary = f"Model compliant. No significant compliance issues detected. Continue normal operations. Risk level: {risk_level}."
+        executive_summary = self._resolve_executive_summary(ai_investigator)
+        if not executive_summary:
+            executive_summary = (
+                f"Model compliant. No significant compliance issues detected. "
+                f"Continue normal operations. Risk level: {risk_level}."
+            )
         
         # Compliance recommendations
         compliance_recommendations = []
@@ -334,13 +339,12 @@ class AudienceTranslator:
         if ai_investigator.get("investigation_findings"):
             findings += f"\nDetailed Analysis:\n{ai_investigator['investigation_findings']}\n"
         
-        # Research executive summary
-        if model_status in ["Requires Immediate Attention", "Unstable"]:
-            executive_summary = f"Research model investigation: {model_status}. {len(root_causes)} technical issues identified. Immediate attention required. Confidence: {confidence}%."
-        elif model_status == "Anomalies Detected":
-            executive_summary = f"Research model anomalies detected. {len(root_causes)} issues identified for investigation. Monitor closely. Confidence: {confidence}%."
-        else:
-            executive_summary = f"Research model stable. No significant issues detected. Continue research operations. Confidence: {confidence}%."
+        executive_summary = self._resolve_executive_summary(ai_investigator)
+        if not executive_summary:
+            executive_summary = (
+                f"Research model stable. No significant issues detected. "
+                f"Continue research operations. Confidence: {confidence}%."
+            )
         
         # Impact assessment (research)
         impact_assessment = "Research implications include potential challenges to study validity, reproducibility, and the reliability of experimental conclusions."
@@ -392,13 +396,12 @@ class AudienceTranslator:
         if ai_investigator.get("investigation_findings"):
             findings += f"\nDetailed Analysis:\n{ai_investigator['investigation_findings']}\n"
         
-        # Technical executive summary
-        if health_status in ["Critical", "Degraded"]:
-            executive_summary = f"Critical model degradation detected. Primary issue: feature drift affecting prediction reliability. Immediate retraining recommended. Confidence: {confidence}%."
-        elif health_status == "Warning":
-            executive_summary = f"Model performance degradation detected. Feature drift impacting predictions. Monitor closely. Confidence: {confidence}%."
-        else:
-            executive_summary = f"Model operating normally. Minor issues detected. Continue monitoring. Confidence: {confidence}%."
+        executive_summary = self._resolve_executive_summary(ai_investigator)
+        if not executive_summary:
+            executive_summary = (
+                f"Model operating normally. Minor issues detected. "
+                f"Continue monitoring. Confidence: {confidence}%."
+            )
         
         # Impact assessment (technical)
         impact_assessment = "Technical impact includes potential reduction in prediction accuracy, calibration drift, and increased risk of unreliable outputs for production workloads."
@@ -461,13 +464,12 @@ class AudienceTranslator:
         if ai_investigator.get("impact_assessment"):
             findings += f"\n{ai_investigator['impact_assessment']}\n"
         
-        # Business-focused executive summary
-        if risk_level in ["CRITICAL", "HIGH"]:
-            executive_summary = f"Model reliability compromised. Business impact: reduced prediction accuracy affecting decisions. Immediate corrective action required. Risk level: {risk_level}."
-        elif risk_level == "MEDIUM":
-            executive_summary = f"Model performance requires attention. Business impact: potential decision accuracy reduction. Schedule maintenance. Risk level: {risk_level}."
-        else:
-            executive_summary = f"Model operating normally. No significant business impact detected. Continue operations. Risk level: {risk_level}."
+        executive_summary = self._resolve_executive_summary(ai_investigator)
+        if not executive_summary:
+            executive_summary = (
+                f"Model operating normally. No significant business impact detected. "
+                f"Continue operations. Risk level: {risk_level}."
+            )
         
         # Translate recommendations to business language
         business_recommendations = []
@@ -542,12 +544,12 @@ class AudienceTranslator:
         
         findings += "\nNote: Always use clinical judgment alongside model predictions."
         
-        if reliability in ["unreliable", "variable"]:
-            executive_summary = f"Clinical decision support reliability compromised. {len(root_causes)} factors affecting predictions. Immediate validation required. Use clinical judgment. Confidence: {confidence}%."
-        elif reliability == "needs monitoring":
-            executive_summary = f"Clinical model requires monitoring. {len(root_causes)} factors identified affecting predictions. Review recommended. Confidence: {confidence}%."
-        else:
-            executive_summary = f"Clinical decision support reliable. No significant issues detected. Continue normal operations. Confidence: {confidence}%."
+        executive_summary = self._resolve_executive_summary(ai_investigator)
+        if not executive_summary:
+            executive_summary = (
+                f"Clinical decision support reliable. No significant issues detected. "
+                f"Continue normal operations. Confidence: {confidence}%."
+            )
         
         # Clinical recommendations
         clinical_recommendations = []
@@ -613,12 +615,12 @@ class AudienceTranslator:
         findings += f"\nOverall Risk Level: {risk_level}\n"
         findings += "\nCompliance Note: Ensure model meets regulatory requirements."
         
-        if assessment_risk in ["High Risk", "Moderate Risk"]:
-            executive_summary = f"Credit risk model reliability compromised. {len(root_causes)} risk factors affecting lending. Immediate validation required. Ensure compliance. Risk level: {risk_level}."
-        elif assessment_risk == "Monitor Closely":
-            executive_summary = f"Credit model requires monitoring. {len(root_causes)} risk factors identified. Validate high-risk decisions. Risk level: {risk_level}."
-        else:
-            executive_summary = f"Credit risk model reliable. No significant issues detected. Continue normal operations. Risk level: {risk_level}."
+        executive_summary = self._resolve_executive_summary(ai_investigator)
+        if not executive_summary:
+            executive_summary = (
+                f"Credit risk model reliable. No significant issues detected. "
+                f"Continue normal operations. Risk level: {risk_level}."
+            )
         
         # Risk-focused recommendations
         risk_recommendations = []
@@ -675,13 +677,12 @@ class AudienceTranslator:
                 severity = cause.get('severity', 'LOW')
                 findings += f"{i}. {cause.get('cause', 'Unknown')} (Severity: {severity})\n"
         
-        # Professional executive summary
-        if health_status in ["Critical", "Degraded"]:
-            executive_summary = f"Model integrity requires immediate attention. {len(root_causes)} issues detected. Predictions unreliable for current data. Address to restore accuracy."
-        elif health_status == "Warning":
-            executive_summary = f"Model performance degradation detected. {len(root_causes)} issues identified. Predictions may be unreliable. Review recommendations."
-        else:
-            executive_summary = f"Model operating within normal parameters. No significant issues detected. Continue monitoring."
+        executive_summary = self._resolve_executive_summary(ai_investigator)
+        if not executive_summary:
+            executive_summary = (
+                f"Model operating within normal parameters. No significant issues detected. "
+                f"Continue monitoring."
+            )
         
         # Impact assessment (simplified professional)
         impact_assessment = "Unreliable model predictions may lead to incorrect decisions. Addressing identified issues is critical to restoring model performance."
@@ -723,9 +724,11 @@ class AudienceTranslator:
             for i, cause in enumerate(root_causes[:5], 1):
                 findings += f"{i}. {cause.get('cause', 'Unknown')} (Severity: {cause.get('severity', 'LOW')})\n"
         
-        executive_summary = f"Model health status: {health_status} with {confidence}% confidence. "
-        if root_causes:
-            executive_summary += f"{len(root_causes)} issues identified."
+        executive_summary = self._resolve_executive_summary(ai_investigator)
+        if not executive_summary:
+            executive_summary = f"Model health status: {health_status} with {confidence}% confidence. "
+            if root_causes:
+                executive_summary += f"{len(root_causes)} issues identified."
         
         # Default fields
         impact_assessment = ai_investigator.get("impact_assessment", "Impact assessment not available.")

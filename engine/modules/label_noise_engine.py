@@ -67,17 +67,42 @@ class LabelNoiseEngine(BaseModule):
         # 3. Quality scores
         scores = label_quality_scores(y_proba, y_noisy)
         
-        # 4. Collect error details (top 10)
+        # 4. Collect error details (ranked by likelihood of mislabeling)
+        # Compute noise probability for each candidate and sort descending so the
+        # most suspicious samples appear at the top of the list.
         error_details = []
-        for idx in error_indices[:10]:
+        ranked = []
+        for idx in error_indices:
+            idx = int(idx)
             s = int(y_noisy[idx])
             y_pred = int(np.argmax(y_proba[idx]))
-            noise_prob = float(1 - y_proba[idx, s])  # 1 - confidence in noisy label
+            # 1 - confidence in the observed noisy label: higher -> more suspicious
+            noise_prob = float(1 - y_proba[idx, s])
+            # model confidence in its own predicted label
+            confidence = float(np.max(y_proba[idx]))
+            # disagreement flag (True if model predicts a different label)
+            disagree = 1 if y_pred != s else 0
+            # reason for ranking (helpful for explanation when top rows have same labels)
+            if disagree:
+                reason = 'disagreement'
+            elif confidence < 0.5:
+                reason = 'low_confidence'
+            else:
+                reason = 'model_agrees'
+            ranked.append((idx, noise_prob, disagree, confidence, reason, y_pred, s))
+
+        # Sort by: disagreement first, then noise probability desc, then lowest confidence
+        ranked.sort(key=lambda t: (t[2], t[1], -t[3]), reverse=True)
+
+        for idx, noise_prob, disagree, confidence, reason, y_pred, s in ranked[:10]:
             error_details.append({
                 "sample_index": int(idx),
                 "true_label": int(s),
                 "predicted_label": int(y_pred),
-                "noise_probability": noise_prob
+                "noise_probability": float(round(noise_prob, 6)),
+                "disagreement": bool(disagree),
+                "confidence": float(round(confidence, 6)),
+                "reason": reason
             })
             
         # 5. Per class noise counts

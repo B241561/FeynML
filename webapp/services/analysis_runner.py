@@ -631,7 +631,9 @@ class AnalysisRunner:
                     slice_report=slice_report,
                     calibration_report=calibration_report,
                     data_quality_report=data_quality_report,
-                    leakage_report=leakage_report
+                    leakage_report=leakage_report,
+                    label_noise_report=self.results.get('label_noise'),
+                    fairness_report=self.results.get('fairness')
                 )
                 
                 try:
@@ -717,7 +719,54 @@ class AnalysisRunner:
                 try:
                     from engine.modules.investigation import Investigation
                     root_cause_dict = self.results.get('root_cause', {})
-                    investigation = Investigation.from_dict(root_cause_dict)
+
+                    # Enrich Investigation metadata with all engine outputs so
+                    # the AI Investigator can consume full audit evidence (leakage,
+                    # label_noise, calibration, drift, missing_data, fairness).
+                    metadata = {
+                        'leakage': self.results.get('leakage', {}),
+                        'label_noise': self.results.get('label_noise', {}),
+                        'calibration': self.results.get('calibration', {}),
+                        'drift': self.results.get('drift', {}),
+                        'missing_data': self.results.get('missing_data', {}),
+                        'fairness': self.results.get('fairness', {}),
+                    }
+
+                    # Merge metadata into the root_cause dict so Investigation.from_dict
+                    # populates Investigation.metadata. Keep existing metadata if present.
+                    if isinstance(root_cause_dict, dict):
+                        merged = dict(root_cause_dict)
+                        existing_meta = merged.get('metadata', {}) or {}
+                        # Avoid overwriting any pre-existing keys in metadata
+                        merged['metadata'] = {**metadata, **existing_meta}
+                        investigation = Investigation.from_dict(merged)
+                    else:
+                        # Fallback: create minimal dict wrapper
+                        investigation = Investigation.from_dict({
+                            'root_causes': [],
+                            'metadata': metadata
+                        })
+                    # Persist overall risk breakdown to top-level results for dashboard
+                    try:
+                        rc_risk = investigation.metadata.get('risk') or (root_cause_dict or {}).get('risk')
+
+                        if rc_risk:
+                            self.results['risk_breakdown'] = rc_risk
+                            self.results['overall_risk'] = rc_risk.get('level')
+
+                            # Single source of truth for dashboard status
+                            self.results['global_status'] = rc_risk.get('level')
+
+                        why = (
+                            (root_cause_dict or {}).get('risk_explanation')
+                            or investigation.metadata.get('risk_explanation')
+                        )
+
+                        if why:
+                            self.results['why_risk'] = why
+
+                    except Exception:
+                        pass
                     
                     # Generate AI Investigator outputs for ALL audiences so that the
                     # downstream AudienceTranslator can render fully adapted reports
@@ -743,9 +792,33 @@ class AnalysisRunner:
                             self.log(f"WARNING: AIInvestigator audience '{aud}' failed: {aud_e}")
                             ai_by_audience[aud] = ai_investigator.analyze(investigation, "ML Engineer")
 
+                    # Align AI Investigator risk with the single source-of-truth (root-cause risk)
+                    try:
+                        if rc_risk and isinstance(rc_risk, dict):
+                            unified_level = rc_risk.get('level')
+                            if unified_level:
+                                for k, v in list(ai_by_audience.items()):
+                                    # Ensure the audience result includes a risk_level key reflecting the unified level
+                                    if isinstance(v, dict):
+                                        v['risk_level'] = unified_level
+                                        ai_by_audience[k] = v
+                    except Exception:
+                        # Non-fatal: keep original AI Investigator outputs
+                        pass
+
                     # Keep the selected audience as the top-level section for legacy consumers.
-                    self.results['ai_investigator'] = ai_by_audience.get(audience, ai_by_audience.get("ML Engineer"))
+                    # Also ensure the top-level ai_investigator carries the unified risk_level when available.
                     self.results['ai_investigator_by_audience'] = ai_by_audience
+                    self.results['ai_investigator'] = ai_by_audience.get(audience, ai_by_audience.get("ML Engineer"))
+                    try:
+                        if rc_risk and isinstance(rc_risk, dict):
+                            top = self.results.get('ai_investigator', {})
+                            if isinstance(top, dict) and rc_risk.get('level'):
+                                top['risk_level'] = rc_risk.get('level')
+                                self.results['ai_investigator'] = top
+                    except Exception:
+                        pass
+
                     self.log("ENGINE_COMPLETED: AIInvestigator analysis complete.")
                 except Exception as inv_e:
                     # If Investigation conversion fails, create degraded analysis

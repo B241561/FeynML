@@ -28,7 +28,8 @@ Usage:
 
 import sys
 import os
-from typing import Dict, List, Optional, Any
+import re
+from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
 
 # Add project root to path
@@ -200,6 +201,8 @@ class AIInvestigator:
             "recommended_actions": recommended_actions,
             "technical_notes": technical_notes,
             "risk_level": risk_level,
+            "risk_breakdown": (getattr(investigation, 'metadata', {}) or {}).get('risk'),
+            "risk_explanation": (getattr(investigation, 'metadata', {}) or {}).get('risk_explanation'),
             "generated_at": datetime.now().isoformat(),
             "investigation_id": investigation.investigation_id
         }
@@ -347,243 +350,554 @@ Tailor ALL sections (not just the executive summary) to the target audience.
         Returns:
             Risk level: LOW, MEDIUM, HIGH, or CRITICAL
         """
+        # Prefer pre-computed risk in investigation metadata (single source of truth)
+        md = getattr(investigation, 'metadata', {}) or {}
+        risk_md = md.get('risk') or {}
+        level = None
+        try:
+            level = risk_md.get('level')
+        except Exception:
+            level = None
+
+        if level:
+            return level.upper()
+
+        # Fallback to legacy heuristic if risk metadata not available
         health_status = investigation.health_status
         confidence = investigation.confidence
         high_severity_count = len(investigation.get_high_severity_causes())
         critical_count = len(investigation.get_critical_causes())
-        
+
         # Critical risk
         if health_status == "Critical" or critical_count > 0:
             return "CRITICAL"
-        
+
         # High risk
         if health_status == "Warning" and high_severity_count >= 2:
             return "HIGH"
-        
+
         if confidence >= 80 and high_severity_count >= 1:
             return "HIGH"
-        
+
         # Medium risk
         if health_status == "Warning" and high_severity_count >= 1:
             return "MEDIUM"
-        
+
         if confidence >= 60 and len(investigation.root_causes) >= 2:
             return "MEDIUM"
-        
+
         # Low risk
         if health_status == "Healthy":
             return "LOW"
-        
+
         # Default to medium for unknown
         return "MEDIUM"
     
+    _AUDIENCE_OPENERS = {
+        "ML Engineer": "Investigation detected",
+        "Executive": "Analysis identified",
+        "Doctor": "Clinical review detected",
+        "Loan Officer": "Credit review identified",
+        "Student": "Review identified",
+        "HR Manager": "Workforce review detected",
+        "Insurance Analyst": "Underwriting review identified",
+        "Legal / Compliance Officer": "Compliance review identified",
+        "Researcher": "Study validation identified",
+    }
+
+    _AUDIENCE_RISK_PREFIX = {
+        "ML Engineer": "Overall risk is classified as",
+        "Executive": "Overall business risk is rated",
+        "Doctor": "Clinical risk is rated",
+        "Loan Officer": "Portfolio risk is rated",
+        "Student": "Overall risk is rated",
+        "HR Manager": "Workforce decision risk is rated",
+        "Insurance Analyst": "Underwriting risk is rated",
+        "Legal / Compliance Officer": "Governance risk is rated",
+        "Researcher": "Study validity risk is rated",
+    }
+
     def _generate_executive_summary(self, investigation: Investigation, risk_level: str, audience: str = "ML Engineer") -> str:
         """
-        Generate executive summary (synthesized narrative, max 120 words).
-        
-        Answers: What happened? Why does it matter? What should happen next?
-        
-        Args:
-            investigation: Investigation object
-            risk_level: Assessed risk level
-            audience: Target audience for the summary
-        
-        Returns:
-            Executive summary string (max 120 words)
+        Generate evidence-grounded executive summary (max 120 words).
+
+        References top root causes, issue-specific evidence, and risk rationale.
+        Audience framing varies; factual findings are shared across audiences.
         """
+        return self._compose_evidence_grounded_summary(investigation, risk_level, audience)
+
+    @staticmethod
+    def _join_names(names: List[str]) -> str:
+        names = [n for n in names if n]
+        if not names:
+            return ""
+        if len(names) == 1:
+            return names[0]
+        if len(names) == 2:
+            return f"{names[0]} and {names[1]}"
+        return ", ".join(names[:-1]) + f", and {names[-1]}"
+
+    def _extract_feature_from_cause(self, cause) -> str:
+        """Extract a display name from a root cause record."""
+        text = cause.cause or ""
+        category = cause.category or ""
+        if category == "target_leakage":
+            return text.replace(" target leakage", "")
+        if category == "feature_drift":
+            return text.replace(" feature drift", "")
+        if category == "slice_degradation":
+            return text.replace("Slice failure: ", "")
+        if category == "missing_values":
+            return text.replace("Missing values in ", "")
+        if category == "outliers":
+            return text.replace("Outlier increase in ", "")
+        if category == "importance_drift":
+            return text.replace("Feature importance drift: ", "")
+        return text
+
+    def _display_cause_name(self, cause) -> str:
+        """Human-readable cause label for executive summaries."""
+        name = self._extract_feature_from_cause(cause)
+        if cause.category == "calibration":
+            return "calibration degradation"
+        if cause.category == "target_leakage":
+            return name
+        if cause.category == "feature_drift":
+            return name
+        if "label noise" in (cause.cause or "").lower():
+            return "label noise"
+        return name
+
+    @staticmethod
+    def _parse_metric(evidence_items: List[str], patterns: Tuple[str, ...]) -> Optional[str]:
+        for item in evidence_items or []:
+            for pattern in patterns:
+                match = re.search(pattern, item, re.IGNORECASE)
+                if match:
+                    return match.group(1).strip()
+        return None
+
+    def _collect_all_evidence(self, investigation: Investigation) -> List[str]:
+        evidence = list(investigation.evidence or [])
+        for cause in investigation.root_causes:
+            evidence.extend(cause.evidence or [])
+        return evidence
+
+    def _build_normalized_context(self, investigation: Investigation) -> Dict[str, Any]:
+        """Build a normalized facts/context object used across narrative generators.
+
+        Ensures all narrative sections derive from the same structured facts.
+        """
+        leakage_features = [
+            self._extract_feature_from_cause(c)
+            for c in investigation.root_causes
+            if c.category == "target_leakage"
+        ]
+
+        drift_features = [
+            self._extract_feature_from_cause(c)
+            for c in investigation.root_causes
+            if c.category == "feature_drift"
+        ]
+
+        # Augment with metadata when available
+        md = getattr(investigation, 'metadata', {}) or {}
+        if isinstance(md.get('leakage'), dict):
+            suspects = (md.get('leakage', {}) or {}).get('findings', {})
+            try:
+                suspects_list = (suspects or {}).get('suspects') if isinstance(suspects, dict) else (md.get('leakage') or {}).get('suspects', [])
+                for s in (suspects_list or []):
+                    fname = s.get('feature') if isinstance(s, dict) else None
+                    if fname and fname not in leakage_features:
+                        leakage_features.append(str(fname))
+            except Exception:
+                pass
+
+        if isinstance(md.get('drift'), dict):
+            try:
+                findings = (md.get('drift') or {}).get('findings') or md.get('drift') or {}
+                drifted = findings.get('drifted') if isinstance(findings, dict) else []
+                if not drifted and isinstance(findings.get('per_feature'), list):
+                    drifted = [f.get('feature') for f in findings.get('per_feature', []) if f.get('status') == 'DRIFT']
+                for f in (drifted or []):
+                    if f and str(f) not in drift_features:
+                        drift_features.append(str(f))
+            except Exception:
+                pass
+
+        label_noise_rate = self._detect_label_noise_rate(investigation)
+        calibration_status, calibration_metric = self._assess_calibration(investigation)
+
+        high_severity = investigation.get_high_severity_causes()
+        top_causes = investigation.root_causes[:3]
+        top_cause_names = [self._display_cause_name(c) for c in top_causes]
+
+        facts = {
+            "high_severity_count": len(high_severity),
+            "leakage_features": leakage_features,
+            "label_noise_rate": label_noise_rate,
+            "drift_features": drift_features,
+            "calibration_status": calibration_status,
+            "calibration_metric": calibration_metric,
+            "top_cause_names": top_cause_names,
+        }
+        return facts
+
+    def _detect_label_noise_rate(self, investigation: Investigation) -> Optional[str]:
+        # 1) Check explicit metadata provided by the LabelNoiseEngine
+        md = getattr(investigation, 'metadata', {}) or {}
+        ln_md = md.get('label_noise') or md.get('label_noise', {})
+        if isinstance(ln_md, dict):
+            findings = ln_md.get('findings') or ln_md.get('result') or ln_md
+            if isinstance(findings, dict):
+                est = findings.get('estimated_noise_fraction') or findings.get('estimated_noise_rate')
+                if est is not None:
+                    try:
+                        # expected as float fraction (0.157) or percentage string
+                        if isinstance(est, (int, float)):
+                            pct = float(est) * 100 if est <= 1 else float(est)
+                            return f"{round(pct, 1)}%"
+                        if isinstance(est, str):
+                            return est if "%" in est else f"{est}%"
+                    except Exception:
+                        pass
+
+        # 2) Fall back to scanning root causes' evidence (legacy behavior)
+        for cause in investigation.root_causes:
+            if cause.category == "label_noise" or "label noise" in (cause.cause or "").lower():
+                rate = self._parse_metric(
+                    cause.evidence,
+                    (
+                        r"(?:estimated[_ ]?)?(?:label[_ ]?)?noise[_ ]?(?:rate|fraction)[=:\s]+(\d+(?:\.\d+)?%?)",
+                        r"noise[_ ]?fraction[=:\s]+(\d+(?:\.\d+)?%?)",
+                        r"(\d+(?:\.\d+)?%)\s+label noise",
+                    ),
+                )
+                if rate:
+                    return rate if "%" in rate else f"{rate}%"
+
+        rate = self._parse_metric(
+            self._collect_all_evidence(investigation),
+            (
+                r"(?:estimated[_ ]?)?(?:label[_ ]?)?noise[_ ]?(?:rate|fraction)[=:\s]+(\d+(?:\.\d+)?%?)",
+                r"noise[_ ]?fraction[=:\s]+(\d+(?:\.\d+)?%?)",
+            ),
+        )
+        if rate:
+            return rate if "%" in rate else f"{rate}%"
+        return None
+
+    def _assess_calibration(self, investigation: Investigation) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Returns (status, metric) where status is 'issue', 'strong', or None.
+        """
+        calibration_causes = investigation.get_causes_by_category("calibration")
+        all_evidence = self._collect_all_evidence(investigation)
+
+        # 1) Inspect metadata from CalibrationEngine if available
+        md = getattr(investigation, 'metadata', {}) or {}
+        cal_md = md.get('calibration') or {}
+        if isinstance(cal_md, dict):
+            # CalibrationEngine.evaluate returns 'ece' or 'best_ece' depending on method
+            # It may be nested under {'findings': ...} or present directly.
+            findings = cal_md.get('findings') or cal_md
+            ece_val = None
+            if isinstance(findings, dict):
+                ece_val = findings.get('ece') or findings.get('best_ece') or findings.get('raw_ece')
+            if ece_val is not None:
+                try:
+                    ece_num = float(ece_val)
+                    # treat as fraction if <=1
+                    if ece_num <= 1:
+                        ece_pct = round(ece_num * 100, 2)
+                        ece_str = f"{ece_pct}%"
+                    else:
+                        ece_str = f"{round(ece_num, 2)}%"
+                    # If calibration causes exist, mark as issue
+                    if calibration_causes:
+                        return "issue", ece_str
+                    # Else, decide if strong
+                    if ece_num <= 0.05 or (ece_num <= 5 and ece_num > 1):
+                        return "strong", ece_str
+                except Exception:
+                    pass
+
+        # 2) Fallback to parsing evidence like before
+        ece = self._parse_metric(
+            all_evidence,
+            (r"ECE[=:\s]+(\d+(?:\.\d+)?%?)", r"expected calibration error[=:\s]+(\d+(?:\.\d+)?%?)"),
+        )
+
+        if calibration_causes:
+            metric = ece
+            if not metric and calibration_causes[0].evidence:
+                metric = self._parse_metric(
+                    calibration_causes[0].evidence,
+                    (r"ECE[=:\s]+(\d+(?:\.\d+)?%?)",),
+                )
+            return "issue", metric or "elevated"
+
+        if ece:
+            ece_val = ece.replace("%", "")
+            try:
+                if float(ece_val) <= 5.0:
+                    return "strong", ece if "%" in ece else f"{ece}%"
+            except ValueError:
+                pass
+        return None, None
+
+    def _severity_count_phrase(self, count: int) -> str:
+        if count == 0:
+            return "no high-severity issues"
+        if count == 1:
+            return "one high-severity issue"
+        return f"{count} high-severity issues"
+
+    def _build_risk_rationale(
+        self, investigation: Investigation, risk_level: str, facts: Dict[str, Any]
+    ) -> str:
+        reasons: List[str] = []
+
+        if risk_level == "LOW":
+            return "no material findings warrant escalation"
+
+        # Immediate critical rationale
+        if risk_level == "CRITICAL" and investigation.get_critical_causes():
+            reasons.append("critical-severity findings require immediate remediation")
+
+        # Leakage rationale with explicit features when available
+        if facts.get("leakage_features"):
+            lf = facts.get("leakage_features")
+            shown = self._join_names(lf[:3])
+            reasons.append(f"leakage can invalidate model evaluation (features: {shown})")
+
+        # Label noise rationale with estimated rate when available
+        if facts.get("label_noise_rate"):
+            ln = facts.get("label_noise_rate")
+            reasons.append(f"noisy labels may reduce prediction reliability (estimated rate: {ln})")
+
+        # Drift rationale with counts and examples
+        if facts.get("drift_features"):
+            df = facts.get("drift_features")
+            if len(df) == 1:
+                reasons.append(f"feature drift observed in {df[0]}")
+            else:
+                shown = self._join_names(df[:3])
+                reasons.append(f"{len(df)} features exhibit measurable drift ({shown})")
+
+        # Calibration rationale with metric
+        if facts.get("calibration_status") == "issue":
+            metric = facts.get("calibration_metric") or "elevated ECE"
+            reasons.append(f"poor calibration can mislead decision thresholds (ECE={metric})")
+
+        # High severity count rationale
+        if facts.get("high_severity_count", 0) >= 2:
+            reasons.append(f"{facts['high_severity_count']} high-severity issues compound operational risk")
+        elif facts.get("high_severity_count", 0) == 1 and not reasons:
+            top = facts.get("top_cause_names", ["a flagged issue"])[0]
+            reasons.append(f"{top} is high severity and requires attention")
+
+        if not reasons:
+            if risk_level == "MEDIUM":
+                reasons.append("multiple moderate findings warrant close monitoring")
+            else:
+                reasons.append(
+                    f"health status is {investigation.health_status.lower()} with {investigation.confidence}% confidence"
+                )
+
+        # Return up to three concise reasons joined by semicolons
+        return "; ".join(reasons[:3])
+
+    def _compose_evidence_grounded_summary(
+        self, investigation: Investigation, risk_level: str, audience: str
+    ) -> str:
+        opener = self._AUDIENCE_OPENERS.get(audience, self._AUDIENCE_OPENERS["ML Engineer"])
+        risk_prefix = self._AUDIENCE_RISK_PREFIX.get(audience, self._AUDIENCE_RISK_PREFIX["ML Engineer"])
+
         if not investigation.root_causes:
-            return "Model operates within expected parameters. No significant degradation detected. No immediate action required."
-        
-        # Get top cause and category
-        top_cause = investigation.root_causes[0]
-        cause_count = len(investigation.root_causes)
-        
-        # Generate audience-specific summary
-        if audience == "ML Engineer":
-            return self._executive_summary_engineer(investigation, risk_level, top_cause, cause_count)
-        elif audience == "Executive":
-            return self._executive_summary_executive(investigation, risk_level, top_cause, cause_count)
-        elif audience == "Doctor":
-            return self._executive_summary_doctor(investigation, risk_level, top_cause, cause_count)
-        elif audience == "Loan Officer":
-            return self._executive_summary_loan_officer(investigation, risk_level, top_cause, cause_count)
-        elif audience == "Student":
-            return self._executive_summary_student(investigation, risk_level, top_cause, cause_count)
-        elif audience == "HR Manager":
-            return self._executive_summary_hr_manager(investigation, risk_level, top_cause, cause_count)
-        elif audience == "Insurance Analyst":
-            return self._executive_summary_insurance_analyst(investigation, risk_level, top_cause, cause_count)
-        elif audience == "Legal / Compliance Officer":
-            return self._executive_summary_compliance_officer(investigation, risk_level, top_cause, cause_count)
-        elif audience == "Researcher":
-            return self._executive_summary_researcher(investigation, risk_level, top_cause, cause_count)
-        else:
-            return self._executive_summary_engineer(investigation, risk_level, top_cause, cause_count)
-    
-    def _executive_summary_engineer(self, investigation: Investigation, risk_level: str, top_cause, cause_count: int) -> str:
-        """ML Engineer audience summary."""
-        if investigation.health_status == "Critical":
-            summary = f"Critical model degradation detected. "
-        elif investigation.health_status == "Warning":
-            summary = f"Model performance degradation detected. "
-        else:
-            summary = f"Minor model issues detected. "
-        
-        # High-level impact without feature details
-        if risk_level in ["HIGH", "CRITICAL"]:
-            summary += f"Prediction reliability significantly compromised. Confidence: {investigation.confidence}%."
-        else:
-            summary += f"Prediction reliability moderately affected. Confidence: {investigation.confidence}%."
-        
+            summary = (
+                f"{opener} no significant degradation. Model operates within expected parameters "
+                f"({investigation.confidence}% confidence). {risk_prefix} {risk_level} "
+                f"because {self._build_risk_rationale(investigation, risk_level, {'high_severity_count': 0, 'leakage_features': [], 'label_noise_rate': None, 'drift_features': [], 'calibration_status': None, 'top_cause_names': []})}."
+            )
+            return self._truncate_to_word_limit(summary, 120)
+
+        top_causes = investigation.root_causes[:3]
+        high_severity = investigation.get_high_severity_causes()
+        leakage_features = [
+            self._extract_feature_from_cause(c)
+            for c in investigation.root_causes
+            if c.category == "target_leakage"
+        ]
+        drift_features = [
+            self._extract_feature_from_cause(c)
+            for c in investigation.root_causes
+            if c.category == "feature_drift"
+        ]
+
+        # Augment lists with engine metadata (prefer metadata-sourced facts)
+        md = getattr(investigation, 'metadata', {}) or {}
+        # Leakage metadata: look for suspects -> list of {feature,...}
+        try:
+            leak_md = md.get('leakage') or {}
+            suspects = (leak_md.get('findings') or leak_md).get('suspects') if isinstance((leak_md.get('findings') or leak_md), dict) else (leak_md.get('suspects') or [])
+        except Exception:
+            suspects = md.get('leakage', {}).get('suspects', []) if isinstance(md.get('leakage', {}), dict) else []
+        for s in (suspects or []):
+            fname = None
+            if isinstance(s, dict):
+                fname = s.get('feature') or s.get('name')
+            elif isinstance(s, (list, tuple)) and len(s) > 0:
+                fname = s[0]
+            if fname and fname not in leakage_features:
+                leakage_features.append(str(fname))
+
+        # Drift metadata: prefer 'drifted' list or per_feature entries
+        try:
+            drift_md = md.get('drift') or {}
+            findings = (drift_md.get('findings') or drift_md) if isinstance((drift_md.get('findings') or drift_md), dict) else drift_md
+            drifted = findings.get('drifted') or findings.get('drifted_features') or []
+            if not drifted and isinstance(findings.get('per_feature'), list):
+                drifted = [f.get('feature') for f in findings.get('per_feature', []) if f.get('status') == 'DRIFT' or f.get('significant_drift')]
+        except Exception:
+            drifted = md.get('drift', {}).get('drifted', []) if isinstance(md.get('drift', {}), dict) else []
+        for f in (drifted or []):
+            if f and str(f) not in drift_features:
+                drift_features.append(str(f))
+        # Prefer metrics coming from investigation.metadata when available
+        label_noise_rate = self._detect_label_noise_rate(investigation)
+        calibration_status, calibration_metric = self._assess_calibration(investigation)
+        top_cause_names = [self._display_cause_name(c) for c in top_causes]
+
+        facts = {
+            "high_severity_count": len(high_severity),
+            "leakage_features": leakage_features,
+            "label_noise_rate": label_noise_rate,
+            "drift_features": drift_features,
+            "calibration_status": calibration_status,
+            "calibration_metric": calibration_metric,
+            "top_cause_names": top_cause_names,
+        }
+
+        issue_clauses: List[str] = []
+
+        if leakage_features:
+            issue_clauses.append(f"target leakage in {self._join_names(leakage_features[:3])}")
+        if label_noise_rate:
+            issue_clauses.append(f"an estimated label noise rate of {label_noise_rate}")
+
+        other_top_names = []
+        for name in top_cause_names:
+            if name in leakage_features or name in drift_features:
+                continue
+            if name == "label noise" and label_noise_rate:
+                continue
+            if name == "calibration degradation" and calibration_status == "issue":
+                continue
+            other_top_names.append(name)
+        if other_top_names:
+            issue_clauses.append(f"findings include {self._join_names(other_top_names[:3])}")
+
+        if drift_features:
+            if len(drift_features) == 1:
+                issue_clauses.append(f"{drift_features[0]} exhibits measurable drift")
+            else:
+                shown = self._join_names(drift_features[:3])
+                issue_clauses.append(
+                    f"{len(drift_features)} features ({shown}) exhibit measurable drift"
+                )
+
+        if calibration_status == "issue":
+            metric = calibration_metric or "elevated ECE"
+            issue_clauses.append(f"calibration degradation (ECE={metric})")
+        elif calibration_status == "strong":
+            metric = calibration_metric or "low ECE"
+            issue_clauses.append(f"calibration remains strong (ECE={metric})")
+
+        # --- Audit quality checks: enforce mention rules ---
+        # Rule 1: If calibration ECE < 1% mention healthy calibration
+        try:
+            if calibration_metric:
+                # calibration_metric may be like '0.58%' or '0.005' etc.
+                cm = str(calibration_metric).replace('%', '')
+                cmf = float(cm)
+                # If it's in fraction form (<=1) convert to percent
+                if cmf <= 1.0:
+                    cm_pct = cmf * 100 if cmf <= 1.0 else cmf
+                else:
+                    cm_pct = cmf
+                if cm_pct < 1.0:
+                    # ensure a clause exists stating calibration healthy
+                    found = any('calibration remains strong' in c or 'calibration' in c for c in issue_clauses)
+                    if not found:
+                        issue_clauses.append(f"calibration remains strong (ECE={round(cm_pct,2)}%)")
+        except Exception:
+            pass
+
+        # Rule 2: If leakage exists, ensure it's mentioned (already added via leakage_features)
+        # Rule 3: If label noise > 10% ensure it is mentioned
+        try:
+            if label_noise_rate:
+                ln_str = str(label_noise_rate).replace('%', '')
+                ln_val = float(ln_str)
+                if ln_val > 10 and not any('label noise' in c or 'label noise' in c for c in issue_clauses):
+                    issue_clauses.append(f"an estimated label noise rate of {label_noise_rate}")
+        except Exception:
+            pass
+
+        # Rule 4: If drifted features > 0 ensure mention
+        try:
+            if drift_features and len(drift_features) > 0 and not any('drift' in c for c in issue_clauses):
+                if len(drift_features) == 1:
+                    issue_clauses.append(f"{drift_features[0]} exhibits measurable drift")
+                else:
+                    shown = self._join_names(drift_features[:3])
+                    issue_clauses.append(f"{len(drift_features)} features ({shown}) exhibit measurable drift")
+        except Exception:
+            pass
+
+        # Rule 5: If fairness disparity == 0 do not imply fairness concerns
+        try:
+            md = getattr(investigation, 'metadata', {}) or {}
+            fairness_md = md.get('fairness') or {}
+            if isinstance(fairness_md, dict):
+                sev = fairness_md.get('severity') or fairness_md.get('status')
+                # If fairness shows no severity/OK/none, remove any fairness mentions (none present by default)
+                if sev and str(sev).upper() in ('NONE', 'OK', 'LOW'):
+                    # no-op because we don't add fairness mentions unless present
+                    pass
+        except Exception:
+            pass
+        if not issue_clauses:
+            issue_clauses.append(
+                f"top findings are {self._join_names(top_cause_names[:3])}"
+            )
+
+        severity_phrase = self._severity_count_phrase(len(high_severity))
+        findings_text = self._join_issue_clauses(issue_clauses)
+        summary = f"{opener} {severity_phrase}: {findings_text}."
+
+        rationale = self._build_risk_rationale(investigation, risk_level, facts)
+        summary += f" {risk_prefix} {risk_level} because {rationale}."
+
+        if investigation.recommendations and len(summary.split()) < 95:
+            top_rec = investigation.recommendations[0]
+            if len(top_rec) > 80:
+                top_rec = top_rec[:77].rstrip() + "..."
+            summary += f" Priority action: {top_rec}."
+
+        summary += f" Confidence: {investigation.confidence}%."
         return self._truncate_to_word_limit(summary, 120)
-    
-    def _executive_summary_executive(self, investigation: Investigation, risk_level: str, top_cause, cause_count: int) -> str:
-        """Executive audience summary."""
-        if risk_level == "CRITICAL":
-            summary = f"Model reliability compromised. "
-        elif risk_level == "HIGH":
-            summary = f"Elevated operational risk detected. "
-        elif risk_level == "MEDIUM":
-            summary = f"Model performance requires attention. "
-        else:
-            summary = f"Model operating normally. "
-        
-        summary += f"Business impact: reduced prediction accuracy affecting decisions. "
-        
-        if risk_level in ["HIGH", "CRITICAL"]:
-            summary += "Significant operational risk to business outcomes."
-        else:
-            summary += "Moderate operational risk requiring monitoring."
-        
-        return self._truncate_to_word_limit(summary, 120)
-    
-    def _executive_summary_doctor(self, investigation: Investigation, risk_level: str, top_cause, cause_count: int) -> str:
-        """Doctor audience summary."""
-        if investigation.health_status == "Critical":
-            summary = f"Clinical decision support reliability compromised. "
-        elif investigation.health_status == "Warning":
-            summary = f"Clinical model requires monitoring. "
-        else:
-            summary = f"Clinical model operating normally. "
-        
-        summary += f"Patient care impact: potential reduction in diagnostic accuracy. "
-        
-        if risk_level in ["HIGH", "CRITICAL"]:
-            summary += "Significant risk to patient outcomes."
-        else:
-            summary += "Moderate risk requiring clinical oversight."
-        
-        return self._truncate_to_word_limit(summary, 120)
-    
-    def _executive_summary_loan_officer(self, investigation: Investigation, risk_level: str, top_cause, cause_count: int) -> str:
-        """Loan Officer audience summary."""
-        if risk_level == "CRITICAL":
-            summary = f"Credit risk model reliability compromised. "
-        elif risk_level == "HIGH":
-            summary = f"Elevated credit risk detected. "
-        elif risk_level == "MEDIUM":
-            summary = f"Credit model requires attention. "
-        else:
-            summary = f"Credit model operating normally. "
-        
-        summary += f"Portfolio impact: potential for inaccurate lending decisions. "
-        
-        if risk_level in ["HIGH", "CRITICAL"]:
-            summary += "Significant regulatory and financial risk."
-        else:
-            summary += "Moderate risk requiring monitoring."
-        
-        return self._truncate_to_word_limit(summary, 120)
-    
-    def _executive_summary_student(self, investigation: Investigation, risk_level: str, top_cause, cause_count: int) -> str:
-        """Student audience summary (professional tone)."""
-        if investigation.health_status == "Critical":
-            summary = f"Model integrity requires immediate attention. "
-        elif investigation.health_status == "Warning":
-            summary = f"Model performance degradation detected. "
-        else:
-            summary = f"Model operating within normal parameters. "
-        
-        summary += f"Learning impact: predictions may be unreliable for current data patterns. "
-        
-        if risk_level in ["HIGH", "CRITICAL"]:
-            summary += "Significant impact on learning outcomes."
-        else:
-            summary += "Moderate impact on learning outcomes."
-        
-        return self._truncate_to_word_limit(summary, 120)
-    
-    def _executive_summary_hr_manager(self, investigation: Investigation, risk_level: str, top_cause, cause_count: int) -> str:
-        """HR Manager audience summary."""
-        if investigation.health_status == "Critical":
-            summary = f"Workforce prediction model reliability compromised. "
-        elif investigation.health_status == "Warning":
-            summary = f"Employee outcome model requires monitoring. "
-        else:
-            summary = f"HR model operating normally. "
-        
-        summary += f"Talent management impact: potential for inaccurate hiring or retention decisions. "
-        
-        if risk_level in ["HIGH", "CRITICAL"]:
-            summary += "Significant risk to workforce decisions."
-        else:
-            summary += "Moderate risk requiring HR oversight."
-        
-        return self._truncate_to_word_limit(summary, 120)
-    
-    def _executive_summary_insurance_analyst(self, investigation: Investigation, risk_level: str, top_cause, cause_count: int) -> str:
-        """Insurance Analyst audience summary."""
-        if investigation.health_status == "Critical":
-            summary = f"Underwriting model reliability compromised. "
-        elif investigation.health_status == "Warning":
-            summary = f"Insurance risk model requires monitoring. "
-        else:
-            summary = f"Insurance model operating normally. "
-        
-        summary += f"Portfolio impact: potential for inaccurate premium exposure and claims risk assessment. "
-        
-        if risk_level in ["HIGH", "CRITICAL"]:
-            summary += "Significant underwriting and reserve risk."
-        else:
-            summary += "Moderate risk requiring monitoring."
-        
-        return self._truncate_to_word_limit(summary, 120)
-    
-    def _executive_summary_compliance_officer(self, investigation: Investigation, risk_level: str, top_cause, cause_count: int) -> str:
-        """Legal/Compliance Officer audience summary."""
-        if investigation.health_status == "Critical":
-            summary = f"Model compliance requires immediate review. "
-        elif investigation.health_status == "Warning":
-            summary = f"Compliance risk detected in model. "
-        else:
-            summary = f"Model operating within compliance parameters. "
-        
-        summary += f"Governance impact: potential regulatory exposure and documentation requirements. "
-        
-        if risk_level in ["HIGH", "CRITICAL"]:
-            summary += "Significant regulatory and governance risk."
-        else:
-            summary += "Moderate risk requiring monitoring."
-        
-        return self._truncate_to_word_limit(summary, 120)
-    
-    def _executive_summary_researcher(self, investigation: Investigation, risk_level: str, top_cause, cause_count: int) -> str:
-        """Researcher audience summary."""
-        if investigation.health_status == "Critical":
-            summary = f"Research model anomalies detected. "
-        elif investigation.health_status == "Warning":
-            summary = f"Experimental design requires review. "
-        else:
-            summary = f"Model methodology validated. "
-        
-        summary += f"Evidence quality: statistical validity may be compromised by distributional shifts. "
-        
-        if risk_level in ["HIGH", "CRITICAL"]:
-            summary += "Significant impact on research validity."
-        else:
-            summary += "Moderate impact on research validity."
-        
-        return self._truncate_to_word_limit(summary, 120)
+
+    @staticmethod
+    def _join_issue_clauses(clauses: List[str]) -> str:
+        if not clauses:
+            return ""
+        if len(clauses) == 1:
+            return clauses[0]
+        if len(clauses) == 2:
+            return f"{clauses[0]} and {clauses[1]}"
+        return ", ".join(clauses[:-1]) + f", and {clauses[-1]}"
     
     def _truncate_to_word_limit(self, text: str, max_words: int) -> str:
         """Truncate text to maximum word limit."""
@@ -608,55 +922,52 @@ Tailor ALL sections (not just the executive summary) to the target audience.
         if not investigation.root_causes:
             base = "No significant issues detected during investigation. All monitored metrics are within acceptable ranges."
             return self._apply_audience_context(base, audience, section="findings")
-        
-        # Group causes by category for pattern summarization
-        categories = {}
-        for cause in investigation.root_causes:
-            if cause.category not in categories:
-                categories[cause.category] = []
-            categories[cause.category].append(cause)
-        
+
+        # Use normalized context to ensure consistency across narrative sections
+        facts = self._build_normalized_context(investigation)
         findings = []
-        
+
         # Feature drift interpretation
-        if "feature_drift" in categories:
-            drift_causes = categories["feature_drift"]
-            if len(drift_causes) == 1:
+        if facts.get('drift_features'):
+            n = len(facts['drift_features'])
+            if n == 1:
                 findings.append("A single feature exhibits distributional shift, indicating localized data drift that may affect predictions for specific segments.")
-            elif len(drift_causes) <= 3:
-                findings.append(f"{len(drift_causes)} features show distributional changes, suggesting broader shifts in the data landscape that could impact model reliability across multiple dimensions.")
+            elif n <= 3:
+                findings.append(f"{n} features show distributional changes, suggesting broader shifts in the data landscape that could impact model reliability across multiple dimensions.")
             else:
-                findings.append(f"Widespread distributional drift detected across {len(drift_causes)} features, indicating significant changes in the underlying data distribution that may require comprehensive model retraining.")
-        
-        # Slice degradation interpretation
-        if "slice_degradation" in categories:
-            slice_causes = categories["slice_degradation"]
+                findings.append(f"Widespread distributional drift detected across {n} features, indicating significant changes in the underlying data distribution that may require comprehensive model retraining.")
+
+        # Slice degradation interpretation (derive from root causes)
+        slice_causes = [c for c in investigation.root_causes if c.category == 'slice_degradation']
+        if slice_causes:
             if len(slice_causes) == 1:
                 findings.append("Performance degradation identified in a specific data segment, indicating the model may not generalize well to that particular subgroup.")
             else:
                 findings.append(f"Multiple data segments ({len(slice_causes)}) show performance degradation, suggesting systematic issues with model generalization across different population subgroups.")
-        
+
         # Calibration interpretation
-        if "calibration" in categories:
+        if facts.get('calibration_status') == 'issue':
             findings.append("Calibration metrics indicate probability estimates have shifted, potentially affecting the reliability of risk assessments and decision-making thresholds.")
-        
+        elif facts.get('calibration_status') == 'strong':
+            findings.append("Calibration remains strong based on reported ECE, indicating probability estimates are reliable.")
+
         # Data quality interpretation
-        if "missing_values" in categories or "outliers" in categories:
+        missing_causes = [c for c in investigation.root_causes if c.category in ['missing_values', 'outliers']]
+        if missing_causes:
             findings.append("Data quality issues have been detected that may be contributing to model performance degradation, requiring investigation of upstream data pipelines.")
-        
+
         # Feature importance interpretation
-        if "importance_drift" in categories:
+        importance_causes = [c for c in investigation.root_causes if c.category == 'importance_drift']
+        if importance_causes:
             findings.append("Feature importance patterns have changed significantly, indicating the model's decision logic has shifted and may no longer align with the original training assumptions.")
-        
+
         # Synthesize into cohesive narrative
         if findings:
             narrative = " ".join(findings)
-            
             # Add context about severity (without recommendation language)
             high_severity = [c for c in investigation.root_causes if c.severity in ["HIGH", "CRITICAL"]]
             if high_severity:
                 narrative += f" The presence of {len(high_severity)} high-severity issue(s) indicates significant model degradation."
-            
             return self._apply_audience_context(narrative, audience, section="findings")
         else:
             base = "The investigation identified several issues affecting model performance. Review the Root Cause Analysis for detailed evidence and severity assessments."
@@ -675,31 +986,33 @@ Tailor ALL sections (not just the executive summary) to the target audience.
         if not investigation.root_causes:
             base = "No significant impact expected. Model performance remains stable."
             return self._apply_audience_context(base, audience, section="impact")
-        
+
+        facts = self._build_normalized_context(investigation)
         impact = ""
-        
-        # Assess based on categories
-        categories = [c.category for c in investigation.root_causes]
-        
-        if "feature_drift" in categories:
+
+        if facts.get('drift_features'):
             impact += "Distributional drift may affect predictions for segments of the population that differ from training data. "
-        
-        if "slice_degradation" in categories:
+
+        slice_causes = [c for c in investigation.root_causes if c.category == 'slice_degradation']
+        if slice_causes:
             impact += "Specific customer segments may experience reduced prediction accuracy. "
-        
-        if "calibration" in categories:
+
+        if facts.get('calibration_status') == 'issue':
             impact += "Probability estimates may be less reliable for decision-making. "
-        
-        if "importance_drift" in categories:
-            impact += "Model behavior has shifted, potentially affecting feature importance and interpretation. "
-        
-        if "missing_values" in categories or "outliers" in categories:
+        elif facts.get('calibration_status') == 'strong':
+            impact += "Probability estimates appear reliable based on reported ECE. "
+
+        missing_causes = [c for c in investigation.root_causes if c.category in ['missing_values', 'outliers']]
+        if missing_causes:
             impact += "Data quality issues may be affecting model performance. "
-        
+
+        if any(c.category == 'importance_drift' for c in investigation.root_causes):
+            impact += "Model behavior has shifted, potentially affecting feature importance and interpretation. "
+
         # Add severity context (without duplicating Investigation Findings)
         if investigation.health_status in ["Critical", "Warning"]:
             impact += "Prediction reliability may be compromised for affected segments."
-        
+
         base = impact.strip() if impact else "Model performance may be affected by the identified issues."
         return self._apply_audience_context(base, audience, section="impact")
 

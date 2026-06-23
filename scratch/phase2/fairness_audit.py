@@ -152,7 +152,10 @@ def audit_by_group(y_true, y_pred, groups, group_name="group",
     dp_gap  = dp.get("max_difference", 0.0)
     eo_gap  = eo.get("max_gap", 0.0)
     # disparate_impact returns "disparate_impact_ratio" key
-    di_ratio = di.get("disparate_impact_ratio", di.get("di_ratio", 1.0)) or 1.0
+    di_ratio = di.get("disparate_impact_ratio", di.get("di_ratio", 1.0))
+    # Preserve explicit 0.0 values — only default to 1.0 when the metric is missing
+    if di_ratio is None:
+        di_ratio = 1.0
 
     # Overall severity = worst across metrics
     sev_order = {"NONE": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}

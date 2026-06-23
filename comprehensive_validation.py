@@ -223,6 +223,28 @@ def run_validation():
     
     print(f"  Executive Summary: {exec_summary}")
     print(f"  Word count: {word_count}")
+
+    # CONSISTENCY CHECK: Ensure root-cause risk, AI Investigator risk and global status align
+    try:
+        rc_level = root_cause_result.get('risk', {}).get('level') if isinstance(root_cause_result.get('risk', {}), dict) else None
+        ai_level = ai_result.get('risk_level')
+        # Determine pass/fail
+        consistent = (rc_level is None and ai_level is None) or (rc_level and ai_level and str(rc_level).upper() == str(ai_level).upper())
+        validation_results['checks']['risk_consistency'] = {
+            'status': 'PASS' if consistent else 'FAIL',
+            'root_cause_level': rc_level,
+            'ai_investigator_level': ai_level
+        }
+        if consistent:
+            validation_results['passing'].append('Risk Consistency')
+            print("  [PASS] Risk levels are consistent between RootCauseEngine and AIInvestigator")
+        else:
+            validation_results['failing'].append('Risk Consistency')
+            print(f"  [FAIL] Inconsistent risk levels: root_cause={rc_level}, ai_investigator={ai_level}")
+    except Exception as e:
+        validation_results['checks']['risk_consistency'] = {'status': 'ERROR', 'error': str(e)}
+        validation_results['warnings'].append('Risk Consistency Check Failed')
+        print(f"  [WARN] Risk consistency check failed: {e}")
     
     # Check executive summary quality
     has_psi = "PSI=" in exec_summary or "PSI " in exec_summary
