@@ -1284,14 +1284,26 @@ def view_dashboard(report_id):
     ]
     severities = [s.upper() if s else 'NONE' for s in severities]
 
-    critical_count = severities.count('CRITICAL') + severities.count('HIGH')
-    alerts_count = severities.count('MEDIUM') + severities.count('LOW')
-    if critical_count > 0:
-        risk_level = 'HIGH'
-    elif severities.count('MEDIUM') > 0:
-        risk_level = 'MEDIUM'
+    # Initialize variables before conditional logic
+    critical_count = 0
+    alerts_count = 0
+    risk_level = "STABLE"
+
+    # Use canonical status from RiskScorer (single source of truth)
+    # RiskScorer level is stored in data['root_cause']['metadata']['risk']['level']
+    canonical_status = data.get('root_cause', {}).get('metadata', {}).get('risk', {}).get('level')
+    if canonical_status:
+        risk_level = canonical_status
     else:
-        risk_level = 'LOW'
+        # Fallback to legacy calculation if RiskScorer data not available
+        critical_count = severities.count('CRITICAL') + severities.count('HIGH')
+        alerts_count = severities.count('MEDIUM') + severities.count('LOW')
+        if critical_count > 0:
+            risk_level = 'HIGH'
+        elif severities.count('MEDIUM') > 0:
+            risk_level = 'MEDIUM'
+        else:
+            risk_level = 'LOW'
 
     charts = {}
     cal_data = data.get('calibration', {})
@@ -1504,12 +1516,19 @@ def view_report(report_id):
         data.get('missing_data', {}).get('severity', 'NONE')
     ]
     severities = [s.upper() if s else 'NONE' for s in severities]
-    if 'CRITICAL' in severities or 'HIGH' in severities:
-        risk_level = 'HIGH'
-    elif 'MEDIUM' in severities:
-        risk_level = 'MEDIUM'
+
+    # Use canonical status from RiskScorer (single source of truth)
+    canonical_status = data.get('root_cause', {}).get('metadata', {}).get('risk', {}).get('level')
+    if canonical_status:
+        risk_level = canonical_status
     else:
-        risk_level = 'LOW'
+        # Fallback to legacy calculation if RiskScorer data not available
+        if 'CRITICAL' in severities or 'HIGH' in severities:
+            risk_level = 'HIGH'
+        elif 'MEDIUM' in severities:
+            risk_level = 'MEDIUM'
+        else:
+            risk_level = 'LOW'
 
     # Check for pre-generated charts in the report JSON
     charts = data.get('charts', {})

@@ -1007,13 +1007,20 @@ class AutoRootCauseEngine:
         max_possible = len(top_causes) * 100
         avg_score = total_score / max(len(top_causes), 1)
         
-        # Determine health status from average top-cause strength
-        if avg_score < 30:
-            health_status = "Healthy"
-        elif avg_score < 60:
+        # Determine health status from severity (single source of truth)
+        # Priority: CRITICAL > HIGH > MEDIUM > LOW > NONE
+        critical_count = sum(1 for c in scored_causes if c["severity"] == "CRITICAL")
+        high_count = sum(1 for c in scored_causes if c["severity"] == "HIGH")
+        medium_count = sum(1 for c in scored_causes if c["severity"] == "MEDIUM")
+
+        if critical_count > 0:
+            health_status = "Critical"
+        elif high_count > 0:
+            health_status = "Warning"
+        elif medium_count > 0:
             health_status = "Warning"
         else:
-            health_status = "Critical"
+            health_status = "Healthy"
         
         # Confidence calibration — avoid unrealistic certainty
         # Evidence considered:
@@ -1038,11 +1045,12 @@ class AutoRootCauseEngine:
     
     def _generate_recommendations(self, scored_causes: List[Dict], leakage_evidence: List[Dict]) -> List[str]:
         """
-        Generate context-aware recommended actions based on root causes.
+        Generate evidence-driven recommended actions based on root causes.
 
-        This implementation deduplicates causes by category and consolidates
-        recommendations to avoid repetition (e.g., multiple drift findings ->
-        single consolidated drift recommendation).
+        This implementation consolidates recommendations by category while preserving
+        evidence-driven format with Root Cause, Evidence, Why it matters, and Recommended workflow sections.
+
+        Maximum 120 words per recommendation.
         """
         from collections import defaultdict
 
@@ -1062,42 +1070,103 @@ class AutoRootCauseEngine:
             drifts = causes_by_category['feature_drift']
             n = len(drifts)
             drifts_sorted = sorted(drifts, key=lambda x: x.get('score', 0), reverse=True)
-            feats_sorted = [d.get('cause', '').replace(' feature drift', '') for d in drifts_sorted]
-            top3 = feats_sorted[:3]
-            features_str = ', '.join(top3)
-            top_feature = feats_sorted[0] if feats_sorted else 'unknown'
+            top_feature = drifts_sorted[0].get('cause', '').replace(' feature drift', '') if drifts_sorted else 'unknown'
             top_score = drifts_sorted[0].get('score', 0) if drifts_sorted else 0
+            
+            # Build evidence section with top 3 features
+            evidence_lines = []
+            for d in drifts_sorted[:3]:
+                feature = d.get('cause', '').replace(' feature drift', '')
+                evidence_list = d.get('evidence', [])
+                evidence_str = evidence_list[0] if evidence_list else 'No evidence'
+                evidence_lines.append(f"{feature} {evidence_str}")
+            evidence_text = '\n'.join(evidence_lines)
 
-            recommendations.append(
-                f"{n} features show significant drift.\n\n"
-                f"Highest priority: {top_feature} (score={top_score}) — fix this first.\n\n"
-                f"All affected: {features_str}.\n\n"
-                f"Collect fresh production samples, validate feature distributions, and retrain the model using recent data."
+            rec = (
+                f"Root Cause:\n{n} features show significant drift\n\n"
+                f"Highest Priority:\n{top_feature} (score={top_score})\n\n"
+                f"Evidence:\n{evidence_text}\n\n"
+                f"Why it matters:\nMultiple production features have drifted from the training distribution, increasing model instability and prediction risk.\n\n"
+                f"Recommended workflow:\n"
+                f"1. Investigate highest-priority feature first.\n"
+                f"2. Compare train vs production distributions.\n"
+                f"3. Validate recent population shifts.\n"
+                f"4. Retrain using representative production data.\n"
+                f"5. Re-evaluate calibration."
             )
+            recommendations.append(self._truncate_to_word_limit(rec, 120))
+
+        # Consolidate calibration recommendations
+        if causes_by_category.get('calibration'):
+            cals = causes_by_category['calibration']
+            evidence_list = cals[0].get('evidence', []) if cals else []
+            evidence_str = evidence_list[0] if evidence_list else 'No evidence available'
+            
+            rec = (
+                f"Root Cause:\nCalibration degradation\n\n"
+                f"Evidence:\n{evidence_str}\n\n"
+                f"Why it matters:\nModel probability estimates are misaligned with actual outcomes, reducing decision-making reliability.\n\n"
+                f"Recommended workflow:\n"
+                f"1. Apply post-hoc calibration (Platt scaling or isotonic regression).\n"
+                f"2. Validate calibration on held-out data.\n"
+                f"3. Monitor ECE over time.\n"
+                f"4. Consider retraining if calibration degrades persistently."
+            )
+            recommendations.append(self._truncate_to_word_limit(rec, 120))
 
         # Consolidate leakage recommendations
         if causes_by_category.get('target_leakage'):
             leaks = causes_by_category['target_leakage']
             n = len(leaks)
-            recommendations.append(
-                f"Target leakage detected in {n} feature(s).\n\nRemove leakage sources, retrain the model, and revalidate all performance metrics."
+            evidence_list = leaks[0].get('evidence', []) if leaks else []
+            evidence_str = evidence_list[0] if evidence_list else 'No evidence available'
+            
+            rec = (
+                f"Root Cause:\nTarget leakage detected in {n} feature(s)\n\n"
+                f"Evidence:\n{evidence_str}\n\n"
+                f"Why it matters:\nTarget leakage causes inflated training performance and fails in production.\n\n"
+                f"Recommended workflow:\n"
+                f"1. Remove leakage sources from features.\n"
+                f"2. Retrain model without leaked features.\n"
+                f"3. Revalidate all performance metrics on clean data."
             )
+            recommendations.append(self._truncate_to_word_limit(rec, 120))
 
         # Consolidate missing values recommendations
         if causes_by_category.get('missing_values'):
             mvs = causes_by_category['missing_values']
             n = len(mvs)
-            recommendations.append(
-                f"Missing value increases detected in {n} feature(s).\n\nInvestigate upstream data pipelines and implement consistent imputation."
+            evidence_list = mvs[0].get('evidence', []) if mvs else []
+            evidence_str = evidence_list[0] if evidence_list else 'No evidence available'
+            
+            rec = (
+                f"Root Cause:\nMissing value increases detected in {n} feature(s)\n\n"
+                f"Evidence:\n{evidence_str}\n\n"
+                f"Why it matters:\nMissing value patterns have changed, potentially biasing model predictions.\n\n"
+                f"Recommended workflow:\n"
+                f"1. Investigate upstream data pipelines.\n"
+                f"2. Implement consistent imputation strategy.\n"
+                f"3. Monitor missing value rates over time."
             )
+            recommendations.append(self._truncate_to_word_limit(rec, 120))
 
         # Consolidate outliers recommendations
         if causes_by_category.get('outliers'):
             outs = causes_by_category['outliers']
             n = len(outs)
-            recommendations.append(
-                f"Outlier growth detected across {n} feature(s).\n\nReview data ingestion quality and strengthen anomaly detection."
+            evidence_list = outs[0].get('evidence', []) if outs else []
+            evidence_str = evidence_list[0] if evidence_list else 'No evidence available'
+            
+            rec = (
+                f"Root Cause:\nOutlier growth detected across {n} feature(s)\n\n"
+                f"Evidence:\n{evidence_str}\n\n"
+                f"Why it matters:\nOutlier growth indicates data quality issues affecting model robustness.\n\n"
+                f"Recommended workflow:\n"
+                f"1. Review data ingestion quality.\n"
+                f"2. Strengthen anomaly detection.\n"
+                f"3. Consider robust preprocessing methods."
             )
+            recommendations.append(self._truncate_to_word_limit(rec, 120))
 
         # Consolidate importance drift recommendations
         if causes_by_category.get('importance_drift'):
@@ -1105,36 +1174,69 @@ class AutoRootCauseEngine:
             n = len(imps)
             top3 = [d.get('cause', '').replace('Feature importance drift: ', '') for d in sorted(imps, key=lambda x: x.get('score',0), reverse=True)][:3]
             top3_str = ', '.join(top3)
-            recommendations.append(
-                f"Model behavior shifted across {n} important feature(s).\n\nInvestigate concept drift and consider model retraining.\nTop impacted: {top3_str}."
+            evidence_list = imps[0].get('evidence', []) if imps else []
+            evidence_str = evidence_list[0] if evidence_list else 'No evidence available'
+            
+            rec = (
+                f"Root Cause:\nModel behavior shifted across {n} important feature(s)\n\n"
+                f"Evidence:\n{evidence_str}\n\n"
+                f"Why it matters:\nFeature importance shifts indicate concept drift or changing data relationships.\n\n"
+                f"Recommended workflow:\n"
+                f"1. Investigate concept drift in target relationship.\n"
+                f"2. Review feature engineering pipeline.\n"
+                f"3. Consider model retraining with recent data.\n\n"
+                f"Top impacted: {top3_str}."
             )
-
-        # Consolidate calibration recommendations (single message)
-        if causes_by_category.get('calibration'):
-            recommendations.append(
-                "Calibration degradation detected.\n\nApply post-hoc calibration (Platt scaling or isotonic regression) and validate probability estimates."
-            )
+            recommendations.append(self._truncate_to_word_limit(rec, 120))
 
         # Consolidate slice_degradation as individual recommendations but limit spam
         if causes_by_category.get('slice_degradation'):
             slices = causes_by_category['slice_degradation']
             for sl in slices[:3]:
-                desc = sl.get('cause') if sl.get('cause') else sl.get('evidence', 'Slice issue')
-                recommendations.append(f"Slice issue: {desc}. Investigate affected segments and consider targeted data collection.")
+                cause_text = sl.get('cause') if sl.get('cause') else sl.get('evidence', 'Slice issue')
+                evidence_list = sl.get('evidence', [])
+                evidence_str = evidence_list[0] if evidence_list else 'No evidence available'
+                
+                rec = (
+                    f"Root Cause:\n{cause_text}\n\n"
+                    f"Evidence:\n{evidence_str}\n\n"
+                    f"Why it matters:\nModel performance has degraded for specific data segments.\n\n"
+                    f"Recommended workflow:\n"
+                    f"1. Investigate affected segments.\n"
+                    f"2. Consider targeted data collection.\n"
+                    f"3. Evaluate segment-specific model adjustments."
+                )
+                recommendations.append(self._truncate_to_word_limit(rec, 120))
 
         # If nothing consolidated above (other categories), fall back to per-cause recommendations
         other_categories = set(c.get('category') for c in scored_causes) - set(['feature_drift','target_leakage','missing_values','outliers','importance_drift','calibration','slice_degradation'])
         for cat in other_categories:
             for c in causes_by_category.get(cat, [])[:3]:
-                recommendations.append(f"{c.get('cause')}: {', '.join(c.get('evidence', []))}")
+                cause_text = c.get('cause', 'Unknown issue')
+                evidence_list = c.get('evidence', [])
+                evidence_str = evidence_list[0] if evidence_list else 'No evidence available'
+                
+                rec = (
+                    f"Root Cause:\n{cause_text}\n\n"
+                    f"Evidence:\n{evidence_str}\n\n"
+                    f"Why it matters:\nThis issue may impact model performance or reliability.\n\n"
+                    f"Recommended workflow:\nReview root cause analysis for specific remediation steps."
+                )
+                recommendations.append(self._truncate_to_word_limit(rec, 120))
 
         # Limit total recommendations to avoid overwhelming the user
-        # Prefer consolidated messages; do not add extra generic 'multiple issues' text when a single consolidated category exists
         if len(recommendations) > 5:
             recommendations = recommendations[:5]
 
         return recommendations
-    
+
+    def _truncate_to_word_limit(self, text: str, max_words: int) -> str:
+        """Truncate text to maximum word limit."""
+        words = text.split()
+        if len(words) <= max_words:
+            return text
+        return ' '.join(words[:max_words])
+
     def _summarize_evidence(self, evidence: Dict) -> str:
         """
         Generate a human-readable summary of evidence.

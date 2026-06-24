@@ -363,35 +363,19 @@ Tailor ALL sections (not just the executive summary) to the target audience.
             return level.upper()
 
         # Fallback to legacy heuristic if risk metadata not available
-        health_status = investigation.health_status
-        confidence = investigation.confidence
-        high_severity_count = len(investigation.get_high_severity_causes())
+        # Use severity-based rules (single source of truth)
         critical_count = len(investigation.get_critical_causes())
+        high_count = len([c for c in investigation.root_causes if c.severity == "HIGH"])
+        medium_count = len([c for c in investigation.root_causes if c.severity == "MEDIUM"])
 
-        # Critical risk
-        if health_status == "Critical" or critical_count > 0:
+        if critical_count > 0:
             return "CRITICAL"
-
-        # High risk
-        if health_status == "Warning" and high_severity_count >= 2:
-            return "HIGH"
-
-        if confidence >= 80 and high_severity_count >= 1:
-            return "HIGH"
-
-        # Medium risk
-        if health_status == "Warning" and high_severity_count >= 1:
-            return "MEDIUM"
-
-        if confidence >= 60 and len(investigation.root_causes) >= 2:
-            return "MEDIUM"
-
-        # Low risk
-        if health_status == "Healthy":
-            return "LOW"
-
-        # Default to medium for unknown
-        return "MEDIUM"
+        elif high_count > 0:
+            return "HIGH RISK"
+        elif medium_count > 0:
+            return "MODERATE"
+        else:
+            return "STABLE"
     
     _AUDIENCE_OPENERS = {
         "ML Engineer": "Investigation detected",
@@ -804,7 +788,7 @@ Tailor ALL sections (not just the executive summary) to the target audience.
             top_action = None
 
         # Sentence constructions
-        sent1 = f"Model health is {risk_level} with {investigation.confidence}% confidence."
+        sent1 = f"Model health is {risk_level}. Confidence in this assessment is {investigation.confidence}%."
 
         if primary_issues:
             if len(primary_issues) == 1:

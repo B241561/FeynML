@@ -162,11 +162,16 @@ class RiskScorer:
         pct_score = (weighted_numeric / max_possible * 100.0) if max_possible > 0 else 0.0
 
         # Map pct_score into levels using percent thresholds
-        level = 'MEDIUM'
-        for lvl, (lo, hi) in self.percent_thresholds.items():
-            if lo <= pct_score <= hi:
-                level = lvl
-                break
+        # However, for single source of truth, use severity-based rules instead
+        # Priority: CRITICAL > HIGH > MEDIUM > LOW > NONE
+        if breakdown.get('leakage') == 'CRITICAL' or breakdown.get('root_cause') == 'CRITICAL':
+            level = 'CRITICAL'
+        elif breakdown.get('leakage') == 'HIGH' or breakdown.get('root_cause') == 'HIGH':
+            level = 'HIGH RISK'
+        elif breakdown.get('leakage') == 'MEDIUM' or breakdown.get('root_cause') == 'MEDIUM':
+            level = 'MODERATE'
+        else:
+            level = 'STABLE'
 
         # Build reasons list with component-level details
         reasons = []

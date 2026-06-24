@@ -95,7 +95,7 @@ def test_medium_risk_investigation():
     result = investigator.analyze(inv)
     
     # Verify risk level
-    assert result["risk_level"] in ["MEDIUM", "HIGH"]
+    assert result["risk_level"] in ["MODERATE", "HIGH RISK"]
     
     # Verify executive summary
     assert len(result["executive_summary"]) > 50
@@ -120,7 +120,7 @@ def test_no_failure_investigation():
     result = investigator.analyze(inv)
     
     # Verify risk level
-    assert result["risk_level"] == "LOW"
+    assert result["risk_level"] == "STABLE"
     
     # Verify executive summary mentions no degradation
     assert "no significant degradation" in result["executive_summary"].lower()
@@ -273,12 +273,12 @@ def test_risk_assessment_logic():
     inv2.add_root_cause("Test", 80, "HIGH", [], "test", ["test"])
     inv2.add_root_cause("Test2", 75, "HIGH", [], "test", ["test"])
     risk2 = investigator._assess_risk_level(inv2)
-    assert risk2 == "HIGH"
-    
+    assert risk2 == "HIGH RISK"
+
     # Test Low risk
     inv3 = Investigation(health_status="Healthy", confidence=100)
     risk3 = investigator._assess_risk_level(inv3)
-    assert risk3 == "LOW"
+    assert risk3 == "STABLE"
     
     print("[PASS] Risk assessment logic test passed")
 

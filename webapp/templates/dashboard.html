@@ -476,11 +476,12 @@
                 <div class="card-header">Auto Root Cause Analysis</div>
                 <div class="card-body p-4">
                     {% set root_cause_data = data.get('root_cause', {}) %}
+                    {% set canonical_status = root_cause_data.get('metadata', {}).get('risk', {}).get('level', root_cause_data.get('health_status', 'Unknown')) %}
                     {% if root_cause_data %}
                         <div class="row align-items-center mb-4">
                             <div class="col-md-6">
                                 <div class="d-flex align-items-center">
-                                    <div class="h3 fw-bold mb-0 me-3">{{ root_cause_data.get('health_status', 'Unknown') }}</div>
+                                    <div class="h3 fw-bold mb-0 me-3">{{ canonical_status }}</div>
                                     <div class="text-muted small">Model Health Status</div>
                                 </div>
                             </div>
