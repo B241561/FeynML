@@ -810,24 +810,27 @@ Tailor ALL sections (not just the executive summary) to the target audience.
             if len(primary_issues) == 1:
                 sent2 = f"Primary concerns: {primary_issues[0]}."
             else:
-                sent2 = f"Primary concerns: {primary_issues[0]} and {primary_issues[1]}."
+                # primary_issues already ordered by severity then score (PSI-weighted)
+                sent2 = f"Primary concerns: {primary_issues[0]} (fix first), then {primary_issues[1]}."
         else:
             sent2 = "Primary concerns: none identified."
 
         if top_action:
-            # Truncate action to max 80 chars and ensure it ends with a period (no ellipses)
             try:
                 if len(top_action) <= 80:
                     action = top_action.rstrip()
                     if not action.endswith('.'):
                         action = action + '.'
                 else:
-                    # Truncate at word boundary within 80 chars and append period
                     action = top_action[:80].rsplit(' ', 1)[0] + '.'
             except Exception:
-                # Fallback to a safe short action
                 action = (top_action[:80].rsplit(' ', 1)[0] + '.') if top_action else 'Review root cause analysis for next steps.'
-            sent3 = f"Immediate action required: {action}"
+            # Prepend top-priority issue to action for clarity
+            top_issue = primary_issues[0] if primary_issues else None
+            if top_issue and top_issue.lower() not in action.lower():
+                sent3 = f"Immediate action required: address {top_issue} first — {action}"
+            else:
+                sent3 = f"Immediate action required: {action}"
         else:
             sent3 = "Immediate action required: review root cause analysis for next steps."
 

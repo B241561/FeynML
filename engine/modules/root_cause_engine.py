@@ -677,20 +677,28 @@ class AutoRootCauseEngine:
     def _calculate_severity(self, psi: float, ks_stat: float) -> tuple[str, int]:
         """
         Calculate severity and score for feature drift.
-        
+        Score is scaled by PSI magnitude within each severity tier so that
+        features with higher drift score higher and appear first in prioritization.
+
         Args:
             psi: Population Stability Index
             ks_stat: Kolmogorov-Smirnov statistic
-        
+
         Returns:
             Tuple of (severity: str, score: int)
         """
         if psi >= 0.2 and ks_stat >= 0.3:
-            return "CRITICAL", 100
+            # Scale 80-100 by PSI magnitude (PSI=0.2 → 80, PSI=2.5+ → 100)
+            score = int(min(100, 80 + (min(psi, 2.5) / 2.5) * 20))
+            return "CRITICAL", score
         elif psi >= 0.2 or (psi >= 0.1 and ks_stat >= 0.2):
-            return "HIGH", 75
+            # Scale 55-79 by PSI magnitude
+            score = int(min(79, 55 + (min(psi, 0.5) / 0.5) * 24))
+            return "HIGH", score
         elif psi >= 0.1 or ks_stat >= 0.2:
-            return "MEDIUM", 50
+            # Scale 30-54 by PSI magnitude
+            score = int(min(54, 30 + (min(psi, 0.2) / 0.2) * 24))
+            return "MEDIUM", score
         elif ks_stat >= 0.1:
             return "LOW", 25
         else:
@@ -1053,15 +1061,18 @@ class AutoRootCauseEngine:
         if causes_by_category.get('feature_drift'):
             drifts = causes_by_category['feature_drift']
             n = len(drifts)
-            # Extract feature names (strip ' feature drift') and sort by score desc
-            feats = [d.get('cause', '').replace(' feature drift', '') for d in drifts]
-            # preserve ordering by score
-            feats_sorted = [d.get('cause', '').replace(' feature drift', '') for d in sorted(drifts, key=lambda x: x.get('score',0), reverse=True)]
+            drifts_sorted = sorted(drifts, key=lambda x: x.get('score', 0), reverse=True)
+            feats_sorted = [d.get('cause', '').replace(' feature drift', '') for d in drifts_sorted]
             top3 = feats_sorted[:3]
             features_str = ', '.join(top3)
+            top_feature = feats_sorted[0] if feats_sorted else 'unknown'
+            top_score = drifts_sorted[0].get('score', 0) if drifts_sorted else 0
 
             recommendations.append(
-                f"{n} features show significant drift.\n\nMost affected: {features_str}.\n\nCollect fresh production samples, validate feature distributions, and retrain the model using recent data."
+                f"{n} features show significant drift.\n\n"
+                f"Highest priority: {top_feature} (score={top_score}) — fix this first.\n\n"
+                f"All affected: {features_str}.\n\n"
+                f"Collect fresh production samples, validate feature distributions, and retrain the model using recent data."
             )
 
         # Consolidate leakage recommendations
