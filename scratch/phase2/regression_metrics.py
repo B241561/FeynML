@@ -86,3 +86,47 @@ def run_verification():
 
 if __name__ == "__main__":
     run_verification()
+
+
+# Compatibility layer: expose sklearn-like function names expected by tests
+mean_squared_error = mse
+root_mean_squared_error = rmse
+mean_absolute_error = mae
+r_squared = r2_score
+
+
+def mean_absolute_percentage_error(y_true, y_pred, eps=1e-8):
+    """Return MAPE as a floating-point percentage (keeps original behaviour)."""
+    return mape(y_true, y_pred, eps=eps)
+
+
+def median_absolute_error(y_true, y_pred):
+    errors = sorted(abs(a - b) for a, b in zip(y_true, y_pred))
+    n = len(errors)
+    if n == 0:
+        return 0.0
+    if n % 2 == 1:
+        return errors[n // 2]
+    return 0.5 * (errors[n // 2 - 1] + errors[n // 2])
+
+
+def max_error(y_true, y_pred):
+    return max(abs(a - b) for a, b in zip(y_true, y_pred)) if y_true else 0.0
+
+
+def explained_variance(y_true, y_pred):
+    """Explained variance = 1 - Var(residuals) / Var(y_true).
+
+    Returns 1.0 when variance of y_true is zero (perfect/explained by bias).
+    """
+    n = len(y_true)
+    if n == 0:
+        return 0.0
+    mean_y = sum(y_true) / n
+    var_y = sum((yi - mean_y) ** 2 for yi in y_true) / n
+    residuals = [y_true[i] - y_pred[i] for i in range(n)]
+    mean_res = sum(residuals) / n
+    var_res = sum((r - mean_res) ** 2 for r in residuals) / n
+    if var_y == 0:
+        return 1.0
+    return 1.0 - (var_res / var_y)

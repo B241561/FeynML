@@ -9,26 +9,45 @@ import traceback
 import plotly
 import plotly.graph_objects as go
 import plotly.express as px
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.model_selection import cross_val_predict
-from sklearn.preprocessing import LabelEncoder
+
+# Make sklearn optional so tests that don't require ML packages can import webapp
+try:
+    from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+    from sklearn.model_selection import cross_val_predict
+    from sklearn.preprocessing import LabelEncoder
+    SKLEARN_AVAILABLE = True
+except Exception:
+    RandomForestClassifier = None
+    RandomForestRegressor = None
+    cross_val_predict = None
+    LabelEncoder = None
+    SKLEARN_AVAILABLE = False
 
 # Add project root to path to import engine modules
 _ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
-from engine.modules.fairness_engine import FairnessEngine
-from engine.modules.calibration_engine import CalibrationEngine
-from engine.modules.drift_engine import DriftEngine
-from engine.modules.leakage_engine import LeakageEngine
-from engine.modules.label_noise_engine import LabelNoiseEngine
-from engine.modules.missing_data_engine import MissingDataEngine
-from engine.modules.slicer_engine import SlicerEngine
-from engine.modules.root_cause_engine import AutoRootCauseEngine
-from engine.modules.ai_investigator import AIInvestigator
-from engine.modules.audience_translator import AudienceTranslator
-from engine.modules.domain_translator import DomainTranslator
+try:
+    from engine.modules.fairness_engine import FairnessEngine
+    from engine.modules.calibration_engine import CalibrationEngine
+    from engine.modules.drift_engine import DriftEngine
+    from engine.modules.leakage_engine import LeakageEngine
+    from engine.modules.label_noise_engine import LabelNoiseEngine
+    from engine.modules.missing_data_engine import MissingDataEngine
+    from engine.modules.slicer_engine import SlicerEngine
+    from engine.modules.root_cause_engine import AutoRootCauseEngine
+    from engine.modules.ai_investigator import AIInvestigator
+    from engine.modules.audience_translator import AudienceTranslator
+    from engine.modules.domain_translator import DomainTranslator
+    ENGINES_AVAILABLE = True
+except Exception:
+    # In test environments we may not have optional engine dependencies installed.
+    FairnessEngine = CalibrationEngine = DriftEngine = LeakageEngine = None
+    LabelNoiseEngine = MissingDataEngine = SlicerEngine = None
+    AutoRootCauseEngine = AIInvestigator = AudienceTranslator = None
+    DomainTranslator = None
+    ENGINES_AVAILABLE = False
 
 
 class NumpyEncoder(json.JSONEncoder):

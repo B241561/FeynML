@@ -44,7 +44,7 @@ class LeakageDetector(BaseModule):
       This module flags statistically suspicious features, but human review is essential.
     """
 
-    def detect_target_leakage(self, df, target_col, threshold=0.95, n_jobs=-1):
+    def detect_target_leakage(self, df, target_col, threshold=0.95, n_jobs=1):
         """
         Identify features that are suspiciously predictive of the target.
         
@@ -343,9 +343,9 @@ class LeakageDetector(BaseModule):
             is_classification = n_unique <= 20
             
             if is_classification:
-                model = RandomForestClassifier(n_estimators=50, random_state=42, n_jobs=-1)
+                model = RandomForestClassifier(n_estimators=50, random_state=42, n_jobs=1)
             else:
-                model = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=-1)
+                model = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=1)
             
             model.fit(X, y)
             self._log(f"Trained {model.__class__.__name__} model")
@@ -353,7 +353,7 @@ class LeakageDetector(BaseModule):
         # Compute permutation importance
         try:
             perm_importance = permutation_importance(
-                model, X, y, n_repeats=n_repeats, random_state=42, n_jobs=-1
+                model, X, y, n_repeats=n_repeats, random_state=42, n_jobs=1
             )
             
             importances_df = pd.DataFrame({

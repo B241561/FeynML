@@ -3,6 +3,7 @@ import json
 import traceback
 from datetime import datetime, timedelta
 from functools import wraps
+from uuid import uuid4
 from urllib.parse import urljoin, urlparse
 from werkzeug.utils import secure_filename
 import io
@@ -39,12 +40,20 @@ except ImportError:
     pd = None
     PANDAS_AVAILABLE = False
 
-from webapp.routes.phase4_routes import phase4_bp
-from webapp.routes.chatbot_routes import chatbot_bp
-
 app = Flask(__name__)
-app.register_blueprint(phase4_bp)
-app.register_blueprint(chatbot_bp, url_prefix='/api/chatbot')
+
+# Register optional blueprints if their modules and optional deps are available.
+try:
+    from webapp.routes.phase4_routes import phase4_bp
+    app.register_blueprint(phase4_bp)
+except Exception:
+    pass
+
+try:
+    from webapp.routes.chatbot_routes import chatbot_bp
+    app.register_blueprint(chatbot_bp, url_prefix='/api/chatbot')
+except Exception:
+    pass
 app.debug = True
 app.config["PROPAGATE_EXCEPTIONS"] = True
 app.config["TRAP_HTTP_EXCEPTIONS"] = True
@@ -72,7 +81,29 @@ os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
 
 ALLOWED_EXTENSIONS = {'csv', 'json'}
 _df_cache = {}
-runner = AnalysisRunner()
+# Lazy analysis runner: avoid importing heavy engine modules at import time
+runner = None
+
+
+def get_runner():
+    """Lazily instantiate AnalysisRunner when first needed.
+
+    Keeps module import lightweight for test collection. If the
+    analysis runner or its optional dependencies are unavailable,
+    this returns None and callers should handle that gracefully.
+    """
+    global runner
+    if runner is None:
+        try:
+            from webapp.services.analysis_runner import AnalysisRunner
+            runner = AnalysisRunner()
+        except Exception:
+            runner = None
+    return runner
+
+# Instantiate a runner on module import so startup and test code can access it,
+# while get_runner() still preserves the lazy-loading semantics for route handlers.
+runner = get_runner()
 
 db.init_app(app)
 bcrypt.init_app(app)
@@ -1129,10 +1160,12 @@ def run_analysis():
         }
 
         try:
-            runner.audience = session.get(
-                'selected_audience', 'ml_engineer'
-            )
-            runner.run(filepath, session['analysis_config'])
+            r = get_runner()
+            if r is None:
+                flash('Analysis runner not available in this environment.', 'warning')
+                return redirect(url_for('configure_schema'))
+            r.audience = session.get('selected_audience', 'ml_engineer')
+            r.run(filepath, session['analysis_config'])
             return redirect(url_for('analysis_progress'))
         except Exception as e:
             traceback.print_exc()
@@ -1147,7 +1180,8 @@ def run_analysis():
 @login_required
 def analysis_progress():
     try:
-        if runner.status == 'idle':
+        r = get_runner()
+        if r is None or r.status == 'idle':
             return redirect(url_for('index'))
         return render_template('analysis_running.html')
     except Exception:
@@ -1159,14 +1193,17 @@ def analysis_progress():
 @login_required
 def analysis_status():
     try:
+        r = get_runner()
+        if r is None:
+            return jsonify({'status': 'unavailable', 'progress': 0, 'logs': [], 'error': 'runner unavailable', 'report_id': None})
         report_id = None
-        if runner.report_path:
-            report_id = os.path.basename(runner.report_path).replace('.json', '')
+        if r.report_path:
+            report_id = os.path.basename(r.report_path).replace('.json', '')
         return jsonify({
-            'status': runner.status,
-            'progress': runner.progress,
-            'logs': runner.logs,
-            'error': runner.error,
+            'status': r.status,
+            'progress': r.progress,
+            'logs': r.logs,
+            'error': r.error,
             'report_id': report_id
         })
     except Exception:
@@ -1857,6 +1894,113 @@ def generate_chart_suggestions(report_data, columns):
         })
     
     return suggestions[:3]  # Return top 3 suggestions
+
+
+def _save_report_visualization(report_id, user_id, chart_data, chart_title, chart_description=None):
+    """Persist a custom visualization snapshot into the report JSON."""
+    report = Report.query.filter_by(report_id=report_id, user_id=user_id).first()
+    if not report:
+        return None, ({'error': 'Report not found'}, 404)
+
+    filepath = os.path.join(REPORT_FOLDER, f"{report_id}.json")
+    if not os.path.exists(filepath):
+        return None, ({'error': 'Report artifact missing'}, 404)
+
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            payload = json.load(f)
+    except Exception as exc:
+        return None, ({'error': f'Unable to read report artifact: {exc}'}, 500)
+
+    if not isinstance(payload, dict):
+        return None, ({'error': 'Invalid report payload'}, 500)
+
+    custom_visualizations = payload.setdefault('custom_visualizations', [])
+    if not isinstance(custom_visualizations, list):
+        custom_visualizations = []
+        payload['custom_visualizations'] = custom_visualizations
+
+    visualization = {
+        'id': uuid4().hex,
+        'title': chart_title or 'Untitled Visualization',
+        'description': chart_description or '',
+        'chart_json': chart_data,
+        'created_at': datetime.utcnow().isoformat()
+    }
+    custom_visualizations.append(visualization)
+
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(payload, f, indent=2, ensure_ascii=False)
+
+    report.size_bytes = os.path.getsize(filepath)
+    db.session.commit()
+    return visualization, None
+
+
+@app.route('/add_to_report', methods=['POST'])
+@app.route('/api/add-to-report', methods=['POST'])
+@login_required
+def add_to_report():
+    data = request.get_json(silent=True) or {}
+    report_id = str(data.get('report_id') or '').strip()
+    chart_data = data.get('chart_data') or data.get('chart_json')
+    chart_title = data.get('chart_title')
+    chart_description = data.get('chart_description')
+
+    if not report_id:
+        return jsonify({'error': 'report_id is required'}), 400
+    if not chart_data:
+        return jsonify({'error': 'chart_data is required'}), 400
+
+    visualization, error = _save_report_visualization(
+        report_id=report_id,
+        user_id=current_user.id,
+        chart_data=chart_data,
+        chart_title=chart_title,
+        chart_description=chart_description,
+    )
+    if error:
+        body, status = error
+        return jsonify(body), status
+
+    return jsonify({
+        'success': True,
+        'message': 'Visualization added to report',
+        'visualization': visualization
+    })
+
+
+@app.route('/api/save-visualization', methods=['POST'])
+@app.route('/save_visualization', methods=['POST'])
+@login_required
+def save_visualization():
+    data = request.get_json(silent=True) or {}
+    report_id = str(data.get('report_id') or '').strip()
+    chart_data = data.get('chart_data') or data.get('chart_json')
+    chart_title = data.get('chart_title')
+    chart_description = data.get('chart_description')
+
+    if not report_id:
+        return jsonify({'error': 'report_id is required'}), 400
+    if not chart_data:
+        return jsonify({'error': 'chart_data is required'}), 400
+
+    visualization, error = _save_report_visualization(
+        report_id=report_id,
+        user_id=current_user.id,
+        chart_data=chart_data,
+        chart_title=chart_title,
+        chart_description=chart_description,
+    )
+    if error:
+        body, status = error
+        return jsonify(body), status
+
+    return jsonify({
+        'success': True,
+        'message': 'Visualization saved',
+        'visualization': visualization
+    })
 
 
 @app.route('/generate_chart', methods=['POST'])

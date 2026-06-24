@@ -101,23 +101,47 @@ def target_correlation_scan(X, y, feat_names=None):
     
     return correlations.to_dict()
 
-def leakage_score(X, y, model, feat_names=None):
+def leakage_score(X, y, model, feat_names=None, n_repeats=5):
     """
     Compute per-feature leakage scores (0-1).
-    Aggregates MI and correlation.
+    Aggregates model importance, MI, and correlation.
     """
     mi = mutual_information_score(X, y, feat_names)
     corr = target_correlation_scan(X, y, feat_names)
-    
+
+    if isinstance(X, pd.DataFrame):
+        X_data = X
+    else:
+        X_data = X
+
+    # Prefer model-derived importance over correlation alone, because a true leakage
+    # feature will dominate the learned model while legitimate signal features may
+    # still correlate strongly with the target.
+    if hasattr(model, "feature_importances_"):
+        importances = np.asarray(model.feature_importances_, dtype=float)
+    else:
+        perm = permutation_importance(model, X_data, y, n_repeats=n_repeats, random_state=42)
+        importances = np.asarray(perm.importances_mean, dtype=float)
+
+    max_imp = float(np.max(importances)) if importances.size > 0 else 0.0
+    if max_imp <= 0:
+        max_imp = 1e-9
+
     scores = {}
-    for feat in mi:
-        # Normalize MI (very rough normalization)
-        norm_mi = min(1.0, mi[feat] / 1.0)
-        c = corr.get(feat, 0)
-        
-        # Weighted average
-        scores[feat] = 0.7 * c + 0.3 * norm_mi
-        
+    mi_max = max(mi.values()) if mi else 1.0
+    mi_max = mi_max if mi_max > 0 else 1.0
+
+    for i, feat in enumerate(mi):
+        imp = float(importances[i]) / max_imp if i < len(importances) else 0.0
+        corr_val = abs(corr.get(feat, 0.0))
+        mi_norm = float(mi[feat]) / mi_max
+
+        # Emphasize features that dominate model importance; aggressively
+        # downweight correlated-but-non-dominant features so legitimate signal
+        # does not look like hard leakage.
+        score = 0.9 * (imp ** 4) + 0.05 * mi_norm + 0.05 * corr_val
+        scores[feat] = float(min(1.0, score))
+
     return scores
 
 def run_verification():

@@ -78,7 +78,7 @@ class LabelNoiseAnalyzer(BaseModule):
         """
         self._log(f"Running regression noise detection on {len(X)} samples")
         
-        reg = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=-1)
+        reg = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=1)
         
         try:
             y_pred = cross_val_predict(reg, X, y, cv=cv)
@@ -177,6 +177,7 @@ class LabelNoiseAnalyzer(BaseModule):
             if len(unique_classes) == n_samples:
                  return {
                     'noisy_indices': [],
+                    'label_issues': np.zeros(n_samples, dtype=bool),
                     'n_total': n_samples,
                     'label_issues_df': pd.DataFrame(),
                     'n_issues': 0,
@@ -206,7 +207,7 @@ class LabelNoiseAnalyzer(BaseModule):
                 self._log(f"Dynamically reduced CV folds to {cv_folds} due to small class sizes")
 
         if clf is None:
-            clf = RandomForestClassifier(n_estimators=50, random_state=42, n_jobs=-1)
+            clf = RandomForestClassifier(n_estimators=50, random_state=42, n_jobs=1)
             self._log("Using default RandomForestClassifier for predictions")
         
         # Get cross-validated predictions
@@ -217,10 +218,7 @@ class LabelNoiseAnalyzer(BaseModule):
             self._error(f"Failed to get predictions: {e}")
             return {
                 'noisy_indices': [],
-                'n_total': n_samples,
-                'label_issues_df': pd.DataFrame(),
-                'n_issues': 0,
-                'estimated_noise_rate': 0.0,
+                    'label_issues': np.zeros(n_samples, dtype=bool),
                 'status': 'FAILED',
                 'error': str(e)
             }
@@ -249,6 +247,7 @@ class LabelNoiseAnalyzer(BaseModule):
                 
                 return {
                     'noisy_indices': label_issues.tolist(),
+                    'label_issues': issues_bool,
                     'n_total': n_samples,
                     'label_issues_df': issues_df,
                     'n_issues': int(np.sum(issues_bool)),
@@ -280,6 +279,7 @@ class LabelNoiseAnalyzer(BaseModule):
         
         return {
             'noisy_indices': np.where(issues_bool)[0].tolist(),
+            'label_issues': issues_bool,
             'n_total': n_samples,
             'label_issues_df': issues_df,
             'n_issues': int(np.sum(issues_bool)),
@@ -472,6 +472,7 @@ class LabelNoiseAnalyzer(BaseModule):
                 severity = 'MEDIUM'
             
             findings = {
+                'status': results.get('status', 'SUCCESS'),
                 'label_issues': results,
                 'summary': summary
             }

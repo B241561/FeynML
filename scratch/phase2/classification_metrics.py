@@ -469,3 +469,9 @@ def run_verification():
 
 if __name__ == "__main__":
     run_verification()
+
+
+# Compatibility aliases (older tests expect these exact names)
+fbeta_score = f_beta
+roc_auc = roc_auc_score
+average_precision = average_precision_score

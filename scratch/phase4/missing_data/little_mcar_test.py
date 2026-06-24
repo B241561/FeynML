@@ -47,6 +47,98 @@ def missingness_pattern_groups(X):
         
     return groups
 
+
+def little_test_statistic(X):
+    """
+    Compute Little's MCAR test statistic and degrees of freedom.
+
+    Returns
+    -------
+    tuple[float, int]
+        (statistic, degrees_of_freedom)
+    """
+    if isinstance(X, pd.DataFrame):
+        X_arr = X.values
+    else:
+        X_arr = np.asarray(X)
+
+    _, K = X_arr.shape
+
+    global_mean = np.nanmean(X_arr, axis=0)
+    global_cov = pd.DataFrame(X_arr).cov().values
+
+    groups = missingness_pattern_groups(X_arr)
+
+    d2 = 0.0
+    df = 0
+
+    for pattern, indices in groups.items():
+        n_j = len(indices)
+        if n_j == 0:
+            continue
+
+        obs_vars = [k for k, is_nan in enumerate(pattern) if not is_nan]
+        if not obs_vars:
+            continue
+
+        k_j = len(obs_vars)
+        df += k_j
+
+        X_j = X_arr[indices][:, obs_vars]
+        y_j_obs = np.nanmean(X_j, axis=0)
+        mu_j_obs = global_mean[obs_vars]
+        sigma_j_obs = global_cov[np.ix_(obs_vars, obs_vars)]
+        diff = y_j_obs - mu_j_obs
+
+        try:
+            inv_sigma = np.linalg.pinv(sigma_j_obs)
+            d2 += float(n_j * diff.T @ inv_sigma @ diff)
+        except np.linalg.LinAlgError:
+            continue
+
+    df -= K
+    return float(d2), int(df)
+
+
+def _tail_asymmetry_flags(X_arr):
+    """
+    Heuristic check for one-sided truncation in columns with missing values.
+
+    Little's test can be underpowered when a column is censored by its own value
+    and the missingness pattern leaves little auxiliary information. In that
+    case, a strongly truncated observed distribution is still useful evidence
+    against MCAR.
+    """
+    flags = {}
+
+    for col_idx in range(X_arr.shape[1]):
+        col = X_arr[:, col_idx]
+        missing_mask = np.isnan(col)
+        if missing_mask.sum() == 0:
+            continue
+
+        observed = col[~missing_mask]
+        if observed.size < 20:
+            continue
+
+        median = float(np.nanmedian(observed))
+        obs_min = float(np.nanmin(observed))
+        obs_max = float(np.nanmax(observed))
+        lower_span = median - obs_min
+        upper_span = obs_max - median
+
+        if lower_span <= 0 or upper_span <= 0:
+            continue
+
+        tail_ratio = upper_span / (lower_span + 1e-12)
+        if tail_ratio < 0.5 or tail_ratio > 2.0:
+            flags[col_idx] = {
+                "tail_ratio": float(tail_ratio),
+                "missing_rate": float(missing_mask.mean())
+            }
+
+    return flags
+
 def little_mcar_test(X, alpha=0.05):
     """
     Run Little's MCAR test.
@@ -56,54 +148,7 @@ def little_mcar_test(X, alpha=0.05):
     else:
         X_arr = X
         
-    N, K = X_arr.shape
-    
-    # 1. Global estimates (ignoring NaNs for simplicity in this scratch version)
-    # A more robust version would use EM algorithm to estimate global mean/cov
-    global_mean = np.nanmean(X_arr, axis=0)
-    global_cov = np.cov(X_arr, rowvar=False, ddof=1)
-    # Handle NaNs in covariance calculation if np.cov doesn't
-    if np.any(np.isnan(global_cov)):
-        # Fallback to pairwise covariance
-        df_tmp = pd.DataFrame(X_arr)
-        global_cov = df_tmp.cov().values
-    
-    groups = missingness_pattern_groups(X_arr)
-    
-    d2 = 0
-    df = 0
-    
-    for pattern, indices in groups.items():
-        n_j = len(indices)
-        if n_j == 0: continue
-        
-        # Identify observed variables in this pattern
-        obs_vars = [k for k, is_nan in enumerate(pattern) if not is_nan]
-        if not obs_vars: continue # Skip all-missing rows
-        
-        k_j = len(obs_vars)
-        df += k_j
-        
-        # Sub-data for this group
-        X_j = X_arr[indices][:, obs_vars]
-        y_j_obs = np.nanmean(X_j, axis=0)
-        
-        # Global estimates for these variables
-        mu_j_obs = global_mean[obs_vars]
-        sigma_j_obs = global_cov[np.ix_(obs_vars, obs_vars)]
-        
-        # Difference
-        diff = y_j_obs - mu_j_obs
-        
-        try:
-            # Inv sigma
-            inv_sigma = np.linalg.pinv(sigma_j_obs)
-            d2 += n_j * diff.T @ inv_sigma @ diff
-        except np.linalg.LinAlgError:
-            continue
-            
-    df -= K # Total df = sum(k_j) - k
-    
+    d2, df = little_test_statistic(X_arr)
     if df <= 0:
         return {
             "statistic": 0.0,
@@ -114,12 +159,15 @@ def little_mcar_test(X, alpha=0.05):
         }
         
     p_value = 1 - chi2.cdf(d2, df)
+    heuristic_flags = _tail_asymmetry_flags(X_arr)
+    mcar_likely = bool(p_value > alpha and not heuristic_flags)
     
     return {
         "statistic": float(d2),
         "pvalue": float(p_value),
-        "mcar_likely": bool(p_value > alpha),
-        "df": int(df)
+        "mcar_likely": mcar_likely,
+        "df": int(df),
+        "heuristic_flags": heuristic_flags
     }
 
 def run_verification():

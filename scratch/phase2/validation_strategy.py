@@ -397,3 +397,89 @@ def run_verification():
 
 if __name__ == "__main__":
     run_verification()
+
+
+# Compatibility wrappers expected by older tests
+def train_test_split(X, y, test_size=0.25, random_state=None):
+    """Simple train/test split returning data lists (not indices)."""
+    n = len(X)
+    if isinstance(test_size, float):
+        test_n = int(round(n * test_size))
+    else:
+        test_n = int(test_size)
+
+    indices = list(range(n))
+    rng = random.Random(random_state) if random_state is not None else random
+    rng.shuffle(indices)
+
+    test_idx = indices[:test_n]
+    train_idx = indices[test_n:]
+
+    X_tr = [X[i] for i in train_idx]
+    X_te = [X[i] for i in test_idx]
+    y_tr = [y[i] for i in train_idx]
+    y_te = [y[i] for i in test_idx]
+    return X_tr, X_te, y_tr, y_te
+
+
+def k_fold_cross_validation(X, y, k=5, seed=42):
+    """Return list of (X_train, X_test, y_train, y_test) folds."""
+    splits = kfold_split(len(X), k=k, shuffle=True, seed=seed)
+    folds = []
+    for train_idx, test_idx in splits:
+        X_tr = [X[i] for i in train_idx]
+        X_te = [X[i] for i in test_idx]
+        y_tr = [y[i] for i in train_idx]
+        y_te = [y[i] for i in test_idx]
+        folds.append((X_tr, X_te, y_tr, y_te))
+    return folds
+
+
+def stratified_k_fold(X, y, k=5, seed=42):
+    """Return stratified folds as (X_train, X_test, y_train, y_test)."""
+    splits = stratified_kfold_split(y, k=k, shuffle=True, seed=seed)
+    folds = []
+    for train_idx, test_idx in splits:
+        X_tr = [X[i] for i in train_idx]
+        X_te = [X[i] for i in test_idx]
+        y_tr = [y[i] for i in train_idx]
+        y_te = [y[i] for i in test_idx]
+        folds.append((X_tr, X_te, y_tr, y_te))
+    return folds
+
+
+def temporal_split(X, y, timestamps, test_ratio=0.2):
+    """Split by time: keep ordering and take latest `test_ratio` as test set."""
+    n = len(X)
+    paired = sorted(range(n), key=lambda i: timestamps[i])
+    test_n = int(round(n * test_ratio))
+    if test_n == 0:
+        return X, [], y, []
+    train_idx = paired[:-test_n]
+    test_idx = paired[-test_n:]
+    X_tr = [X[i] for i in train_idx]
+    X_te = [X[i] for i in test_idx]
+    y_tr = [y[i] for i in train_idx]
+    y_te = [y[i] for i in test_idx]
+    return X_tr, X_te, y_tr, y_te
+
+
+def detect_data_leakage(X_train, X_test):
+    """Lightweight leakage check: exact-duplicate rows and preprocessing hints.
+
+    Returns a dict including `leakage_detected` boolean for test compatibility.
+    """
+    # Check exact duplicates
+    set_train = {tuple(row) for row in X_train}
+    duplicates = [row for row in X_test if tuple(row) in set_train]
+    leakage_detected = len(duplicates) > 0
+
+    # Also include preprocessing leakage heuristics
+    preproc_report = detect_preprocessing_leakage(X_train, X_test) if X_train and X_test else {}
+
+    return {
+        "leakage_detected": leakage_detected,
+        "n_duplicates_in_test": len(duplicates),
+        "duplicates_sample": duplicates[:5],
+        "preprocessing_report": preproc_report,
+    }

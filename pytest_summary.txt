@@ -1,0 +1,8 @@
+﻿............................                                             [100%]
+============================== warnings summary ===============================
+tests/test_admin_auth.py::TestAdminResetPasswordRoute::test_reset_password_success
+  C:\Users\arman\OneDrive\Desktop\DATA ANALYTICS\ML_investigator\ml_failure_engine_reorganized\webapp\app.py:719: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    admin = AdminProfile.query.get(admin_id)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+28 passed, 1 warning in 41.98s

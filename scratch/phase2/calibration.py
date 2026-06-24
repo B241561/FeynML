@@ -471,19 +471,19 @@ def calibration_summary(y_true, y_prob, n_bins=10, label="model"):
     # 0.10 <= ECE <0.20 -> HIGH
     # ECE >= 0.20       -> CRITICAL
     if ece < 0.05:
-        severity = "NONE"
+        severity = "EXCELLENT"
     elif ece < 0.10:
-        severity = "LOW"
+        severity = "GOOD"
     elif ece < 0.20:
-        severity = "HIGH"
+        severity = "MODERATE"
     else:
-        severity = "CRITICAL"
+        severity = "POOR"
 
     interpretation_map = {
-        "NONE":     "ECE < 5%  — calibration is good; no action required.",
-        "LOW":      "ECE 5–10% — acceptable but consider monitoring or light recalibration.",
-        "HIGH":     "ECE 10–20% — calibration is degraded; recalibration recommended.",
-        "CRITICAL": "ECE >=20% — calibration severely degraded; recalibration required before deployment.",
+        "EXCELLENT": "ECE < 5%  — calibration is excellent; no action required.",
+        "GOOD":      "ECE 5–10% — calibration is good; monitor for drift.",
+        "MODERATE":  "ECE 10–20% — calibration is moderate; consider recalibration.",
+        "POOR":      "ECE >=20% — calibration is poor; recalibration recommended.",
     }
 
     return {

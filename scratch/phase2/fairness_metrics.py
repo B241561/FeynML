@@ -139,6 +139,8 @@ def equalized_odds(y_true, y_pred, groups):
                                  "n":   metrics[g]["n"]} for g in group_names},
         "TPR_gap":          round(tpr_gap, 4),
         "FPR_gap":          round(fpr_gap, 4),
+        "tpr_gap":          round(tpr_gap, 4),
+        "fpr_gap":          round(fpr_gap, 4),
         "max_gap":          round(max_gap, 4),
         "passes":           max_gap < 0.1,
         "interpretation":   (
@@ -233,7 +235,8 @@ def predictive_parity(y_true, y_pred, groups):
 # 5. DISPARATE IMPACT (80% / Four-Fifths Rule)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def disparate_impact(y_pred, groups, privileged_group, unprivileged_group):
+def disparate_impact(y_pred, groups, privileged_group=None, unprivileged_group=None,
+                     privileged=None, unprivileged=None):
     """
     Disparate Impact Ratio (EEOC Four-Fifths Rule):
       DI = P(Ŷ=1 | A=unprivileged) / P(Ŷ=1 | A=privileged)
@@ -247,6 +250,21 @@ def disparate_impact(y_pred, groups, privileged_group, unprivileged_group):
     
     Note: purely outcome-based; does not account for legitimate predictors.
     """
+    if privileged is not None:
+        privileged_group = privileged
+    if unprivileged is not None:
+        unprivileged_group = unprivileged
+
+    group_names = sorted(set(groups))
+    if privileged_group is None or unprivileged_group is None:
+        counts = {g: groups.count(g) for g in group_names}
+        if privileged_group is None:
+            privileged_group = max(counts, key=counts.get)
+        if unprivileged_group is None:
+            # Choose a different group than the privileged one when counts tie.
+            unprivileged_group = next((g for g in group_names if g != privileged_group),
+                                     min(counts, key=counts.get))
+
     priv = [y_pred[i] for i, g in enumerate(groups) if g == privileged_group]
     unpriv = [y_pred[i] for i, g in enumerate(groups) if g == unprivileged_group]
 
@@ -265,6 +283,8 @@ def disparate_impact(y_pred, groups, privileged_group, unprivileged_group):
         "selection_rate_privileged":   round(rate_priv, 4),
         "selection_rate_unprivileged": round(rate_unpriv, 4),
         "disparate_impact_ratio":      round(di, 4),
+        "di_ratio":                    round(di, 4),
+        "passes":                     0.8 <= di <= 1.25,
         "eeoc_passes":         0.8 <= di <= 1.25,
         "interpretation":      (
             f"DI = {di:.3f}. "
