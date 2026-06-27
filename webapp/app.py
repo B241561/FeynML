@@ -1341,6 +1341,15 @@ def view_dashboard(report_id):
     with open(filepath, 'r') as f:
         data = json.load(f)
 
+    # ── Unwrap ReportEngine "sections" wrapper if present ──────────────
+    # ReportEngine.save_json() nests all module outputs under "sections".
+    # view_dashboard expects flat top-level keys. Unwrap if needed.
+    if 'sections' in data and isinstance(data.get('sections'), dict):
+        sections_data = data.pop('sections')
+        for k, v in sections_data.items():
+            if k not in data:
+                data[k] = v
+
     # Detect Phase 4 reports and redirect to the specialized phase4 viewer
     if data.get('results', {}).get('module'):
         return redirect(url_for('phase4.view_report', report_id=report_id))
@@ -1352,7 +1361,41 @@ def view_dashboard(report_id):
     data.setdefault('leakage', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
     data.setdefault('missing_data', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
     data.setdefault('root_cause', {'health_status': 'Unknown', 'confidence': 0, 'root_causes': [], 'recommended_actions': []})
-    data.setdefault('ai_investigator', {'risk_level': 'UNKNOWN', 'executive_summary': '', 'investigation_findings': '', 'impact_assessment': '', 'confidence_explanation': '', 'recommended_actions': [], 'technical_notes': ''})
+    # If ai_investigator exists but has empty fields, try to populate from
+    # ai_investigator_by_audience (which may have been generated instead)
+    existing_ai = data.get('ai_investigator', {})
+    if not existing_ai.get('executive_summary'):
+        ai_by_aud = data.get('ai_investigator_by_audience', {})
+        if ai_by_aud:
+            # Use first available audience report as fallback
+            fallback_audience = (
+                data.get('selected_audience') or
+                session.get('selected_audience') or
+                'ML Engineer'
+            )
+            fallback_ai = ai_by_aud.get(fallback_audience) or next(iter(ai_by_aud.values()), {})
+            if fallback_ai.get('executive_summary'):
+                # Merge fallback into ai_investigator
+                for field in ['executive_summary', 'investigation_findings',
+                               'impact_assessment', 'confidence_explanation',
+                               'recommended_actions', 'technical_notes', 'risk_level']:
+                    if not existing_ai.get(field) and fallback_ai.get(field):
+                        existing_ai[field] = fallback_ai[field]
+                data['ai_investigator'] = existing_ai
+
+    data.setdefault('ai_investigator', {
+        'risk_level': 'UNKNOWN',
+        'executive_summary': '',
+        'investigation_findings': '',
+        'impact_assessment': '',
+        'confidence_explanation': '',
+        'recommended_actions': [],
+        'technical_notes': ''
+    })
+    # If audience_reports is empty but ai_investigator_by_audience exists,
+    # mirror it into audience_reports so the JS switcher works
+    if not data.get('audience_reports') and data.get('ai_investigator_by_audience'):
+        data['audience_reports'] = data['ai_investigator_by_audience']
     data.setdefault('audience_reports', {})
 
     if isinstance(data.get('root_cause'), dict):

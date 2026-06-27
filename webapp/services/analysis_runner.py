@@ -784,8 +784,11 @@ class AnalysisRunner:
                         if why:
                             self.results['why_risk'] = why
 
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        import traceback
+                        print(f"[AI Investigator ERROR] {type(e).__name__}: {e}")
+                        traceback.print_exc()
+                        # Do not re-raise — let the rest of the report write proceed
                     
                     # Generate AI Investigator outputs for ALL audiences so that the
                     # downstream AudienceTranslator can render fully adapted reports
@@ -807,6 +810,10 @@ class AnalysisRunner:
                         try:
                             ai_by_audience[aud] = ai_investigator.analyze(investigation, aud)
                         except Exception as aud_e:
+                            import traceback
+                            print(f"[AI Investigator ERROR] {type(aud_e).__name__}: {aud_e}")
+                            traceback.print_exc()
+                            # Do not re-raise — let the rest of the report write proceed
                             # Never stop early; ensure all 9 keys exist.
                             self.log(f"WARNING: AIInvestigator audience '{aud}' failed: {aud_e}")
                             ai_by_audience[aud] = ai_investigator.analyze(investigation, "ML Engineer")
@@ -821,9 +828,11 @@ class AnalysisRunner:
                                     if isinstance(v, dict):
                                         v['risk_level'] = unified_level
                                         ai_by_audience[k] = v
-                    except Exception:
-                        # Non-fatal: keep original AI Investigator outputs
-                        pass
+                    except Exception as e:
+                        import traceback
+                        print(f"[AI Investigator ERROR] {type(e).__name__}: {e}")
+                        traceback.print_exc()
+                        # Do not re-raise — let the rest of the report write proceed
 
                     # Keep the selected audience as the top-level section for legacy consumers.
                     # Also ensure the top-level ai_investigator carries the unified risk_level when available.
@@ -835,11 +844,18 @@ class AnalysisRunner:
                             if isinstance(top, dict) and rc_risk.get('level'):
                                 top['risk_level'] = rc_risk.get('level')
                                 self.results['ai_investigator'] = top
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        import traceback
+                        print(f"[AI Investigator ERROR] {type(e).__name__}: {e}")
+                        traceback.print_exc()
+                        # Do not re-raise — let the rest of the report write proceed
 
                     self.log("ENGINE_COMPLETED: AIInvestigator analysis complete.")
                 except Exception as inv_e:
+                    import traceback
+                    print(f"[AI Investigator ERROR] {type(inv_e).__name__}: {inv_e}")
+                    traceback.print_exc()
+                    # Do not re-raise — let the rest of the report write proceed
                     # If Investigation conversion fails, create degraded analysis
                     self.log(f"WARNING: Investigation conversion failed: {str(inv_e)}")
                     self.results['ai_investigator'] = ai_investigator._generate_deterministic(
@@ -847,6 +863,7 @@ class AnalysisRunner:
                         audience
                     )
             except Exception as e:
+                print(f"[AI Investigator ERROR] {type(e).__name__}: {e}")
                 traceback.print_exc()
                 self.log(f"ENGINE_FAILED: AIInvestigator error: {str(e)}")
                 self.results['ai_investigator'] = {"status": "FAILED", "error": str(e)}
@@ -873,6 +890,7 @@ class AnalysisRunner:
                 )
                 self.log("ENGINE_COMPLETED: AudienceTranslator analysis complete.")
             except Exception as e:
+                print(f"[AI Investigator ERROR] {type(e).__name__}: {e}")
                 traceback.print_exc()
                 self.log(f"ENGINE_FAILED: AudienceTranslator error: {str(e)}")
                 self.results['audience_reports'] = {"status": "FAILED", "error": str(e)}
@@ -897,7 +915,14 @@ class AnalysisRunner:
             
             with open(self.report_path, 'w') as f:
                 results = convert_numpy(self.results)
-                json.dump(results, f, indent=4)
+                report_data = results
+                # DEBUG: log what keys are present before JSON write
+                print(f"[ReportWriter] Keys being written: {list(report_data.keys())}")
+                ai_inv = report_data.get('ai_investigator', report_data.get('sections', {}).get('ai_investigator', {}))
+                print(f"[ReportWriter] ai_investigator.executive_summary = {repr(ai_inv.get('executive_summary', 'KEY MISSING'))[:120]}")
+                aud = report_data.get('audience_reports', report_data.get('sections', {}).get('audience_reports', {}))
+                print(f"[ReportWriter] audience_reports keys = {list(aud.keys())}")
+                json.dump(report_data, f, indent=4)
             
             self.log(f"REPORT_SAVED: Results saved to {report_filename}")
             self.progress = 100

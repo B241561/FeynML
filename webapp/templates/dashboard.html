@@ -109,9 +109,24 @@
             <div class="card-header">Executive Summary</div>
             <div class="card-body p-4">
                 <div id="audience-content">
-                    {% set selected_audience = data.get('selected_audience', 'ML Engineer') %}
+                    {% set selected_audience = selected_audience | default(data.get('selected_audience', 'ML Engineer')) %}
                     {% set ai_by_audience = data.get('ai_investigator_by_audience', {}) %}
-                    {% set ai_investigator_data = ai_by_audience.get(selected_audience, data.get('ai_investigator', {})) %}
+                    {#
+                       Resolution order for ai_investigator_data:
+                       1. ai_by_audience[selected_audience]  — audience-specific AI report
+                       2. first value in ai_by_audience       — any audience report
+                       3. data['ai_investigator']             — flat top-level key
+                       4. ai_investigator_data passed from Flask — template variable
+                    #}
+                    {% if ai_by_audience and ai_by_audience.get(selected_audience) %}
+                        {% set ai_investigator_data = ai_by_audience.get(selected_audience) %}
+                    {% elif ai_by_audience %}
+                        {% set ai_investigator_data = ai_by_audience.values() | list | first %}
+                    {% elif data.get('ai_investigator') and data.get('ai_investigator', {}).get('executive_summary') %}
+                        {% set ai_investigator_data = data.get('ai_investigator') %}
+                    {% else %}
+                        {% set ai_investigator_data = ai_investigator_data | default({}) %}
+                    {% endif %}
                     {% set root_confidence_drivers = data.get('root_cause', {}).get('confidence_drivers', data.get('root_cause', {}).get('metadata', {}).get('confidence_drivers', {})) %}
                     {% set confidence_driver_data = ai_investigator_data.get('confidence_drivers', root_confidence_drivers) %}
                     {% set audience_reports = data.get('audience_reports', {}) %}
