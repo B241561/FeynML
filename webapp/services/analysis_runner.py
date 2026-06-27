@@ -96,10 +96,91 @@ class AnalysisRunner:
         self.results = {}
         self.error = None
         self.report_path = None
+        self._start_time = None
 
     def log(self, message):
         timestamp = time.strftime("%H:%M:%S")
         self.logs.append(f"[{timestamp}] {message}")
+
+    def _run_with_timeout(self, engine_name, timeout_seconds, func, timeout_result, timeout_log):
+        result_holder = {"value": None}
+        error_holder = {"error": None, "traceback": None}
+
+        def _target():
+            try:
+                result_holder["value"] = func()
+            except Exception as e:
+                error_holder["error"] = e
+                error_holder["traceback"] = traceback.format_exc()
+
+        worker = threading.Thread(target=_target, daemon=True)
+        worker.start()
+        worker.join(timeout=timeout_seconds)
+
+        if worker.is_alive():
+            self.log(f"{timeout_log}: {engine_name} exceeded {timeout_seconds}s. Skipping.")
+            return "timeout", timeout_result
+
+        if error_holder["error"] is not None:
+            if error_holder["traceback"]:
+                print(error_holder["traceback"])
+            self.log(f"ENGINE_FAILED: {engine_name} error: {str(error_holder['error'])}")
+            return "error", {
+                "status": "FAILED",
+                "error": str(error_holder["error"]),
+                "severity": "HIGH"
+            }
+
+        return "ok", result_holder["value"]
+
+    def _write_report(self, df=None, completion_log="ANALYSIS_COMPLETED: Investigation finished successfully."):
+        self.progress = max(self.progress, 90)
+        self.status = "saving_report"
+
+        try:
+            if df is not None:
+                try:
+                    self._generate_charts(df, self.results)
+                except Exception as e:
+                    self.log(f"WARNING: Chart generation failed: {str(e)}")
+                    traceback.print_exc()
+
+            self.log("STATUS_UPDATE: Consolidating results and saving report...")
+
+            if not self.report_path:
+                report_filename = f"report_{int(time.time())}.json"
+                reports_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'reports')
+                os.makedirs(reports_dir, exist_ok=True)
+                self.report_path = os.path.join(reports_dir, report_filename)
+
+            with open(self.report_path, 'w') as f:
+                results = convert_numpy(self.results)
+                report_data = results
+                # DEBUG: log what keys are present before JSON write
+                print(f"[ReportWriter] Keys being written: {list(report_data.keys())}")
+                ai_inv = report_data.get('ai_investigator', report_data.get('sections', {}).get('ai_investigator', {}))
+                print(f"[ReportWriter] ai_investigator.executive_summary = {repr(ai_inv.get('executive_summary', 'KEY MISSING'))[:120]}")
+                aud = report_data.get('audience_reports', report_data.get('sections', {}).get('audience_reports', {}))
+                print(f"[ReportWriter] audience_reports keys = {list(aud.keys())}")
+                json.dump(report_data, f, indent=4)
+
+            self.log(f"REPORT_SAVED: Results saved to {os.path.basename(self.report_path)}")
+            self.progress = 100
+            self.status = "completed"
+            self.log(completion_log)
+        except Exception as save_ex:
+            traceback.print_exc()
+            self.log(f"REPORT_WRITE_ERROR: {save_ex}")
+            self.error = str(save_ex)
+            self.status = "failed"
+
+    def _check_watchdog(self, df):
+        if self._start_time and (time.time() - self._start_time > 480):
+            self.log("WATCHDOG: Total analysis exceeded 8 minutes. Force completing.")
+            self.status = 'completed'
+            self._write_report(df=df, completion_log="ANALYSIS_COMPLETED: Investigation force-completed by watchdog.")
+            return True
+        return False
 
     def _generate_charts(self, df, results):
         """
@@ -323,6 +404,7 @@ class AnalysisRunner:
                 return
 
             self.status = "running"
+            self._start_time = time.time()
             self.progress = 0
             self.logs = []
             self.results = {}
@@ -499,17 +581,32 @@ class AnalysisRunner:
             self.log("STATUS_UPDATE: Phase 2 Diagnostics started.")
             
             if pred_col or auto_predict:
-                try:
-                    self.log(f"ENGINE_STARTED: CalibrationEngine (Source: {prediction_source})")
+                if self._check_watchdog(df):
+                    return
+                self.log(f"ENGINE_STARTED: CalibrationEngine (Source: {prediction_source})")
+
+                def _run_calibration():
                     cal_engine = CalibrationEngine()
-                    self.results['calibration'] = cal_engine.evaluate(y_true, y_proba[:, 1])
-                    self.results['calibration']['prediction_source'] = prediction_source
-                    self.results['calibration']['model_type'] = model_type
+                    cal_result = cal_engine.evaluate(y_true, y_proba[:, 1])
+                    cal_result['prediction_source'] = prediction_source
+                    cal_result['model_type'] = model_type
+                    return cal_result
+
+                cal_status, cal_payload = self._run_with_timeout(
+                    "CalibrationEngine",
+                    45,
+                    _run_calibration,
+                    {
+                        'status': 'SKIPPED',
+                        'severity': 'NONE',
+                        'findings': {},
+                        'summary': 'Calibration timed out on this dataset.'
+                    },
+                    "CALIBRATION_TIMEOUT"
+                )
+                self.results['calibration'] = cal_payload
+                if cal_status == "ok":
                     self.log("ENGINE_COMPLETED: CalibrationEngine audit complete.")
-                except Exception as e:
-                    traceback.print_exc()
-                    self.log(f"ENGINE_FAILED: CalibrationEngine error: {str(e)}")
-                    self.results['calibration'] = {"status": "FAILED", "error": str(e), "severity": "HIGH"}
             else:
                 self.log("Skipping CalibrationEngine (no prediction column provided).")
                 self.results['calibration'] = {
@@ -520,21 +617,34 @@ class AnalysisRunner:
                 }
             
             if sensitive_col and sensitive_col in df.columns:
-                try:
-                    self.log(f"ENGINE_STARTED: FairnessEngine for attribute: {sensitive_col}")
+                if self._check_watchdog(df):
+                    return
+                self.log(f"ENGINE_STARTED: FairnessEngine for attribute: {sensitive_col}")
+
+                def _run_fairness():
                     fair_engine = FairnessEngine()
-                    # FairnessEngine requires register_axis() before run()
                     fair_engine.register_axis(sensitive_col, df[sensitive_col].values)
-                    self.results['fairness'] = fair_engine.run(y_true, (y_proba[:, 1] > 0.5).astype(int), y_proba[:, 1])
-                    # Add auto-detect note if applicable
+                    fair_result = fair_engine.run(y_true, (y_proba[:, 1] > 0.5).astype(int), y_proba[:, 1])
                     if not config.get('sensitive_col'):
-                        self.results['fairness']['auto_detected'] = True
-                        self.results['fairness']['auto_detected_column'] = sensitive_col
+                        fair_result['auto_detected'] = True
+                        fair_result['auto_detected_column'] = sensitive_col
+                    return fair_result
+
+                fair_status, fair_payload = self._run_with_timeout(
+                    "FairnessEngine",
+                    45,
+                    _run_fairness,
+                    {
+                        "status": "SKIPPED",
+                        "severity": "NONE",
+                        "findings": {},
+                        "summary": "Fairness timed out on this dataset."
+                    },
+                    "FAIRNESS_TIMEOUT"
+                )
+                self.results['fairness'] = fair_payload
+                if fair_status == "ok":
                     self.log(f"ENGINE_COMPLETED: FairnessEngine audit complete.")
-                except Exception as e:
-                    traceback.print_exc()
-                    self.log(f"ENGINE_FAILED: FairnessEngine error: {str(e)}")
-                    self.results['fairness'] = {"status": "FAILED", "error": str(e), "severity": "HIGH"}
             else:
                 self.log("Skipping FairnessEngine (no sensitive column provided or auto-detected).")
                 self.results['fairness'] = {
@@ -549,33 +659,61 @@ class AnalysisRunner:
             self.status = "running (Phase 3)"
             self.log("STATUS_UPDATE: Phase 3 Observability started.")
             
-            try:
-                self.log("ENGINE_STARTED: DriftEngine")
+            mid = len(df) // 2
+            X = df.drop(columns=[target_col])
+            X_ref = X.iloc[:mid].values.tolist()
+            X_curr = X.iloc[mid:].values.tolist()
+
+            if self._check_watchdog(df):
+                return
+            self.log("ENGINE_STARTED: DriftEngine")
+
+            def _run_drift():
                 drift_engine = DriftEngine()
-                # DriftEngine requires set_reference() then run(X_current)
-                mid = len(df) // 2
-                X = df.drop(columns=[target_col])
-                X_ref = X.iloc[:mid].values.tolist()
-                X_curr = X.iloc[mid:].values.tolist()
                 drift_engine.set_reference(X_ref, X.columns.tolist())
-                self.results['drift'] = drift_engine.run(X_curr)
+                return drift_engine.run(X_curr)
+
+            drift_status, drift_payload = self._run_with_timeout(
+                "DriftEngine",
+                60,
+                _run_drift,
+                {
+                    "status": "SKIPPED",
+                    "severity": "NONE",
+                    "findings": {},
+                    "summary": "Drift analysis timed out on this dataset."
+                },
+                "DRIFT_TIMEOUT"
+            )
+            self.results['drift'] = drift_payload
+            if drift_status == "ok":
                 self.log("ENGINE_COMPLETED: DriftEngine feature drift detection complete.")
-            except Exception as e:
-                traceback.print_exc()
-                self.log(f"ENGINE_FAILED: DriftEngine error: {str(e)}")
-                self.results['drift'] = {"status": "FAILED", "error": str(e), "severity": "HIGH"}
 
             # Slice Analysis
-            try:
-                self.log("ENGINE_STARTED: SlicerEngine")
+            if self._check_watchdog(df):
+                return
+            self.log("ENGINE_STARTED: SlicerEngine")
+
+            def _run_slicer():
                 slicer_engine = SlicerEngine(k=5, effect_size_threshold=0.2)
                 y_pred = (y_proba[:, 1] > 0.5).astype(int)
-                self.results['slice'] = slicer_engine.run(y_true, y_pred, X.values.tolist(), X.columns.tolist())
+                return slicer_engine.run(y_true, y_pred, X.values.tolist(), X.columns.tolist())
+
+            slice_status, slice_payload = self._run_with_timeout(
+                "SlicerEngine",
+                60,
+                _run_slicer,
+                {
+                    "status": "SKIPPED",
+                    "severity": "NONE",
+                    "findings": {},
+                    "summary": "Slice analysis timed out on this dataset."
+                },
+                "SLICE_TIMEOUT"
+            )
+            self.results['slice'] = slice_payload
+            if slice_status == "ok":
                 self.log("ENGINE_COMPLETED: SlicerEngine slice analysis complete.")
-            except Exception as e:
-                traceback.print_exc()
-                self.log(f"ENGINE_FAILED: SlicerEngine error: {str(e)}")
-                self.results['slice'] = {"status": "FAILED", "error": str(e), "severity": "HIGH"}
 
             # --- Phase 4: Root Cause Analysis ---
             self.progress = 70
@@ -583,351 +721,311 @@ class AnalysisRunner:
             self.log("STATUS_UPDATE: Phase 4 Root Cause Analysis started.")
             
             # 1. Label Noise
-            try:
-                self.log("ENGINE_STARTED: LabelNoiseEngine")
+            if self._check_watchdog(df):
+                return
+            self.log("ENGINE_STARTED: LabelNoiseEngine")
+
+            def _run_label_noise():
                 ln_engine = LabelNoiseEngine()
-                self.results['label_noise'] = ln_engine.run(y_proba, y_true)
+                return ln_engine.run(y_proba, y_true)
+
+            label_status, label_payload = self._run_with_timeout(
+                "LabelNoiseEngine",
+                60,
+                _run_label_noise,
+                {
+                    "status": "SKIPPED",
+                    "severity": "NONE",
+                    "findings": {},
+                    "summary": "Label noise analysis timed out on this dataset."
+                },
+                "LABEL_NOISE_TIMEOUT"
+            )
+            self.results['label_noise'] = label_payload
+            if label_status == "ok":
                 self.log("ENGINE_COMPLETED: LabelNoiseEngine audit complete.")
-            except Exception as e:
-                traceback.print_exc()
-                self.log(f"ENGINE_FAILED: LabelNoiseEngine error: {str(e)}")
-                self.results['label_noise'] = {"status": "FAILED", "error": str(e), "severity": "HIGH"}
             
             # 2. Leakage
-            try:
-                self.log("ENGINE_STARTED: LeakageEngine")
+            if self._check_watchdog(df):
+                return
+            self.log("ENGINE_STARTED: LeakageEngine")
+
+            def _run_leakage():
                 leak_engine = LeakageEngine()
-                # Leakage scanner can handle original y_raw
-                self.results['leakage'] = leak_engine.run(X.values, y_for_engines, df, None, X.columns.tolist(), timestamp_col)
+                return leak_engine.run(X.values, y_for_engines, df, None, X.columns.tolist(), timestamp_col)
+
+            leak_status, leak_payload = self._run_with_timeout(
+                "LeakageEngine",
+                45,
+                _run_leakage,
+                {
+                    "status": "SKIPPED",
+                    "severity": "NONE",
+                    "findings": {},
+                    "summary": "Leakage analysis timed out on this dataset."
+                },
+                "LEAKAGE_TIMEOUT"
+            )
+            self.results['leakage'] = leak_payload
+            if leak_status == "ok":
                 self.log("ENGINE_COMPLETED: LeakageEngine feature leakage scan complete.")
-            except Exception as e:
-                traceback.print_exc()
-                self.log(f"ENGINE_FAILED: LeakageEngine error: {str(e)}")
-                self.results['leakage'] = {"status": "FAILED", "error": str(e), "severity": "HIGH"}
             
             # 3. Missing Data
-            try:
-                self.log("ENGINE_STARTED: MissingDataEngine")
+            if self._check_watchdog(df):
+                return
+            self.log("ENGINE_STARTED: MissingDataEngine")
+
+            def _run_missing_data():
                 md_engine = MissingDataEngine()
-                
+
                 # Prepare X for MissingDataEngine: ensure all columns are numeric for correlation checks
                 # while preserving NaN positions for missingness analysis.
                 X_md = X.copy()
                 for col in X_md.columns:
                     if not pd.api.types.is_numeric_dtype(X_md[col].dtype):
-                        # Factorize categorical columns to numeric codes, preserving NaNs
                         series = X_md[col]
                         mask = series.isnull()
-                        # pd.factorize returns -1 for NaNs by default
                         codes, _ = pd.factorize(series)
                         X_md[col] = pd.Series(codes, index=series.index, dtype=float)
                         X_md.loc[mask, col] = np.nan
-                
-                self.results['missing_data'] = md_engine.run(X_md, y_for_engines)
+
+                return md_engine.run(X_md, y_for_engines)
+
+            missing_status, missing_payload = self._run_with_timeout(
+                "MissingDataEngine",
+                30,
+                _run_missing_data,
+                {
+                    "status": "SKIPPED",
+                    "severity": "NONE",
+                    "findings": {},
+                    "summary": "Missing data analysis timed out on this dataset."
+                },
+                "MISSING_DATA_TIMEOUT"
+            )
+            self.results['missing_data'] = missing_payload
+            if missing_status == "ok":
                 self.log("ENGINE_COMPLETED: MissingDataEngine analysis complete.")
-            except Exception as e:
-                traceback.print_exc()
-                self.log(f"ENGINE_FAILED: MissingDataEngine error: {str(e)}")
-                self.results['missing_data'] = {"status": "FAILED", "error": str(e), "severity": "HIGH"}
 
             # --- Auto Root Cause Analysis ---
             self.progress = 80
             self.status = "running (Auto Root Cause)"
             self.log("STATUS_UPDATE: Auto Root Cause Analysis started.")
-            
-            try:
-                self.log("ENGINE_STARTED: AutoRootCauseEngine")
+            if self._check_watchdog(df):
+                return
+            self.log("ENGINE_STARTED: AutoRootCauseEngine")
+
+            def _run_root_cause():
                 rc_engine = AutoRootCauseEngine(verbose=False)
-                # Collect reports from all engines
-                drift_report = self.results.get('drift')
-                slice_report = self.results.get('slice')
-                calibration_report = self.results.get('calibration')
-                data_quality_report = self.results.get('missing_data')
-                leakage_report = self.results.get('leakage')
-                
-                self.results['root_cause'] = rc_engine.run(
-                    drift_report=drift_report,
-                    slice_report=slice_report,
-                    calibration_report=calibration_report,
-                    data_quality_report=data_quality_report,
-                    leakage_report=leakage_report,
+                return rc_engine.run(
+                    drift_report=self.results.get('drift'),
+                    slice_report=self.results.get('slice'),
+                    calibration_report=self.results.get('calibration'),
+                    data_quality_report=self.results.get('missing_data'),
+                    leakage_report=self.results.get('leakage'),
                     label_noise_report=self.results.get('label_noise'),
                     fairness_report=self.results.get('fairness')
                 )
-                
-                try:
-                    translator = DomainTranslator()
-                    audience = getattr(
-                        self, 'audience', 'ml_engineer'
+
+            root_status, root_payload = self._run_with_timeout(
+                "AutoRootCauseEngine",
+                60,
+                _run_root_cause,
+                {
+                    "status": "SKIPPED",
+                    "severity": "NONE",
+                    "health_status": "Unknown",
+                    "confidence": 0,
+                    "root_causes": [],
+                    "recommended_actions": [],
+                    "summary": "Root cause analysis timed out on this dataset."
+                },
+                "ROOT_CAUSE_TIMEOUT"
+            )
+            self.results['root_cause'] = root_payload
+
+            try:
+                translator = DomainTranslator()
+                audience = getattr(self, 'audience', 'ml_engineer')
+                rc_data = self.results.get('root_cause', {})
+                root_causes = rc_data.get('root_causes', [])
+                for cause in root_causes:
+                    cause['domain_translation'] = translator.translate(
+                        finding_type='drift',
+                        feature_name=cause.get('cause', ''),
+                        severity=cause.get('severity', 'MEDIUM'),
+                        technical_details=str(cause.get('evidence', '')),
+                        audience=audience
                     )
-                    rc_data = self.results.get(
-                        'root_cause', {}
-                    )
-                    root_causes = rc_data.get(
-                        'root_causes', []
-                    )
-                    for cause in root_causes:
-                        cause['domain_translation'] = \
-                            translator.translate(
-                                finding_type='drift',
-                                feature_name=cause.get(
-                                    'cause', ''
-                                ),
-                                severity=cause.get(
-                                    'severity', 'MEDIUM'
-                                ),
-                                technical_details=str(
-                                    cause.get('evidence', '')
-                                ),
-                                audience=audience
-                            )
-                except Exception:
-                    pass
-                
+            except Exception:
+                pass
+
+            if root_status == "ok":
                 self.log("ENGINE_COMPLETED: AutoRootCauseEngine analysis complete.")
-            except Exception as e:
-                traceback.print_exc()
-                self.log(f"ENGINE_FAILED: AutoRootCauseEngine error: {str(e)}")
-                self.results['root_cause'] = {"status": "FAILED", "error": str(e), "severity": "HIGH"}
-                try:
-                    translator = DomainTranslator()
-                    audience = getattr(
-                        self, 'audience', 'ml_engineer'
-                    )
-                    rc_data = self.results.get(
-                        'root_cause', {}
-                    )
-                    root_causes = rc_data.get(
-                        'root_causes', []
-                    )
-                    for cause in root_causes:
-                        cause['domain_translation'] = \
-                            translator.translate(
-                                finding_type='drift',
-                                feature_name=cause.get(
-                                    'cause', ''
-                                ),
-                                severity=cause.get(
-                                    'severity', 'MEDIUM'
-                                ),
-                                technical_details=str(
-                                    cause.get('evidence', '')
-                                ),
-                                audience=audience
-                            )
-                except Exception:
-                    pass
             
             # --- AI Investigator Analysis ---
             self.progress = 85
             self.status = "running (AI Investigator)"
             self.log("STATUS_UPDATE: AI Investigator Analysis started.")
-            
-            try:
-                self.log("ENGINE_STARTED: AIInvestigator")
+            if self._check_watchdog(df):
+                return
+            self.log("ENGINE_STARTED: AIInvestigator")
+
+            def _run_ai_investigator():
+                from engine.modules.investigation import Investigation
+
                 ai_investigator = AIInvestigator(use_llm=False, verbose=False)
-                
-                # Get audience for audience-specific summary
                 audience_key = getattr(self, 'audience', 'ml_engineer')
                 audience = AIInvestigator.normalize_audience(audience_key)
-                # Persist selected audience into the report JSON so the dashboard
-                # can restore the correct audience on reload.
-                self.results['selected_audience'] = audience
-                
-                # Convert root_cause dict to Investigation object
+                payload = {
+                    'selected_audience': audience,
+                    'ai_investigator_by_audience': {},
+                    'ai_investigator': {}
+                }
+
+                root_cause_dict = self.results.get('root_cause', {})
+                metadata = {
+                    'leakage': self.results.get('leakage', {}),
+                    'label_noise': self.results.get('label_noise', {}),
+                    'calibration': self.results.get('calibration', {}),
+                    'drift': self.results.get('drift', {}),
+                    'missing_data': self.results.get('missing_data', {}),
+                    'fairness': self.results.get('fairness', {}),
+                }
+
                 try:
-                    from engine.modules.investigation import Investigation
-                    root_cause_dict = self.results.get('root_cause', {})
-
-                    # Enrich Investigation metadata with all engine outputs so
-                    # the AI Investigator can consume full audit evidence (leakage,
-                    # label_noise, calibration, drift, missing_data, fairness).
-                    metadata = {
-                        'leakage': self.results.get('leakage', {}),
-                        'label_noise': self.results.get('label_noise', {}),
-                        'calibration': self.results.get('calibration', {}),
-                        'drift': self.results.get('drift', {}),
-                        'missing_data': self.results.get('missing_data', {}),
-                        'fairness': self.results.get('fairness', {}),
-                    }
-
-                    # Merge metadata into the root_cause dict so Investigation.from_dict
-                    # populates Investigation.metadata. Keep existing metadata if present.
                     if isinstance(root_cause_dict, dict):
                         merged = dict(root_cause_dict)
                         existing_meta = merged.get('metadata', {}) or {}
-                        # Avoid overwriting any pre-existing keys in metadata
                         merged['metadata'] = {**metadata, **existing_meta}
                         investigation = Investigation.from_dict(merged)
                     else:
-                        # Fallback: create minimal dict wrapper
                         investigation = Investigation.from_dict({
                             'root_causes': [],
                             'metadata': metadata
                         })
-                    # Persist overall risk breakdown to top-level results for dashboard
-                    try:
-                        rc_risk = investigation.metadata.get('risk') or (root_cause_dict or {}).get('risk')
-
-                        if rc_risk:
-                            self.results['risk_breakdown'] = rc_risk
-                            self.results['overall_risk'] = rc_risk.get('level')
-
-                            # Single source of truth for dashboard status
-                            self.results['global_status'] = rc_risk.get('level')
-
-                        why = (
-                            (root_cause_dict or {}).get('risk_explanation')
-                            or investigation.metadata.get('risk_explanation')
-                        )
-
-                        if why:
-                            self.results['why_risk'] = why
-
-                    except Exception as e:
-                        import traceback
-                        print(f"[AI Investigator ERROR] {type(e).__name__}: {e}")
-                        traceback.print_exc()
-                        # Do not re-raise — let the rest of the report write proceed
-                    
-                    # Generate AI Investigator outputs for ALL audiences so that the
-                    # downstream AudienceTranslator can render fully adapted reports
-                    # (not just Doctor/Student).
-                    audiences = [
-                        "ML Engineer",
-                        "Executive",
-                        "Doctor",
-                        "Loan Officer",
-                        "Student",
-                        "HR Manager",
-                        "Insurance Analyst",
-                        "Legal / Compliance Officer",
-                        "Researcher",
-                    ]
-
-                    ai_by_audience = {}
-                    for aud in audiences:
-                        try:
-                            ai_by_audience[aud] = ai_investigator.analyze(investigation, aud)
-                        except Exception as aud_e:
-                            import traceback
-                            print(f"[AI Investigator ERROR] {type(aud_e).__name__}: {aud_e}")
-                            traceback.print_exc()
-                            # Do not re-raise — let the rest of the report write proceed
-                            # Never stop early; ensure all 9 keys exist.
-                            self.log(f"WARNING: AIInvestigator audience '{aud}' failed: {aud_e}")
-                            ai_by_audience[aud] = ai_investigator.analyze(investigation, "ML Engineer")
-
-                    # Align AI Investigator risk with the single source-of-truth (root-cause risk)
-                    try:
-                        if rc_risk and isinstance(rc_risk, dict):
-                            unified_level = rc_risk.get('level')
-                            if unified_level:
-                                for k, v in list(ai_by_audience.items()):
-                                    # Ensure the audience result includes a risk_level key reflecting the unified level
-                                    if isinstance(v, dict):
-                                        v['risk_level'] = unified_level
-                                        ai_by_audience[k] = v
-                    except Exception as e:
-                        import traceback
-                        print(f"[AI Investigator ERROR] {type(e).__name__}: {e}")
-                        traceback.print_exc()
-                        # Do not re-raise — let the rest of the report write proceed
-
-                    # Keep the selected audience as the top-level section for legacy consumers.
-                    # Also ensure the top-level ai_investigator carries the unified risk_level when available.
-                    self.results['ai_investigator_by_audience'] = ai_by_audience
-                    self.results['ai_investigator'] = ai_by_audience.get(audience, ai_by_audience.get("ML Engineer"))
-                    try:
-                        if rc_risk and isinstance(rc_risk, dict):
-                            top = self.results.get('ai_investigator', {})
-                            if isinstance(top, dict) and rc_risk.get('level'):
-                                top['risk_level'] = rc_risk.get('level')
-                                self.results['ai_investigator'] = top
-                    except Exception as e:
-                        import traceback
-                        print(f"[AI Investigator ERROR] {type(e).__name__}: {e}")
-                        traceback.print_exc()
-                        # Do not re-raise — let the rest of the report write proceed
-
-                    self.log("ENGINE_COMPLETED: AIInvestigator analysis complete.")
                 except Exception as inv_e:
-                    import traceback
                     print(f"[AI Investigator ERROR] {type(inv_e).__name__}: {inv_e}")
                     traceback.print_exc()
-                    # Do not re-raise — let the rest of the report write proceed
-                    # If Investigation conversion fails, create degraded analysis
                     self.log(f"WARNING: Investigation conversion failed: {str(inv_e)}")
-                    self.results['ai_investigator'] = ai_investigator._generate_deterministic(
+                    payload['ai_investigator'] = ai_investigator._generate_deterministic(
                         Investigation(health_status="Unknown", confidence=0, evidence=[], recommendations=[]),
                         audience
                     )
-            except Exception as e:
-                print(f"[AI Investigator ERROR] {type(e).__name__}: {e}")
-                traceback.print_exc()
-                self.log(f"ENGINE_FAILED: AIInvestigator error: {str(e)}")
-                self.results['ai_investigator'] = {"status": "FAILED", "error": str(e)}
+                    return payload
+
+                rc_risk = investigation.metadata.get('risk') or (root_cause_dict or {}).get('risk')
+                if rc_risk:
+                    payload['risk_breakdown'] = rc_risk
+                    payload['overall_risk'] = rc_risk.get('level')
+                    payload['global_status'] = rc_risk.get('level')
+
+                why = (
+                    (root_cause_dict or {}).get('risk_explanation')
+                    or investigation.metadata.get('risk_explanation')
+                )
+                if why:
+                    payload['why_risk'] = why
+
+                audiences = [
+                    "ML Engineer",
+                    "Executive",
+                    "Doctor",
+                    "Loan Officer",
+                    "Student",
+                    "HR Manager",
+                    "Insurance Analyst",
+                    "Legal / Compliance Officer",
+                    "Researcher",
+                ]
+
+                ai_by_audience = {}
+                for aud in audiences:
+                    try:
+                        ai_by_audience[aud] = ai_investigator.analyze(investigation, aud)
+                    except Exception as aud_e:
+                        print(f"[AI Investigator ERROR] {type(aud_e).__name__}: {aud_e}")
+                        traceback.print_exc()
+                        self.log(f"WARNING: AIInvestigator audience '{aud}' failed: {aud_e}")
+                        ai_by_audience[aud] = ai_investigator.analyze(investigation, "ML Engineer")
+
+                if rc_risk and isinstance(rc_risk, dict):
+                    unified_level = rc_risk.get('level')
+                    if unified_level:
+                        for k, v in list(ai_by_audience.items()):
+                            if isinstance(v, dict):
+                                v['risk_level'] = unified_level
+                                ai_by_audience[k] = v
+
+                payload['ai_investigator_by_audience'] = ai_by_audience
+                payload['ai_investigator'] = ai_by_audience.get(audience, ai_by_audience.get("ML Engineer", {}))
+                if rc_risk and isinstance(rc_risk, dict):
+                    top = payload.get('ai_investigator', {})
+                    if isinstance(top, dict) and rc_risk.get('level'):
+                        top['risk_level'] = rc_risk.get('level')
+                        payload['ai_investigator'] = top
+
+                return payload
+
+            ai_status, ai_payload = self._run_with_timeout(
+                "AIInvestigator",
+                90,
+                _run_ai_investigator,
+                {
+                    "selected_audience": getattr(self, 'audience', 'ML Engineer'),
+                    "ai_investigator_by_audience": {},
+                    "ai_investigator": {
+                        "status": "SKIPPED",
+                        "risk_level": "UNKNOWN",
+                        "executive_summary": "",
+                        "investigation_findings": "",
+                        "impact_assessment": "",
+                        "confidence_explanation": "",
+                        "recommended_actions": [],
+                        "technical_notes": "",
+                        "summary": "AI Investigator timed out on this dataset."
+                    }
+                },
+                "AI_INVESTIGATOR_TIMEOUT"
+            )
+            if isinstance(ai_payload, dict):
+                self.results.update(ai_payload)
+            if ai_status == "ok":
+                self.log("ENGINE_COMPLETED: AIInvestigator analysis complete.")
             
             # --- Audience Translation ---
             self.progress = 90
             self.status = "running (Audience Translation)"
             self.log("STATUS_UPDATE: Audience Translation started.")
-            
-            try:
-                self.log("ENGINE_STARTED: AudienceTranslator")
+
+            if self._check_watchdog(df):
+                return
+            self.log("ENGINE_STARTED: AudienceTranslator")
+
+            def _run_audience_translation():
                 audience_translator = AudienceTranslator(verbose=False)
-                
-                # Get root_cause and ai_investigator data
-                root_cause_data = self.results.get('root_cause', {})
-                ai_investigator_data = self.results.get('ai_investigator', {})
-                ai_investigator_by_audience = self.results.get('ai_investigator_by_audience')
-                
-                # Generate audience-specific reports
-                self.results['audience_reports'] = audience_translator.translate(
-                    root_cause=root_cause_data,
-                    ai_investigator=ai_investigator_data,
-                    ai_investigator_by_audience=ai_investigator_by_audience
+                return audience_translator.translate(
+                    root_cause=self.results.get('root_cause', {}),
+                    ai_investigator=self.results.get('ai_investigator', {}),
+                    ai_investigator_by_audience=self.results.get('ai_investigator_by_audience')
                 )
+
+            audience_status, audience_payload = self._run_with_timeout(
+                "AudienceTranslator",
+                45,
+                _run_audience_translation,
+                {
+                    "status": "SKIPPED",
+                    "summary": "Audience translation timed out on this dataset."
+                },
+                "AUDIENCE_TRANSLATION_TIMEOUT"
+            )
+            self.results['audience_reports'] = audience_payload
+            if audience_status == "ok":
                 self.log("ENGINE_COMPLETED: AudienceTranslator analysis complete.")
-            except Exception as e:
-                print(f"[AI Investigator ERROR] {type(e).__name__}: {e}")
-                traceback.print_exc()
-                self.log(f"ENGINE_FAILED: AudienceTranslator error: {str(e)}")
-                self.results['audience_reports'] = {"status": "FAILED", "error": str(e)}
 
             # --- Save Results ---
-            self.progress = 90
-            self.status = "saving_report"
-            
-            # Generate Visualizations
-            try:
-                self._generate_charts(df, self.results)
-            except Exception as e:
-                self.log(f"WARNING: Chart generation failed: {str(e)}")
-                traceback.print_exc()
-
-            self.log("STATUS_UPDATE: Consolidating results and saving report...")
-            
-            report_filename = f"report_{int(time.time())}.json"
-            reports_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'reports')
-            os.makedirs(reports_dir, exist_ok=True)
-            self.report_path = os.path.join(reports_dir, report_filename)
-            
-            with open(self.report_path, 'w') as f:
-                results = convert_numpy(self.results)
-                report_data = results
-                # DEBUG: log what keys are present before JSON write
-                print(f"[ReportWriter] Keys being written: {list(report_data.keys())}")
-                ai_inv = report_data.get('ai_investigator', report_data.get('sections', {}).get('ai_investigator', {}))
-                print(f"[ReportWriter] ai_investigator.executive_summary = {repr(ai_inv.get('executive_summary', 'KEY MISSING'))[:120]}")
-                aud = report_data.get('audience_reports', report_data.get('sections', {}).get('audience_reports', {}))
-                print(f"[ReportWriter] audience_reports keys = {list(aud.keys())}")
-                json.dump(report_data, f, indent=4)
-            
-            self.log(f"REPORT_SAVED: Results saved to {report_filename}")
-            self.progress = 100
-            self.status = "completed"
-            self.log("ANALYSIS_COMPLETED: Investigation finished successfully.")
+            self._write_report(df=df)
 
         except Exception as e:
             traceback.print_exc()

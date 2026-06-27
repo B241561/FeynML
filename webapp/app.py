@@ -1293,6 +1293,20 @@ def analysis_status():
         raise
 
 
+@app.route('/reset-analysis')
+@login_required
+def reset_analysis():
+    r = get_runner()
+    if r:
+        r.status = 'idle'
+        r.progress = 0
+        r.logs = []
+        r.error = None
+        r.report_path = None
+    flash('Analysis runner reset. You can start a new analysis.', 'info')
+    return redirect(url_for('index'))
+
+
 @app.route('/set-audience', methods=['POST'])
 @login_required
 def set_audience():
