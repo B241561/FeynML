@@ -4,13 +4,13 @@ from groq import Groq
 
 chatbot_bp = Blueprint('chatbot', __name__)
 
-SYSTEM_PROMPT = """You are **FeynML Assistant** — dedicated AI tutor, guide, and expert for the **FeynML ML Failure Investigation Engine** (also called **Sentinel**). Three modes blended: **Tutor** (concepts, any depth), **Guide** (FeynML UI step-by-step), **Expert** (implementations, papers, Power BI, Tableau, stats). Named after Richard Feynman — explain it simply or you don't truly understand it. Always adapt to user's level. Start simple, offer to go deeper. Never make anyone feel stupid. 
+SYSTEM_PROMPT = """You are **FeynML Assistant** — the built-in diagnostic intelligence for **FeynML**, the ML Failure Investigation Platform. You operate as three specialists in one: Three modes blended: **Tutor** (concepts, any depth), **Guide** (FeynML UI step-by-step), **Expert** (implementations, papers, Power BI, Tableau, stats). Named after Richard Feynman — explain it simply or you don't truly understand it. Always adapt to user's level. Start simple, offer to go deeper. Never make anyone feel stupid. 
  
  --- 
  ## FEYNML PLATFORM 
  
  Stack: Flask + Pandas + Plotly Express + HTML/CSS/JS + SQLite/SQLAlchemy 
- Philosophy: "Anyone can train a model. Almost nobody can diagnose one." 
+Philosophy: "Anyone can train a model. Almost nobody can diagnose one." — FeynML exists for the second half of that sentence. 
  
  **URL MAP** 
  `/` → Home: drag-drop CSV/JSON upload 
@@ -40,7 +40,7 @@ SYSTEM_PROMPT = """You are **FeynML Assistant** — dedicated AI tutor, guide, a
  `causal_engine` — DAGs + Confounder/Collider/Mediator + Simpson's Paradox + DiD + IPW (binary) + Linear Regression (continuous treatment) 
  
  **DASHBOARD** 
- Global Risk: LOW (Green=monitor) | MEDIUM (Yellow=investigate weeks) | HIGH (Red=pause immediately) 
+Global Risk: LOW (Green — model is stable, maintain monitoring cadence) | MEDIUM (Yellow — degradation detected, investigate within days before it compounds) | HIGH (Red — pause automated decisions immediately, root cause analysis required before next deployment) 
  KPI Cards: Calibration→ECE | Drift→drifted count | Label Noise→% mislabelled | Leakage→suspect count | Missing→rate+mechanism | Fairness→worst parity gap + disparate impact ratio 
  Every module report: What Was Found → Why It Matters → Technical Details → Visualisation → Recommended Action 
  Export: JSON (engineers/monitoring) | CSV (stakeholders) | PDF (leadership/archiving) 
@@ -247,7 +247,7 @@ SYSTEM_PROMPT = """You are **FeynML Assistant** — dedicated AI tutor, guide, a
  --- 
  ## GUARDRAILS 
  
- Never make users feel stupid | Never use jargon over a good analogy | Never say "it depends" without explaining what | Never invent FeynML features/URLs | Never guess thresholds — you know them exactly | Never confuse correlation with causation in your own answers | Never recommend a chart without explaining why | Never give notation to beginners without intuition first | Every question deserves a real answer 
+Never make users feel stupid | Never use jargon over a good analogy | Never say "it depends" without explaining what | Never invent FeynML features/URLs | Never guess thresholds — you know them exactly | Never confuse correlation with causation in your own answers | Never recommend a chart without explaining why | Never give notation to beginners without intuition first | Every question deserves a real answer — no deflection, no "it depends" without explaining what depends on what, no invented features 
  
  --- 
  ## SAMPLE RESPONSES 
@@ -324,7 +324,7 @@ def chatbot_message():
         data = request.get_json()
         if not data:
             current_app.logger.warning("Chatbot: Missing request body")
-            return jsonify({"success": false, "error": "Missing request body"}), 400
+            return jsonify({"success": False, "error": "Missing request body"}), 400
 
         user_message = data.get('message')
         history = data.get('history', [])
@@ -332,12 +332,12 @@ def chatbot_message():
 
         if not user_message:
             current_app.logger.warning("Chatbot: Message content is empty")
-            return jsonify({"success": false, "error": "Message content is required"}), 400
+            return jsonify({"success": False, "error": "Message content is required"}), 400
 
         if not GROQ_API_KEY:
             current_app.logger.error("Chatbot: Groq API key missing from environment")
             return jsonify({
-                "success": false, 
+                "success": False, 
                 "error": "GROQ_API_KEY is not configured on the server. Please add it to your environment variables."
             }), 500
 
@@ -345,7 +345,7 @@ def chatbot_message():
         reply = get_groq_response(user_message, history, context)
         
         current_app.logger.info("Chatbot: Successfully generated reply")
-        return jsonify({"success": true, "reply": reply})
+        return jsonify({"success": True, "reply": reply})
 
     except Exception as e:
         import traceback
@@ -358,7 +358,7 @@ def chatbot_message():
         error_type = type(e).__name__
         
         return jsonify({
-            "success": false, 
+            "success": False, 
             "error": f"Internal Server Error ({error_type}): {err_msg}",
             "details": stack_trace if current_app.debug else None
         }), status_code
