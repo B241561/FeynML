@@ -159,15 +159,83 @@
     <!-- Header -->
     <div class="p-3 bg-navy-800 border-bottom border-navy-700 d-flex align-items-center justify-content-between">
       <div class="d-flex align-items-center gap-2">
-        <div class="position-relative">
-          <img
-            src="{{ url_for('static', filename='images/richard_feynman.jpg') }}"
-            alt="Feyn avatar"
-            class="rounded-circle"
-            style="width:32px; height:32px; object-fit:cover;">
+        <div class="position-relative" style="width:36px; height:36px; flex-shrink:0;">
+          <svg
+            width="36" height="36"
+            viewBox="195 55 290 290"
+            xmlns="http://www.w3.org/2000/svg"
+            role="img"
+            aria-hidden="true"
+            style="display:block; overflow:visible; pointer-events:none;">
+
+            <radialGradient id="fmlHdrGlow" cx="50%" cy="48%" r="40%"><stop offset="0%" stop-color="#0284c7" stop-opacity="0.18"/><stop offset="100%" stop-color="#060d1a" stop-opacity="0"/></radialGradient><rect width="680" height="420" fill="url(#fmlHdrGlow)"/>
+
+            <circle cx="340" cy="200" r="118" fill="none" stroke="#0ea5e9"
+              stroke-width="0.8" opacity="0.3"/>
+
+            <g class="fml-r4">
+              <circle cx="340" cy="200" r="108" fill="none" stroke="#0369a1"
+                stroke-width="1" stroke-dasharray="5 15 3 20 5 10" opacity="0.45"/>
+            </g>
+
+            <g class="fml-r1">
+              <circle cx="340" cy="200" r="92" fill="none" stroke="#0ea5e9"
+                stroke-width="2" stroke-dasharray="32 9 9 9 55 9 9 9" opacity="0.8"/>
+              <rect x="336" y="107" width="8"   height="2.5" rx="1" fill="#38bdf8" opacity="0.8"/>
+              <rect x="336" y="291" width="8"   height="2.5" rx="1" fill="#38bdf8" opacity="0.8"/>
+              <rect x="247" y="198" width="2.5" height="4"   rx="1" fill="#38bdf8" opacity="0.8"/>
+              <rect x="431" y="198" width="2.5" height="4"   rx="1" fill="#38bdf8" opacity="0.8"/>
+            </g>
+
+            <g class="fml-r2">
+              <circle cx="340" cy="200" r="72" fill="none" stroke="#38bdf8"
+                stroke-width="1.5" stroke-dasharray="22 7 7 7 44 7" opacity="0.75"/>
+              <circle cx="340"   cy="128" r="5" fill="#7dd3fc" opacity="0.95"/>
+              <circle cx="340"   cy="128" r="9" fill="none"
+                stroke="#7dd3fc" stroke-width="0.8" opacity="0.5"/>
+              <circle cx="402.4" cy="236" r="5" fill="#7dd3fc" opacity="0.95"/>
+              <circle cx="402.4" cy="236" r="9" fill="none"
+                stroke="#7dd3fc" stroke-width="0.8" opacity="0.5"/>
+              <circle cx="277.6" cy="236" r="5" fill="#7dd3fc" opacity="0.95"/>
+              <circle cx="277.6" cy="236" r="9" fill="none"
+                stroke="#7dd3fc" stroke-width="0.8" opacity="0.5"/>
+            </g>
+
+            <g class="fml-r3">
+              <circle cx="340" cy="200" r="52" fill="none" stroke="#0284c7"
+                stroke-width="2" stroke-dasharray="12 5 5 5 24 5" opacity="0.9"/>
+              <circle class="fml-scan" cx="340" cy="148" r="3.5" fill="#bae6fd"/>
+            </g>
+
+            <g opacity="0.10" stroke="#38bdf8" stroke-width="0.8" fill="none">
+              <polygon points="340,174 366,189 366,219 340,234 314,219 314,189"/>
+              <polygon points="340,154 374,173 374,213 340,232 306,213 306,173"/>
+            </g>
+
+            <circle cx="340" cy="200" r="34" fill="#082f49" opacity="0.6"/>
+            <circle cx="340" cy="200" r="28" fill="#0c4a6e" opacity="0.75"/>
+            <circle cx="340" cy="200" r="22" fill="#075985" opacity="0.85"/>
+            <circle cx="340" cy="200" r="17" fill="#0284c7" opacity="0.90"/>
+            <circle cx="340" cy="200" r="12" fill="#38bdf8" opacity="0.92"/>
+            <circle cx="340" cy="200" r="7"
+              fill="#bae6fd" opacity="0.97" class="fml-core"/>
+
+            <g stroke="#082f49" stroke-width="2" opacity="0.95" stroke-linecap="round">
+              <line x1="340" y1="184" x2="340" y2="195"/>
+              <line x1="340" y1="205" x2="340" y2="216"/>
+              <line x1="324" y1="200" x2="335" y2="200"/>
+              <line x1="345" y1="200" x2="356" y2="200"/>
+              <line x1="329" y1="189" x2="337" y2="197"/>
+              <line x1="343" y1="203" x2="351" y2="211"/>
+              <line x1="351" y1="189" x2="343" y2="197"/>
+              <line x1="337" y1="203" x2="329" y2="211"/>
+            </g>
+          </svg>
+
+          <!-- Online indicator dot -->
           <span
-            class="position-absolute bottom-0 end-0 bg-success border border-white rounded-circle"
-            style="width:10px; height:10px;"
+            class="position-absolute bottom-0 end-0 bg-success border border-dark rounded-circle"
+            style="width:9px; height:9px;"
             aria-hidden="true"></span>
         </div>
         <div>
