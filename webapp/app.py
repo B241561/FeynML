@@ -1544,16 +1544,23 @@ def view_dashboard(report_id):
     except Exception:
         pass
 
-    return render_template('dashboard.html',
-                           data=data,
-                           report_id=report_id,
-                           filename=filename,
-                           risk_level=risk_level,
-                           critical_count=critical_count,
-                           alerts_count=alerts_count,
-                           charts=charts,
-                           selected_audience=selected_audience,
-                           why_risk=data.get('why_risk'))
+    return render_template(
+        'dashboard.html',
+        data=data,
+        report_id=report_id,
+        filename=filename,
+        risk_level=risk_level,
+        critical_count=critical_count,
+        alerts_count=alerts_count,
+        charts=charts,
+        selected_audience=selected_audience,
+        why_risk=data.get('why_risk'),
+
+        # Dashboard AI context
+        root_cause_data=data.get('root_cause', {}),
+        ai_investigator_data=data.get('ai_investigator', {}),
+        audience_reports=data.get('audience_reports', {})
+    )
 
 
 @app.route('/dashboard')
