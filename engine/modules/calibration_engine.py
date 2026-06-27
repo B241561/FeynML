@@ -71,18 +71,33 @@ class CalibrationEngine:
         if not _MODULES_LOADED:
             return {"error": _IMPORT_ERROR}
         result = calibration_summary(y_true, y_prob, self.n_bins, model_name)
-        
-        # Normalize severity for webapp compatibility
-        # EXCELLENT -> NONE, GOOD -> LOW, MODERATE -> MEDIUM, POOR -> HIGH
-        severity_map = {
-            "EXCELLENT": "NONE",
-            "GOOD":      "LOW",
-            "MODERATE":  "MEDIUM",
-            "POOR":      "HIGH"
-        }
-        if "severity" in result:
-            result["severity"] = severity_map.get(result["severity"], result["severity"])
+
+        # Normalize dashboard-facing calibration fields from the raw numeric ECE.
+        # Keep severity tied to the same float used for display to avoid
+        # contradictions such as "0.00%" alongside HIGH severity.
+        ece_value = None
+        for key in ("ece", "best_ece", "raw_ece"):
+            if result.get(key) is not None:
+                try:
+                    ece_value = float(result[key])
+                    break
+                except (TypeError, ValueError):
+                    continue
+
+        if ece_value is not None:
+            ece_score = round(ece_value, 4)
+            result["ece"] = ece_score
+            result["ece_score"] = ece_score
+
+            if ece_value < 0.05:
+                result["severity"] = "NONE"
+            elif ece_value <= 0.10:
+                result["severity"] = "MEDIUM"
+            else:
+                result["severity"] = "HIGH"
             
+        import sys
+        print(f"[ECE DEBUG] ece_value={ece_value}, type={type(ece_value)}, severity={result.get('severity')}", flush=True, file=sys.stderr)
         self._results["last_eval"] = result
         return result
 

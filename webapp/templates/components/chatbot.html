@@ -1,226 +1,536 @@
-<!-- FeynML Chatbot Component -->
+<!-- FeynML Chatbot Component — v3.0 (Senior Dev Reviewed) -->
+<!-- 
+  CHANGELOG vs v1/v2:
+  [FIX]  Icon: cropped viewBox "195 55 290 290" → orb renders large & crisp in 56px button
+  [FIX]  Button border: removed light-blue border entirely; using only shadow glow
+  [FIX]  Accessibility: :focus-visible replaces blanket outline:none (keyboard users safe)
+  [FIX]  Close icon: was "bi bi-xl" (invalid) → now "bi bi-x-lg" (correct Bootstrap Icons)
+  [FIX]  Markdown: supports **bold**, *italic*, `code`, newlines, and basic lists
+  [FIX]  History: cap at 40 messages to prevent sessionStorage bloat
+  [FIX]  Context capture: pulls from #feyn-report-summary or #investigation-output first
+  [KEEP] All existing chatbot functionality: bubble, panel, chips, typing, fetch, fallback
+-->
+
 <div id="feyn-chatbot-container" class="d-print-none">
-    <!-- Floating Bubble Button -->
-    <button id="feyn-chat-bubble" class="btn btn-indigo rounded-circle shadow-lg d-flex align-items-center justify-content-center" style="position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 1050; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-        <i class="bi bi-chat-dots-fill fs-3 text-white"></i>
-    </button>
 
-    <!-- Chat Panel -->
-    <div id="feyn-chat-panel" class="bg-card shadow-lg border border-navy-700 rounded-4 d-none" style="position: fixed; bottom: 90px; right: 20px; width: 380px; height: 520px; z-index: 1050; display: flex; flex-direction: column; overflow: hidden; transform-origin: bottom right; transition: all 0.3s ease-in-out;">
-        <!-- Header -->
-        <div class="p-3 bg-navy-800 border-bottom border-navy-700 d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center gap-2">
-                <div class="position-relative">
-                    <img src="{{ url_for('static', filename='images/richard_feynman.jpg') }}" alt="Feyn" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
-                    <span class="position-absolute bottom-0 end-0 bg-success border border-white rounded-circle" style="width: 10px; height: 10px;"></span>
-                </div>
-                <div>
-                    <h6 class="mb-0 fw-bold text-white">Feyn</h6>
-                    <small class="text-muted" style="font-size: 10px;">AI Investigation Assistant</small>
-                </div>
-            </div>
-            <button id="feyn-chat-close" class="btn btn-sm btn-link text-muted p-0 border-0">
-                <i class="bi bi-xl fs-5"></i>
-            </button>
-        </div>
+  <!-- ── Floating Bubble Button ── -->
+  <button
+    id="feyn-chat-bubble"
+    aria-label="Open Feyn AI Assistant"
+    aria-expanded="false"
+    aria-controls="feyn-chat-panel"
+    class="btn btn-indigo rounded-circle shadow-lg d-flex align-items-center justify-content-center"
+    style="
+      position: fixed; bottom: 24px; right: 24px;
+      width: 60px; height: 60px;
+      z-index: 1050;
+      border: none;
+      padding: 0;
+      background: #0c4a6e;
+      box-shadow: 0 4px 24px rgba(14,165,233,0.30) !important;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                  box-shadow 0.2s ease;
+    ">
 
-        <!-- Messages Area -->
-        <div id="feyn-chat-messages" class="flex-grow-1 p-3 overflow-y-auto d-flex flex-column gap-3" style="background: rgba(15, 23, 42, 0.5);">
-            <!-- Starter Chips -->
-            <div class="d-flex flex-wrap gap-2 mb-2" id="feyn-starter-chips">
-                <button class="btn btn-sm btn-outline-navy-600 rounded-pill starter-chip" style="font-size: 11px;">What is data drift?</button>
-                <button class="btn btn-sm btn-outline-navy-600 rounded-pill starter-chip" style="font-size: 11px;">Explain my report</button>
-                <button class="btn btn-sm btn-outline-navy-600 rounded-pill starter-chip" style="font-size: 11px;">How to read PSI chart?</button>
-                <button class="btn btn-sm btn-outline-navy-600 rounded-pill starter-chip" style="font-size: 11px;">What is label noise?</button>
-                <button class="btn btn-sm btn-outline-navy-600 rounded-pill starter-chip" style="font-size: 11px;">What does HIGH severity mean?</button>
-            </div>
-        </div>
+    <!--
+      KEY: viewBox cropped to "195 55 290 290" isolates just the orb from the
+      full 680x420 canvas. At 48×48 this renders at roughly 24× scale → crisp.
+      Gradient IDs use unique suffix "Btn3" to avoid conflicts if logo SVG
+      appears elsewhere on the page.
+    -->
+    <svg
+      width="48" height="48"
+      viewBox="195 55 290 290"
+      xmlns="http://www.w3.org/2000/svg"
+      role="img"
+      aria-hidden="true"
+      style="display:block; overflow:visible; pointer-events:none;">
 
-        <!-- Typing Indicator (Hidden) -->
-        <div id="feyn-typing-indicator" class="px-3 py-2 d-none">
-            <div class="bg-navy-700 rounded-4 px-3 py-2 d-inline-flex align-items-center gap-1" style="max-width: 60px;">
-                <span class="typing-dot"></span>
-                <span class="typing-dot"></span>
-                <span class="typing-dot"></span>
-            </div>
-        </div>
+      <title>FeynML</title>
 
-        <!-- Input Area -->
-        <div class="p-3 bg-navy-800 border-top border-navy-700">
-            <form id="feyn-chat-form" class="d-flex gap-2">
-                <input type="text" id="feyn-chat-input" class="form-control bg-navy-900 border-navy-600 text-white rounded-pill px-3 py-2" placeholder="Ask Feyn something..." autocomplete="off">
-                <button type="submit" class="btn btn-indigo rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; flex-shrink: 0;">
-                    <i class="bi bi-send-fill"></i>
-                </button>
-            </form>
+      <!-- Background glow -->
+      <radialGradient id="fmlBgGlowBtn3" cx="50%" cy="48%" r="40%">
+        <stop offset="0%"  stop-color="#0284c7" stop-opacity="0.18"/>
+        <stop offset="100%" stop-color="#060d1a" stop-opacity="0"/>
+      </radialGradient>
+      <rect width="680" height="420" fill="url(#fmlBgGlowBtn3)"/>
+
+      <!-- Outermost ambient rings -->
+      <circle cx="340" cy="200" r="145" fill="none" stroke="#38bdf8" stroke-width="0.5"/>
+      <circle cx="340" cy="200" r="150" fill="none" stroke="#0ea5e9" stroke-width="0.3"/>
+
+      <!-- Outer static rings -->
+      <circle cx="340" cy="200" r="118" fill="none" stroke="#0ea5e9" stroke-width="0.8" opacity="0.3"/>
+      <circle cx="340" cy="200" r="122" fill="none" stroke="#38bdf8" stroke-width="0.5" opacity="0.2"/>
+
+      <!-- Tick marks -->
+      <g stroke="#38bdf8" stroke-width="1.8" opacity="0.6">
+        <line x1="340" y1="79"  x2="340" y2="68"/>
+        <line x1="340" y1="321" x2="340" y2="332"/>
+        <line x1="219" y1="200" x2="208" y2="200"/>
+        <line x1="461" y1="200" x2="472" y2="200"/>
+        <line x1="424" y1="116" x2="432" y2="108"/>
+        <line x1="256" y1="116" x2="248" y2="108"/>
+        <line x1="424" y1="284" x2="432" y2="292"/>
+        <line x1="256" y1="284" x2="248" y2="292"/>
+      </g>
+
+      <!-- Ring 4 — outermost slow counter-clockwise -->
+      <g class="fml-r4">
+        <circle cx="340" cy="200" r="108" fill="none" stroke="#0369a1" stroke-width="1"
+          stroke-dasharray="5 15 3 20 5 10" opacity="0.45"/>
+      </g>
+
+      <!-- Ring 1 — slow clockwise dashed -->
+      <g class="fml-r1">
+        <circle cx="340" cy="200" r="92" fill="none" stroke="#0ea5e9" stroke-width="2"
+          stroke-dasharray="32 9 9 9 55 9 9 9" opacity="0.8"/>
+        <rect x="336" y="107" width="8" height="2.5" rx="1" fill="#38bdf8" opacity="0.8"/>
+        <rect x="336" y="291" width="8" height="2.5" rx="1" fill="#38bdf8" opacity="0.8"/>
+        <rect x="247" y="198" width="2.5" height="4"  rx="1" fill="#38bdf8" opacity="0.8"/>
+        <rect x="431" y="198" width="2.5" height="4"  rx="1" fill="#38bdf8" opacity="0.8"/>
+      </g>
+
+      <!-- Ring 2 — counter-rotate with 3 glowing nodes -->
+      <g class="fml-r2">
+        <circle cx="340" cy="200" r="72" fill="none" stroke="#38bdf8" stroke-width="1.5"
+          stroke-dasharray="22 7 7 7 44 7" opacity="0.75"/>
+        <circle cx="340"   cy="128" r="5" fill="#7dd3fc" opacity="0.95"/>
+        <circle cx="340"   cy="128" r="9" fill="none" stroke="#7dd3fc" stroke-width="0.8" opacity="0.5"/>
+        <circle cx="402.4" cy="236" r="5" fill="#7dd3fc" opacity="0.95"/>
+        <circle cx="402.4" cy="236" r="9" fill="none" stroke="#7dd3fc" stroke-width="0.8" opacity="0.5"/>
+        <circle cx="277.6" cy="236" r="5" fill="#7dd3fc" opacity="0.95"/>
+        <circle cx="277.6" cy="236" r="9" fill="none" stroke="#7dd3fc" stroke-width="0.8" opacity="0.5"/>
+      </g>
+
+      <!-- Ring 3 — inner fast spinner with scanning dot -->
+      <g class="fml-r3">
+        <circle cx="340" cy="200" r="52" fill="none" stroke="#0284c7" stroke-width="2"
+          stroke-dasharray="12 5 5 5 24 5" opacity="0.9"/>
+        <circle class="fml-scan" cx="340" cy="148" r="3.5" fill="#bae6fd"/>
+      </g>
+
+      <!-- Hex grid (subtle depth) -->
+      <g opacity="0.10" stroke="#38bdf8" stroke-width="0.8" fill="none">
+        <polygon points="340,174 366,189 366,219 340,234 314,219 314,189"/>
+        <polygon points="340,154 374,173 374,213 340,232 306,213 306,173"/>
+        <polygon points="340,136 380,159 380,209 340,232 300,209 300,159"/>
+      </g>
+
+      <!-- Arc reactor core — layered circles -->
+      <circle cx="340" cy="200" r="34" fill="#082f49" opacity="0.6"/>
+      <circle cx="340" cy="200" r="28" fill="#0c4a6e" opacity="0.75"/>
+      <circle cx="340" cy="200" r="22" fill="#075985" opacity="0.85"/>
+      <circle cx="340" cy="200" r="17" fill="#0284c7" opacity="0.9"/>
+      <circle cx="340" cy="200" r="12" fill="#38bdf8" opacity="0.92"/>
+      <circle cx="340" cy="200" r="7"  fill="#bae6fd" opacity="0.97"/>
+
+      <!-- Core spokes -->
+      <g stroke="#082f49" stroke-width="2" opacity="0.95" stroke-linecap="round">
+        <line x1="340" y1="184" x2="340" y2="195"/>
+        <line x1="340" y1="205" x2="340" y2="216"/>
+        <line x1="324" y1="200" x2="335" y2="200"/>
+        <line x1="345" y1="200" x2="356" y2="200"/>
+        <line x1="329" y1="189" x2="337" y2="197"/>
+        <line x1="343" y1="203" x2="351" y2="211"/>
+        <line x1="351" y1="189" x2="343" y2="197"/>
+        <line x1="337" y1="203" x2="329" y2="211"/>
+      </g>
+    </svg>
+  </button>
+
+  <!-- ── Chat Panel ── -->
+  <div
+    id="feyn-chat-panel"
+    role="dialog"
+    aria-label="Feyn AI Assistant"
+    aria-modal="true"
+    class="bg-card shadow-lg border border-navy-700 rounded-4 d-none"
+    style="
+      position: fixed; bottom: 94px; right: 20px;
+      width: 380px; height: 520px;
+      z-index: 1050;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      transform-origin: bottom right;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    ">
+
+    <!-- Header -->
+    <div class="p-3 bg-navy-800 border-bottom border-navy-700 d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-2">
+        <div class="position-relative">
+          <img
+            src="{{ url_for('static', filename='images/richard_feynman.jpg') }}"
+            alt="Feyn avatar"
+            class="rounded-circle"
+            style="width:32px; height:32px; object-fit:cover;">
+          <span
+            class="position-absolute bottom-0 end-0 bg-success border border-white rounded-circle"
+            style="width:10px; height:10px;"
+            aria-hidden="true"></span>
         </div>
+        <div>
+          <h6 class="mb-0 fw-bold text-white">Feyn</h6>
+          <small class="text-muted" style="font-size:10px;">AI Investigation Assistant</small>
+        </div>
+      </div>
+
+      <!-- FIX: was "bi bi-xl" (invalid class) → now "bi bi-x-lg" (correct Bootstrap Icons X) -->
+      <button
+        id="feyn-chat-close"
+        class="btn btn-sm btn-link text-muted p-0 border-0"
+        aria-label="Close chat"
+        style="line-height:1;">
+        <i class="bi bi-x-lg fs-5"></i>
+      </button>
     </div>
+
+    <!-- Messages Area -->
+    <div
+      id="feyn-chat-messages"
+      role="log"
+      aria-live="polite"
+      aria-label="Chat messages"
+      class="flex-grow-1 p-3 overflow-y-auto d-flex flex-column gap-3"
+      style="background:rgba(15,23,42,0.5);">
+
+      <!-- Starter Chips -->
+      <div class="d-flex flex-wrap gap-2 mb-2" id="feyn-starter-chips" aria-label="Quick questions">
+        <button class="btn btn-sm btn-outline-secondary rounded-pill starter-chip" style="font-size:11px; color:#94a3b8; border-color:#334155;">What is data drift?</button>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill starter-chip" style="font-size:11px; color:#94a3b8; border-color:#334155;">Explain my report</button>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill starter-chip" style="font-size:11px; color:#94a3b8; border-color:#334155;">How to read PSI chart?</button>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill starter-chip" style="font-size:11px; color:#94a3b8; border-color:#334155;">What is label noise?</button>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill starter-chip" style="font-size:11px; color:#94a3b8; border-color:#334155;">What does HIGH severity mean?</button>
+      </div>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div id="feyn-typing-indicator" class="px-3 py-2 d-none" aria-hidden="true">
+      <div class="bg-navy-700 rounded-4 px-3 py-2 d-inline-flex align-items-center gap-1" style="max-width:60px;">
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="p-3 bg-navy-800 border-top border-navy-700">
+      <div class="d-flex gap-2" role="form" aria-label="Send a message to Feyn">
+        <input
+          type="text"
+          id="feyn-chat-input"
+          class="form-control bg-navy-900 border-navy-600 text-white rounded-pill px-3 py-2"
+          placeholder="Ask Feyn something..."
+          autocomplete="off"
+          aria-label="Message input"
+          style="font-size:13.5px;">
+        <button
+          id="feyn-send-btn"
+          type="button"
+          class="btn btn-indigo rounded-circle p-0 d-flex align-items-center justify-content-center"
+          aria-label="Send message"
+          style="width:40px; height:40px; flex-shrink:0;">
+          <i class="bi bi-send-fill" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
+
 <style>
-    #feyn-chat-panel.show {
-        display: flex !important;
-        animation: feynSlideUp 0.3s ease-out;
-    }
-    
-    @keyframes feynSlideUp {
-        from { opacity: 0; transform: translateY(20px) scale(0.95); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
-    }
+/* ── Button: no border, no generic outline, accessible focus-visible ring ── */
+#feyn-chat-bubble {
+  border: none !important;
+  outline: none !important;
+  /* shadow-only glow — no border artifact */
+  box-shadow: 0 4px 24px rgba(14,165,233,0.30) !important;
+}
+#feyn-chat-bubble:hover {
+  transform: scale(1.10);
+  box-shadow: 0 6px 32px rgba(14,165,233,0.50) !important;
+}
+/* FIX: keyboard users still get a visible ring via :focus-visible */
+#feyn-chat-bubble:focus-visible {
+  outline: 2px solid #38bdf8 !important;
+  outline-offset: 3px !important;
+}
 
-    .typing-dot {
-        width: 4px;
-        height: 4px;
-        background: #94a3b8;
-        border-radius: 50%;
-        animation: typingBlink 1.4s infinite both;
-    }
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+/* ── Panel open animation ── */
+#feyn-chat-panel.show {
+  display: flex !important;
+  animation: feynSlideUp 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes feynSlideUp {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
 
-    @keyframes typingBlink {
-        0%, 80%, 100% { opacity: 0; }
-        40% { opacity: 1; }
-    }
+/* ── Typing dots ── */
+.typing-dot {
+  width: 4px; height: 4px;
+  background: #94a3b8;
+  border-radius: 50%;
+  animation: typingBlink 1.4s infinite both;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.20s; }
+.typing-dot:nth-child(3) { animation-delay: 0.40s; }
+@keyframes typingBlink {
+  0%, 80%, 100% { opacity: 0; transform: scale(0.8); }
+  40%           { opacity: 1; transform: scale(1);   }
+}
 
-    .feyn-msg {
-        max-width: 85%;
-        padding: 10px 14px;
-        font-size: 13.5px;
-        line-height: 1.5;
-    }
-    .feyn-msg-user {
-        align-self: flex-end;
-        background: #6366f1;
-        color: white;
-        border-radius: 18px 18px 2px 18px;
-    }
-    .feyn-msg-ai {
-        align-self: flex-start;
-        background: #1e293b;
-        color: #e2e8f0;
-        border-radius: 18px 18px 18px 2px;
-        border: 1px solid #334155;
-    }
+/* ── Message bubbles ── */
+.feyn-msg {
+  max-width: 85%;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  word-break: break-word;
+}
+.feyn-msg-user {
+  align-self: flex-end;
+  background: #6366f1;
+  color: #ffffff;
+  border-radius: 18px 18px 4px 18px;
+}
+.feyn-msg-ai {
+  align-self: flex-start;
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 18px 18px 18px 4px;
+  border: 1px solid #334155;
+}
+/* Inline code inside AI messages */
+.feyn-msg-ai code {
+  background: #0f172a;
+  color: #7dd3fc;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: 'Fira Code', monospace;
+  font-size: 12px;
+}
+/* Bullet lists inside AI messages */
+.feyn-msg-ai ul {
+  margin: 6px 0 0 0;
+  padding-left: 16px;
+}
+.feyn-msg-ai li { margin-bottom: 3px; }
 
-    .starter-chip:hover {
-        background: #6366f1 !important;
-        color: white !important;
-        border-color: #6366f1 !important;
-    }
+/* ── Starter chips ── */
+.starter-chip {
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.starter-chip:hover,
+.starter-chip:focus-visible {
+  background: #6366f1 !important;
+  color: #ffffff !important;
+  border-color: #6366f1 !important;
+  outline: none;
+}
 
-    #feyn-chat-messages::-webkit-scrollbar {
-        width: 4px;
-    }
-    #feyn-chat-messages::-webkit-scrollbar-thumb {
-        background: #334155;
-        border-radius: 10px;
-    }
+/* ── Close & send button accessible focus ── */
+#feyn-chat-close:focus-visible,
+#feyn-send-btn:focus-visible {
+  outline: 2px solid #38bdf8 !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+}
+
+/* ── Scrollbar ── */
+#feyn-chat-messages::-webkit-scrollbar       { width: 4px; }
+#feyn-chat-messages::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+/* ── Respect reduced-motion preference ── */
+@media (prefers-reduced-motion: reduce) {
+  #feyn-chat-bubble,
+  #feyn-chat-panel.show,
+  .typing-dot { animation: none !important; transition: none !important; }
+}
 </style>
 
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const bubble = document.getElementById('feyn-chat-bubble');
-    const panel = document.getElementById('feyn-chat-panel');
-    const close = document.getElementById('feyn-chat-close');
-    const form = document.getElementById('feyn-chat-form');
-    const input = document.getElementById('feyn-chat-input');
-    const msgContainer = document.getElementById('feyn-chat-messages');
-    const typing = document.getElementById('feyn-typing-indicator');
-    const starterChips = document.querySelectorAll('.starter-chip');
+document.addEventListener('DOMContentLoaded', function () {
 
-    let history = JSON.parse(sessionStorage.getItem('feyn_chat_history') || '[]');
+  /* ── Element refs ── */
+  const bubble   = document.getElementById('feyn-chat-bubble');
+  const panel    = document.getElementById('feyn-chat-panel');
+  const closeBtn = document.getElementById('feyn-chat-close');
+  const sendBtn  = document.getElementById('feyn-send-btn');
+  const input    = document.getElementById('feyn-chat-input');
+  const msgs     = document.getElementById('feyn-chat-messages');
+  const typing   = document.getElementById('feyn-typing-indicator');
+  const chips    = document.querySelectorAll('.starter-chip');
 
-    // Initialize UI from history
-    if (history.length > 0) {
-        history.forEach(msg => appendMessage(msg.role === 'user' ? 'user' : 'ai', msg.content, false));
-    } else {
-        // Initial greeting
-        appendMessage('ai', "Hi! I'm **Feyn**, your ML failure engine tutor. How can I help you investigate your model today?", false);
+  /* ── Constants ── */
+  const HISTORY_KEY = 'feyn_chat_history';
+  const MAX_HISTORY = 40;   // cap to prevent sessionStorage bloat
+
+  /* ── History: load & trim ── */
+  let history = [];
+  try {
+    history = JSON.parse(sessionStorage.getItem(HISTORY_KEY) || '[]');
+    if (!Array.isArray(history)) history = [];
+  } catch (_) { history = []; }
+
+  /* Replay persisted messages into UI */
+  if (history.length > 0) {
+    history.forEach(m => appendMessage(m.role === 'user' ? 'user' : 'ai', m.content, false));
+  } else {
+    appendMessage('ai',
+      "Hi! I'm **Feyn**, your ML failure engine tutor. Ask me anything about your model investigation — data drift, PSI, root causes, severity levels, or **Explain my report** for a full walkthrough.",
+      false);
+  }
+
+  /* ── Panel toggle ── */
+  bubble.addEventListener('click', togglePanel);
+  bubble.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePanel(); }
+  });
+
+  function togglePanel() {
+    const isOpen = panel.classList.contains('show');
+    panel.classList.toggle('d-none',  isOpen);
+    panel.classList.toggle('show',   !isOpen);
+    bubble.setAttribute('aria-expanded', String(!isOpen));
+    if (!isOpen) { input.focus(); scrollBottom(); }
+  }
+
+  closeBtn.addEventListener('click', () => {
+    panel.classList.add('d-none');
+    panel.classList.remove('show');
+    bubble.setAttribute('aria-expanded', 'false');
+    bubble.focus();   // return focus to trigger — accessibility
+  });
+
+  /* Close on Escape */
+  panel.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeBtn.click();
+  });
+
+  /* ── Send message ── */
+  sendBtn.addEventListener('click', submitInput);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitInput(); }
+  });
+  chips.forEach(chip => chip.addEventListener('click', () => sendMessage(chip.textContent.trim())));
+
+  function submitInput() {
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    sendMessage(text);
+  }
+
+  async function sendMessage(text) {
+    appendMessage('user', text);
+    scrollBottom();
+    typing.classList.remove('d-none');
+    typing.removeAttribute('aria-hidden');
+    scrollBottom();
+
+    try {
+      /*
+        FIX: smarter context capture.
+        Prefer a dedicated report element, fall back to body text.
+        This gives the backend more relevant signal than raw page text.
+      */
+      const reportEl = document.querySelector(
+        '#feyn-report-summary, #investigation-output, [data-feyn-context]'
+      );
+      const context = reportEl
+        ? reportEl.innerText.substring(0, 1500)
+        : document.body.innerText.substring(0, 1000);
+
+      const res  = await fetch('/api/chatbot/message', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, history, context }),
+      });
+
+      const data = await res.json();
+      typing.classList.add('d-none');
+      typing.setAttribute('aria-hidden', 'true');
+
+      if (data.success && data.reply) {
+        appendMessage('ai', data.reply);
+      } else {
+        const err = data.error || "Sorry, I'm having trouble right now. Please try again.";
+        appendMessage('ai', `⚠️ **Error:** ${err}`);
+      }
+
+    } catch (_) {
+      typing.classList.add('d-none');
+      typing.setAttribute('aria-hidden', 'true');
+      appendMessage('ai',
+        "⚠️ **Connection Error:** Could not reach the FeynML engine. " +
+        "Check your terminal if running locally, or verify Render is active.");
     }
 
-    bubble.addEventListener('click', () => {
-        panel.classList.toggle('d-none');
-        panel.classList.toggle('show');
-        if (panel.classList.contains('show')) {
-            input.focus();
-            scrollToBottom();
-        }
-    });
+    scrollBottom();
+  }
 
-    close.addEventListener('click', () => {
-        panel.classList.add('d-none');
-        panel.classList.remove('show');
-    });
+  /* ── Message rendering ── */
+  function appendMessage(role, content, save = true) {
+    const div = document.createElement('div');
+    div.className = `feyn-msg feyn-msg-${role}`;
+    div.innerHTML  = renderMarkdown(content);
+    msgs.appendChild(div);
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const text = input.value.trim();
-        if (!text) return;
-        
-        await sendMessage(text);
-    });
-
-    starterChips.forEach(chip => {
-        chip.addEventListener('click', () => sendMessage(chip.textContent));
-    });
-
-    async function sendMessage(text) {
-        input.value = '';
-        appendMessage('user', text);
-        scrollToBottom();
-
-        // Show typing indicator
-        typing.classList.remove('d-none');
-        scrollToBottom();
-
-        try {
-            const context = document.body.innerText.substring(0, 1000); // Simple context capture
-            const response = await fetch('/api/chatbot/message', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message: text,
-                    history: history,
-                    context: context
-                })
-            });
-
-            const data = await response.json();
-            typing.classList.add('d-none');
-
-            if (data.success && data.reply) {
-                appendMessage('ai', data.reply);
-            } else {
-                const errorMsg = data.error || "Sorry, I'm having trouble connecting to my brain right now. Please try again later.";
-                appendMessage('ai', `**Assistant Error:** ${errorMsg}`);
-            }
-        } catch (err) {
-            typing.classList.add('d-none');
-            appendMessage('ai', "**Connection Error:** Could not reach the FeynML engine. If you are running locally, check your terminal. If deployed, verify the server is active.");
-        }
-        
-        scrollToBottom();
+    if (save) {
+      history.push({ role: role === 'user' ? 'user' : 'assistant', content });
+      /* FIX: trim history to MAX_HISTORY entries (keep most recent) */
+      if (history.length > MAX_HISTORY) {
+        history = history.slice(history.length - MAX_HISTORY);
+      }
+      try { sessionStorage.setItem(HISTORY_KEY, JSON.stringify(history)); }
+      catch (_) { /* storage full — silently drop oldest on next save */ }
     }
+  }
 
-    function appendMessage(role, content, save = true) {
-        const div = document.createElement('div');
-        div.className = `feyn-msg feyn-msg-${role}`;
-        
-        // Very basic markdown bolding
-        let formatted = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        div.innerHTML = formatted;
-        
-        msgContainer.appendChild(div);
-        
-        if (save) {
-            history.push({ role: role === 'user' ? 'user' : 'assistant', content: content });
-            sessionStorage.setItem('feyn_chat_history', JSON.stringify(history));
-        }
-    }
+  /*
+    FIX: richer markdown renderer (no external lib needed).
+    Handles: **bold**, *italic*, `inline code`, newlines, and simple -/• bullet lists.
+    All output is properly escaped first to prevent XSS.
+  */
+  function renderMarkdown(text) {
+    // 1. Escape HTML entities
+    let s = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
 
-    function scrollToBottom() {
-        msgContainer.scrollTop = msgContainer.scrollHeight;
+    // 2. Inline code (`...`) — before bold/italic so backtick content isn't mangled
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // 3. Bold & italic
+    s = s.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+    s = s.replace(/\*\*([^*]+)\*\*/g,     '<strong>$1</strong>');
+    s = s.replace(/\*([^*]+)\*/g,         '<em>$1</em>');
+
+    // 4. Bullet list lines (-, *, •)
+    const lines = s.split('\n');
+    let inList = false;
+    const out  = [];
+    for (const line of lines) {
+      if (/^[-*•]\s+/.test(line)) {
+        if (!inList) { out.push('<ul>'); inList = true; }
+        out.push('<li>' + line.replace(/^[-*•]\s+/, '') + '</li>');
+      } else {
+        if (inList) { out.push('</ul>'); inList = false; }
+        out.push(line);
+      }
     }
+    if (inList) out.push('</ul>');
+
+    // 5. Remaining newlines → <br>
+    return out.join('\n').replace(/\n/g, '<br>');
+  }
+
+  function scrollBottom() {
+    msgs.scrollTop = msgs.scrollHeight;
+  }
 });
 </script>

@@ -198,6 +198,7 @@ class AIInvestigator:
             "investigation_findings": investigation_findings,
             "impact_assessment": impact_assessment,
             "confidence_explanation": confidence_explanation,
+            "confidence_drivers": (getattr(investigation, 'metadata', {}) or {}).get('confidence_drivers'),
             "recommended_actions": recommended_actions,
             "technical_notes": technical_notes,
             "risk_level": risk_level,
@@ -258,14 +259,14 @@ class AIInvestigator:
         """
         audiences_context = {
             "ML Engineer": "Use technical ML terminology.",
-            "Doctor": "Use clinical medical terminology. Refer to predictions as clinical decisions. Use patient safety language.",
-            "Loan Officer": "Use credit risk and finance terminology. Refer to predictions as loan approval decisions. Mention portfolio risk.",
-            "HR Manager": "Use HR and people management terminology. Refer to predictions as employee decisions. Mention attrition and performance.",
+            "Doctor": "Use clinical medical terminology. Refer to predictions as model outputs used in clinical review. Describe observed data shift, calibration changes, and uncertainty. Do not claim patient safety or clinical outcome impacts unless explicit evidence is supplied.",
+            "Loan Officer": "Use credit review terminology. Refer to predictions as model outputs used in loan review. Describe observed segment reliability, data drift, and uncertainty. Do not claim default rates, portfolio losses, or policy impacts unless explicit evidence is supplied.",
+            "HR Manager": "Use HR and people management terminology. Refer to predictions as model outputs used in employee-related review. Describe observed reliability changes, affected segments, and uncertainty. Do not claim attrition, hiring, or performance outcomes unless explicit evidence is supplied.",
             "Student": "Use simple academic language. Refer to predictions as academic performance assessments.",
-            "Executive": "Use business impact language. Focus on ROI, revenue risk, and strategic decisions.",
-            "Insurance Analyst": "Use actuarial and risk assessment terminology. Refer to predictions as risk scoring decisions.",
-            "Legal / Compliance Officer": "Use legal and regulatory terminology. Mention compliance risk, disparate impact, and regulatory exposure.",
-            "Researcher": "Use academic and statistical terminology. Mention methodology, validity, and generalizability.",
+            "Executive": "Use business-facing language that explains observed model condition, reliability, and affected workflows. Focus on what the investigation detected and what should be reviewed next. Do not claim revenue, ROI, cost, reputational, or strategic outcomes unless explicit evidence is supplied.",
+            "Insurance Analyst": "Use actuarial and risk assessment terminology. Refer to predictions as risk scoring outputs used in underwriting review. Describe observed scoring reliability, drift, and uncertainty. Do not claim premium adequacy, loss ratio, reserve assumptions, or financial outcomes unless explicit evidence is supplied.",
+            "Legal / Compliance Officer": "Use governance and control-review terminology. Describe observed model behavior, drift, documentation needs, and review requirements. Do not claim compliance violations, disparate impact, or regulatory exposure unless explicit evidence is supplied.",
+            "Researcher": "Use academic and statistical terminology. Emphasize observed methodology signals, dataset shift, calibration, uncertainty, and limits of the supplied evidence. Avoid claiming broader downstream impacts unless explicit evidence is supplied.",
         }
 
         audience_context = audiences_context.get(audience, audiences_context["ML Engineer"])
@@ -308,6 +309,8 @@ Generate a structured analysis with:
 6. Technical Notes (ML-engineer-friendly details)
 
 Be concise, professional, and avoid hallucinations. Only use the supplied evidence. Do not invent metrics or root causes.
+Use evidence-first interpretation language. Describe observed model behavior, detected drift, calibration changes, data quality issues, affected segments, and uncertainty.
+Do not claim business, financial, legal, clinical, underwriting, HR, reputational, compliance, or regulatory outcomes unless explicit supporting evidence is supplied in the investigation data.
 Tailor ALL sections (not just the executive summary) to the target audience.
 """
         return prompt
@@ -323,21 +326,22 @@ Tailor ALL sections (not just the executive summary) to the target audience.
         if audience == "ML Engineer":
             return recs
 
-        prefix = {
-            "Executive": "Business action",
-            "Doctor": "Clinical action",
-            "Loan Officer": "Risk action",
-            "HR Manager": "HR action",
-            "Student": "Action",
-            "Insurance Analyst": "Risk action",
-            "Legal / Compliance Officer": "Compliance action",
-            "Researcher": "Research action",
-        }.get(audience, "Action")
+        framing = {
+            "Executive":                  ("Operational review required —", "Escalate to model owners:"),
+            "Doctor":                     ("Clinical validation required —", "Flag for clinical review:"),
+            "Loan Officer":               ("Credit model review required —", "Review before next approval cycle:"),
+            "HR Manager":                 ("People analytics review required —", "Validate before use in decisions:"),
+            "Student":                    ("Learning note —", "Next step:"),
+            "Insurance Analyst":          ("Underwriting model review required —", "Validate before scoring:"),
+            "Legal / Compliance Officer": ("Governance action required —", "Document and review:"),
+            "Researcher":                 ("Methodological review required —", "Validate before reporting:"),
+        }
+        labels = framing.get(audience, ("Action required —", "Next step:"))
 
         adapted = []
-        for r in recs:
-            # Light touch: keep the recommendation content, add audience framing.
-            adapted.append(f"{prefix}: {r}")
+        for i, r in enumerate(recs):
+            prefix = labels[0] if i == 0 else labels[1]
+            adapted.append(f"{prefix} {r}")
         return adapted
     
     def _assess_risk_level(self, investigation: Investigation) -> str:
@@ -391,14 +395,14 @@ Tailor ALL sections (not just the executive summary) to the target audience.
 
     _AUDIENCE_RISK_PREFIX = {
         "ML Engineer": "Overall risk is classified as",
-        "Executive": "Overall business risk is rated",
-        "Doctor": "Clinical risk is rated",
-        "Loan Officer": "Portfolio risk is rated",
-        "Student": "Overall risk is rated",
-        "HR Manager": "Workforce decision risk is rated",
-        "Insurance Analyst": "Underwriting risk is rated",
-        "Legal / Compliance Officer": "Governance risk is rated",
-        "Researcher": "Study validity risk is rated",
+        "Executive": "Observed model reliability level is rated",
+        "Doctor": "Observed clinical review model risk is rated",
+        "Loan Officer": "Observed loan review model risk is rated",
+        "Student": "Observed model risk is rated",
+        "HR Manager": "Observed workforce review model risk is rated",
+        "Insurance Analyst": "Observed underwriting review model risk is rated",
+        "Legal / Compliance Officer": "Observed model review priority is rated",
+        "Researcher": "Observed methodology review risk is rated",
     }
 
     def _generate_executive_summary(self, investigation: Investigation, risk_level: str, audience: str = "ML Engineer") -> str:
@@ -695,14 +699,13 @@ Tailor ALL sections (not just the executive summary) to the target audience.
     def _compose_evidence_grounded_summary(
         self, investigation: Investigation, risk_level: str, audience: str
     ) -> str:
-        opener = self._AUDIENCE_OPENERS.get(audience, self._AUDIENCE_OPENERS["ML Engineer"])
-        risk_prefix = self._AUDIENCE_RISK_PREFIX.get(audience, self._AUDIENCE_RISK_PREFIX["ML Engineer"])
-
         if not investigation.root_causes:
             summary = (
-                f"{opener} no significant degradation. Model operates within expected parameters "
-                f"({investigation.confidence}% confidence). {risk_prefix} {risk_level} "
-                f"because {self._build_risk_rationale(investigation, risk_level, {'high_severity_count': 0, 'leakage_features': [], 'label_noise_rate': None, 'drift_features': [], 'calibration_status': None, 'top_cause_names': []})}."
+                f"Diagnostic confidence is {investigation.confidence}% with a {risk_level} "
+                f"risk classification. All monitored diagnostic signals — calibration, drift, "
+                f"label integrity, and data quality — returned within acceptable bounds. "
+                f"Maintain scheduled monitoring cadence and validate the next production batch "
+                f"before deploying updates."
             )
             return self._truncate_to_word_limit(summary, 120)
 
@@ -762,64 +765,107 @@ Tailor ALL sections (not just the executive summary) to the target audience.
             "calibration_metric": calibration_metric,
             "top_cause_names": top_cause_names,
         }
-
-        # Build concise executive summary (max 3 sentences) per new guidance.
-        # Sentence 1: Overall risk level + confidence
-        # Sentence 2: Top 2 most critical issues only
-        # Sentence 3: Single most important action
-
-        # Determine primary concerns: prefer high/critical severity root causes
-        critical_or_high = [c for c in investigation.root_causes if c.severity in ("CRITICAL", "HIGH")]
-        primary_issues = []
-        if critical_or_high:
-            # order by severity then score
-            primary_sorted = sorted(critical_or_high, key=lambda c: (0 if c.severity == 'CRITICAL' else 1, -getattr(c, 'score', 0)))
-            primary_issues = [self._display_cause_name(c) for c in primary_sorted[:2]]
-        else:
-            # fallback to top causes by score
-            primary_issues = [self._display_cause_name(c) for c in investigation.root_causes[:2]]
-
-        # Prepare action
-        top_action = None
-        try:
-            if investigation.recommendations and len(investigation.recommendations) > 0:
-                top_action = investigation.recommendations[0]
-        except Exception:
-            top_action = None
-
-        # Sentence constructions
-        sent1 = f"Model health is {risk_level}. Confidence in this assessment is {investigation.confidence}%."
-
-        if primary_issues:
-            if len(primary_issues) == 1:
-                sent2 = f"Primary concerns: {primary_issues[0]}."
-            else:
-                # primary_issues already ordered by severity then score (PSI-weighted)
-                sent2 = f"Primary concerns: {primary_issues[0]} (fix first), then {primary_issues[1]}."
-        else:
-            sent2 = "Primary concerns: none identified."
-
-        if top_action:
+        def _format_metric(metric: Optional[str]) -> Optional[str]:
+            if not metric:
+                return None
             try:
-                if len(top_action) <= 80:
-                    action = top_action.rstrip()
-                    if not action.endswith('.'):
-                        action = action + '.'
-                else:
-                    action = top_action[:80].rsplit(' ', 1)[0] + '.'
+                value = str(metric).strip()
+                if value.endswith("%"):
+                    num = float(value[:-1])
+                    return f"{num:.1f}%"
+                return f"{float(value):.3f}"
             except Exception:
-                action = (top_action[:80].rsplit(' ', 1)[0] + '.') if top_action else 'Review root cause analysis for next steps.'
-            # Prepend top-priority issue to action for clarity
-            top_issue = primary_issues[0] if primary_issues else None
-            if top_issue and top_issue.lower() not in action.lower():
-                sent3 = f"Immediate action required: address {top_issue} first — {action}"
-            else:
-                sent3 = f"Immediate action required: {action}"
-        else:
-            sent3 = "Immediate action required: review root cause analysis for next steps."
+                return str(metric)
 
-        concise = " ".join([sent1, sent2, sent3])
-        return concise
+        def _summarize_cause(cause) -> str:
+            display = self._display_cause_name(cause)
+            score = getattr(cause, "score", None)
+            score_text = f", score={int(score)}" if isinstance(score, (int, float)) else ""
+
+            if cause.category == "feature_drift":
+                psi = _format_metric(self._parse_metric(cause.evidence, (r"PSI[=:\s]+(\d+(?:\.\d+)?)",)))
+                ks = _format_metric(self._parse_metric(cause.evidence, (r"KS[=:\s]+(\d+(?:\.\d+)?)",)))
+                details = []
+                if psi:
+                    details.append(f"PSI={psi}")
+                if ks:
+                    details.append(f"KS={ks}")
+                details.append(f"score={int(score)}" if isinstance(score, (int, float)) else "score recorded")
+                return f"{display} drift ({', '.join(details)})"
+
+            if cause.category == "calibration":
+                ece = _format_metric(self._parse_metric(cause.evidence, (r"ECE[=:\s]+(\d+(?:\.\d+)?%?)",)))
+                if ece and not str(ece).endswith("%"):
+                    ece = f"{ece}%"
+                if ece:
+                    return f"calibration degradation (ECE={ece}{score_text})"
+                return f"calibration degradation ({'score=' + str(int(score)) if isinstance(score, (int, float)) else 'score recorded'})"
+
+            if cause.category == "target_leakage":
+                conf = _format_metric(self._parse_metric(cause.evidence, (r"Leakage confidence[=:\s]+(\d+(?:\.\d+)?)",)))
+                if conf:
+                    return f"{display} leakage (confidence={conf}{score_text})"
+                return f"{display} leakage ({'score=' + str(int(score)) if isinstance(score, (int, float)) else 'score recorded'})"
+
+            return f"{display} ({'score=' + str(int(score)) if isinstance(score, (int, float)) else 'score recorded'})"
+
+        def _select_primary_causes():
+            candidates = [c for c in investigation.root_causes if c.severity in ("CRITICAL", "HIGH")]
+            if not candidates:
+                candidates = list(investigation.root_causes)
+            return candidates[:2]
+
+        def _derive_action() -> str:
+            categories = {c.category for c in investigation.root_causes}
+            if "target_leakage" in categories:
+                return "Review suspect features for leakage, remove unavailable-at-prediction signals, and retrain on clean data."
+            if "feature_drift" in categories:
+                return "Review production data distributions and retrain using recent representative samples."
+            if "calibration" in categories:
+                return "Recalibrate the model on recent validation data and verify probability quality before deployment."
+            if "missing_values" in categories or "outliers" in categories:
+                return "Investigate upstream data quality changes and validate the affected features before relying on new predictions."
+            if "slice_degradation" in categories:
+                return "Review the affected segments and validate whether performance has shifted for specific subgroups."
+            if "importance_drift" in categories:
+                return "Review changing feature relationships and validate model behavior on recent production data."
+            return ("Audit the flagged diagnostic signals, cross-reference with recent "
+                    "production batch statistics, and validate model behavior before "
+                    "the next scheduled deployment window.")
+
+        primary_causes = _select_primary_causes()
+        primary_cause = primary_causes[0] if primary_causes else None
+        secondary_cause = primary_causes[1] if len(primary_causes) > 1 else None
+        calibration_cause = next((c for c in investigation.root_causes if c.category == "calibration"), None)
+
+        sentences = [f"This investigation assigned a {risk_level} risk classification "
+                     f"at {investigation.confidence}% diagnostic confidence."]
+
+        if primary_cause:
+            sentences.append(f"The primary concern is {_summarize_cause(primary_cause)}.")
+
+        if secondary_cause:
+            sentences.append(f"A secondary concern is {_summarize_cause(secondary_cause)}.")
+
+        if calibration_cause and calibration_cause not in [primary_cause, secondary_cause]:
+            cal_ece = _format_metric(self._parse_metric(calibration_cause.evidence, (r"ECE[=:\s]+(\d+(?:\.\d+)?%?)",)))
+            if cal_ece and not str(cal_ece).endswith("%"):
+                cal_ece = f"{cal_ece}%"
+            if cal_ece:
+                sentences.append(f"Calibration quality has also degraded (ECE={cal_ece}).")
+            else:
+                sentences.append("Calibration quality has also degraded.")
+        elif facts.get("calibration_status") == "issue" and facts.get("calibration_metric"):
+            metric = str(facts["calibration_metric"])
+            if metric and not metric.endswith("%") and metric != "elevated":
+                try:
+                    metric = f"{float(metric):.1f}%"
+                except Exception:
+                    pass
+            sentences.append(f"Calibration quality has also degraded (ECE={metric}).")
+
+        sentences.append(_derive_action())
+        return self._truncate_to_word_limit(" ".join(sentences[:5]), 120)
 
     @staticmethod
     def _join_issue_clauses(clauses: List[str]) -> str:
@@ -852,7 +898,9 @@ Tailor ALL sections (not just the executive summary) to the target audience.
             Investigation findings string
         """
         if not investigation.root_causes:
-            base = "No significant issues detected during investigation. All monitored metrics are within acceptable ranges."
+            base = ("All diagnostic modules completed without flagging actionable anomalies. "
+                    "Calibration, drift, label noise, leakage, and slice performance signals "
+                    "are within expected bounds for the current production window.")
             return self._apply_audience_context(base, audience, section="findings")
 
         # Use normalized context to ensure consistency across narrative sections
@@ -921,7 +969,10 @@ Tailor ALL sections (not just the executive summary) to the target audience.
                 narrative = f"{top_headline} {narrative}"
             return self._apply_audience_context(narrative, audience, section="findings")
         else:
-            base = "The investigation identified several issues affecting model performance. Review the Root Cause Analysis for detailed evidence and severity assessments."
+            base = ("Diagnostic signals indicate active model degradation. "
+                    "Root cause modules have flagged evidence across one or more dimensions — "
+                    "review the severity rankings and evidence items below for the specific "
+                    "features, segments, and statistical indicators involved.")
             # Even in the empty-findings fallback, include top_headline if present
             if top_headline:
                 base = f"{top_headline} {base}"
@@ -938,7 +989,9 @@ Tailor ALL sections (not just the executive summary) to the target audience.
             Impact assessment string
         """
         if not investigation.root_causes:
-            base = "No significant impact expected. Model performance remains stable."
+            base = ("No diagnostic signals warranting operational intervention were detected. "
+                    "Prediction reliability appears stable across monitored segments and "
+                    "calibration windows. Continue standard production monitoring.")
             return self._apply_audience_context(base, audience, section="impact")
 
         facts = self._build_normalized_context(investigation)
@@ -967,7 +1020,11 @@ Tailor ALL sections (not just the executive summary) to the target audience.
         if investigation.health_status in ["Critical", "Warning"]:
             impact += "Prediction reliability may be compromised for affected segments."
 
-        base = impact.strip() if impact else "Model performance may be affected by the identified issues."
+        base = impact.strip() if impact else (
+            "One or more diagnostic modules returned findings that may affect prediction "
+            "reliability. Review the root cause evidence and severity rankings to determine "
+            "which segments, features, or calibration windows are most affected."
+        )
         return self._apply_audience_context(base, audience, section="impact")
 
     def _apply_audience_context(self, text: str, audience: str, section: str) -> str:
@@ -982,36 +1039,36 @@ Tailor ALL sections (not just the executive summary) to the target audience.
 
         framing = {
             "Doctor": {
-                "findings": "Clinical framing: these signals suggest the decision support tool may behave differently for current patients than it did during validation.",
-                "impact": "Clinical impact: this may increase the risk of missed or incorrect clinical decisions; use clinical judgment and consider re-validation.",
+                "findings": "Clinical framing: these signals suggest the model may be operating on data or probability patterns that differ from those seen during validation.",
+                "impact": "Clinical review impact: prediction reliability may decrease for affected cases, so flagged outputs should be reviewed and the model should be re-validated if needed.",
             },
             "Loan Officer": {
-                "findings": "Credit framing: these shifts can change loan approval outcomes and increase portfolio risk if not addressed.",
-                "impact": "Portfolio impact: decision accuracy may degrade for certain borrower segments, increasing default risk and potential policy exceptions.",
+                "findings": "Credit framing: these signals suggest the model may behave differently for some borrower segments than it did during validation.",
+                "impact": "Credit review impact: prediction reliability may decrease for affected borrower segments, so approvals should be reviewed with the detected drift or calibration changes in mind.",
             },
             "HR Manager": {
-                "findings": "HR framing: these changes can affect employee-related decisions (attrition, performance, hiring) for certain groups or time periods.",
-                "impact": "People impact: inaccurate predictions may lead to suboptimal retention or performance interventions; validate before acting on results.",
+                "findings": "HR framing: these signals suggest the model may behave differently for some groups or time periods than it did during validation.",
+                "impact": "People review impact: prediction reliability may decrease for affected groups or periods, so outputs should be checked before they are used in employee-related review.",
             },
             "Student": {
                 "findings": "Plain-language framing: this means the data the model sees now is different from what it learned from, so its outputs may be less reliable.",
                 "impact": "Practical impact: decisions based on the model may be less accurate until the issues are fixed and the model is updated.",
             },
             "Executive": {
-                "findings": "Business framing: these issues indicate the model may be drifting away from the conditions it was built for, increasing operational risk.",
-                "impact": "Business impact: degraded decision quality can create revenue/ROI risk, higher operating costs, and reduced trust in automated workflows.",
+                "findings": "Business framing: these issues indicate the model is operating under conditions that differ from the data or behavior seen during development and validation.",
+                "impact": "Workflow impact: automated outputs may be less reliable until the detected drift, calibration changes, or data quality issues are reviewed.",
             },
             "Insurance Analyst": {
-                "findings": "Actuarial framing: these shifts can change risk scoring behavior and distort underwriting segmentation over time.",
-                "impact": "Underwriting impact: mis-scoring can affect premium adequacy, loss ratio, and reserve assumptions for certain cohorts.",
+                "findings": "Actuarial framing: these signals suggest risk scoring behavior may differ for some cohorts from what was observed during validation.",
+                "impact": "Underwriting review impact: score reliability may decrease for affected cohorts, so outputs should be reviewed before they are used in underwriting decisions.",
             },
             "Legal / Compliance Officer": {
-                "findings": "Governance framing: these issues can raise compliance and documentation risk, especially if outcomes differ across protected groups.",
-                "impact": "Regulatory impact: degraded or shifting model behavior can increase disparate impact risk and regulatory exposure; document and review controls.",
+                "findings": "Governance framing: these issues indicate the model behavior and supporting documentation should be reviewed because drift, calibration change, or other evidence has been detected.",
+                "impact": "Control review impact: the detected issues should be documented and reviewed so model behavior, evidence, and controls remain traceable.",
             },
             "Researcher": {
-                "findings": "Research framing: these signals may indicate dataset shift and threaten validity or generalizability of conclusions.",
-                "impact": "Methodology impact: results may not generalize; consider re-sampling, recalibration, and reporting uncertainty alongside outcomes.",
+                "findings": "Research framing: these signals suggest dataset shift, calibration change, or other conditions that may limit how confidently the current findings can be generalized.",
+                "impact": "Methodology impact: reported results should be interpreted with uncertainty in mind, and re-sampling, recalibration, or additional validation may be warranted.",
             },
         }
 

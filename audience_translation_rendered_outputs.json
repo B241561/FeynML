@@ -1,0 +1,119 @@
+{
+  "ML Engineer": {
+    "audience": "ML Engineer",
+    "executive_summary": "Monitoring flags the model as degraded in monitoring. 2 evidence-backed issues were identified. Review the evidence below before making pipeline changes.",
+    "findings": "Technical Model Assessment:\nSystem status: degraded in monitoring\nAssessment confidence: 85%\nRisk level: HIGH\n\nObserved technical signals:\n1. Data Drift Detected: High-priority technical signal (score=0.920)\n   Evidence: Feature X drifted by 0.45\n   Evidence: Feature Y drifted by 0.32\n2. Label Noise Present: Moderate technical signal (score=0.780)\n   Evidence: 15% of labels may be incorrect\n\nNote: Treat the evidence as diagnostic input for technical review.",
+    "impact_assessment": "This translation highlights observed monitoring evidence for technical diagnosis. It indicates where model behavior should be reviewed, but does not by itself prove downstream production outcomes.",
+    "confidence_explanation": "The 85% confidence score reflects how strongly the observed monitoring signals support the current diagnosis. It is confidence in the investigation, not a guarantee of downstream system impact.",
+    "recommendations": [
+      "Retrain model with recent data",
+      "Investigate label quality",
+      "Monitor feature drift"
+    ],
+    "technical_notes": "Use the evidence lines as-is for debugging. Compare them with drift, calibration, and data-quality reports before changing the model or features."
+  },
+  "Executive": {
+    "audience": "Executive",
+    "executive_summary": "Monitoring shows the model is operating below expected bounds. 2 evidence-backed issues were identified. The wording below stays close to the observed evidence and avoids unsupported business claims.",
+    "findings": "Model Oversight Summary:\nOversight status: operating below expected bounds\nAssessment confidence: 85%\nRisk level: HIGH\n\nEvidence-backed review items:\n1. Data Drift Detected: Priority review item\n   Evidence: Feature X drifted by 0.45\n   Evidence: Feature Y drifted by 0.32\n2. Label Noise Present: Review item\n   Evidence: 15% of labels may be incorrect\n\nNote: Use this summary for oversight and prioritization, not as proof of business loss.",
+    "impact_assessment": "This summary identifies where model review may be needed for governance and operating decisions. It does not by itself establish revenue, customer, or other downstream business outcomes.",
+    "confidence_explanation": "The 85% confidence score indicates how consistently the available evidence supports this assessment. It is not a claim about business impact certainty.",
+    "recommendations": [
+      "Retrain model with recent data",
+      "Investigate label quality",
+      "Monitor feature drift"
+    ],
+    "technical_notes": "Additional technical detail can be reviewed separately if needed."
+  },
+  "Doctor": {
+    "audience": "Doctor",
+    "executive_summary": "Monitoring indicates the clinical decision-support model is less reliable in current monitoring. 2 evidence-backed issues were identified. Keep using clinical judgment while the evidence is reviewed.",
+    "findings": "Clinical Decision Support Review:\nSupport model status: less reliable in current monitoring\nAssessment confidence: 85%\n\nObserved model signals:\n1. Data Drift Detected: Important review signal\n   Evidence: Feature X drifted by 0.45\n   Evidence: Feature Y drifted by 0.32\n2. Label Noise Present: Moderate review signal\n   Evidence: 15% of labels may be incorrect\n\nNote: Clinical judgment should remain primary while these signals are investigated.",
+    "impact_assessment": "These findings describe monitored model behavior relevant to clinical review. They do not by themselves establish patient outcomes or care consequences.",
+    "confidence_explanation": "The 85% confidence score reflects how strongly the observed evidence supports the current model assessment. It is confidence in the investigation, not a clinical guarantee.",
+    "recommendations": [
+      "Retrain model with recent data",
+      "Investigate label quality",
+      "Monitor feature drift"
+    ],
+    "technical_notes": "Use the evidence lines to coordinate follow-up with the model monitoring or analytics team."
+  },
+  "Loan Officer": {
+    "audience": "Loan Officer",
+    "executive_summary": "Monitoring indicates the credit model is showing reduced reliability in monitoring. 2 evidence-backed issues were identified. Review the evidence before relying on the model in lending workflows.",
+    "findings": "Credit Model Review:\nModel review status: showing reduced reliability in monitoring\nAssessment confidence: 85%\nRisk level: HIGH\n\nObserved review signals:\n1. Data Drift Detected: High-priority lending review signal\n   Evidence: Feature X drifted by 0.45\n   Evidence: Feature Y drifted by 0.32\n2. Label Noise Present: Moderate lending review signal\n   Evidence: 15% of labels may be incorrect\n\nNote: Use the evidence for model review, alongside existing lending controls.",
+    "impact_assessment": "This translation summarizes monitored model behavior relevant to lending review. It does not by itself prove borrower, portfolio, or default outcomes.",
+    "confidence_explanation": "The 85% confidence score shows how well the observed evidence supports this model assessment. It is not a guarantee about loan outcomes.",
+    "recommendations": [
+      "Retrain model with recent data",
+      "Investigate label quality",
+      "Monitor feature drift"
+    ],
+    "technical_notes": "Pair these findings with policy and governance review where needed."
+  },
+  "Student": {
+    "audience": "Student",
+    "executive_summary": "The model is showing weaker performance signals according to monitoring. 2 evidence-backed issues were identified. The wording below stays simple, but the evidence itself is unchanged.",
+    "findings": "Model Health Explanation:\nCurrent status: showing weaker performance signals\nAssessment confidence: 85%\n\nWhat the evidence shows:\n1. Data Drift Detected: Important signal\n   Evidence: Feature X drifted by 0.45\n   Evidence: Feature Y drifted by 0.32\n2. Label Noise Present: Moderate signal\n   Evidence: 15% of labels may be incorrect\n\nNote: Use this version to understand the investigation without changing the underlying facts.",
+    "impact_assessment": "This explanation points to where the model needs review based on observed evidence. It does not claim any specific real-world outcome by itself.",
+    "confidence_explanation": "The 85% confidence score tells you how strongly the available evidence supports this explanation. It is confidence in the diagnosis, not proof of what happens next.",
+    "recommendations": [
+      "Retrain model with recent data",
+      "Investigate label quality",
+      "Monitor feature drift"
+    ],
+    "technical_notes": "Read the evidence lines first, then compare them with the recommended actions."
+  },
+  "HR Manager": {
+    "audience": "HR Manager",
+    "executive_summary": "Monitoring indicates the HR decision-support model is less reliable in monitoring. 2 evidence-backed issues were identified. Use the evidence for review, alongside standard HR judgment.",
+    "findings": "HR Model Review:\nDecision-support status: less reliable in monitoring\nAssessment confidence: 85%\nRisk level: HIGH\n\nObserved review signals:\n1. Data Drift Detected: Important HR review signal\n   Evidence: Feature X drifted by 0.45\n   Evidence: Feature Y drifted by 0.32\n2. Label Noise Present: Moderate HR review signal\n   Evidence: 15% of labels may be incorrect\n\nNote: HR judgment should remain primary while model signals are investigated.",
+    "impact_assessment": "These findings summarize monitored model behavior relevant to HR review. They do not by themselves establish hiring, performance, or retention outcomes.",
+    "confidence_explanation": "The 85% confidence score reflects how strongly the observed evidence supports this assessment. It is not a guarantee about workforce outcomes.",
+    "recommendations": [
+      "Retrain model with recent data",
+      "Investigate label quality",
+      "Monitor feature drift"
+    ],
+    "technical_notes": "Escalate technical follow-up to the analytics team if evidence repeats across monitoring cycles."
+  },
+  "Insurance Analyst": {
+    "audience": "Insurance Analyst",
+    "executive_summary": "Monitoring indicates the insurance model is showing reduced reliability in monitoring. 2 evidence-backed issues were identified. Review the evidence before making reliance decisions in underwriting workflows.",
+    "findings": "Insurance Model Review:\nModel review status: showing reduced reliability in monitoring\nAssessment confidence: 85%\nRisk level: HIGH\n\nObserved review signals:\n1. Data Drift Detected: High-priority underwriting review signal\n   Evidence: Feature X drifted by 0.45\n   Evidence: Feature Y drifted by 0.32\n2. Label Noise Present: Moderate underwriting review signal\n   Evidence: 15% of labels may be incorrect\n\nNote: Use this report for model review and documentation, not as proof of downstream insurance outcomes.",
+    "impact_assessment": "This translation summarizes monitored model behavior relevant to underwriting review. It does not by itself prove claims, pricing, or portfolio outcomes.",
+    "confidence_explanation": "The 85% confidence score reflects how consistently the available evidence supports this assessment. It is not a guarantee about underwriting outcomes.",
+    "recommendations": [
+      "Retrain model with recent data",
+      "Investigate label quality",
+      "Monitor feature drift"
+    ],
+    "technical_notes": "Use the evidence lines together with governance materials if a formal review is needed."
+  },
+  "Legal / Compliance Officer": {
+    "audience": "Legal / Compliance Officer",
+    "executive_summary": "Monitoring indicates the model is showing elevated governance concern from a governance perspective. 2 evidence-backed issues were identified. The wording below stays close to the evidence and avoids unsupported legal conclusions.",
+    "findings": "Model Governance Review:\nGovernance status: showing elevated governance concern\nAssessment confidence: 85%\nRisk level: HIGH\n\nDocumented review signals:\n1. Data Drift Detected: High-priority governance review signal\n   Evidence: Feature X drifted by 0.45\n   Evidence: Feature Y drifted by 0.32\n2. Label Noise Present: Moderate governance review signal\n   Evidence: 15% of labels may be incorrect\n\nNote: Document the observed signals and follow-up steps separately from any legal conclusion.",
+    "impact_assessment": "This translation identifies monitored model signals relevant to governance review and documentation. It does not by itself establish legal violation, enforcement, or penalty outcomes.",
+    "confidence_explanation": "The 85% confidence score reflects the strength and consistency of the observed evidence for this review. It is not a legal conclusion.",
+    "recommendations": [
+      "Retrain model with recent data",
+      "Investigate label quality",
+      "Monitor feature drift"
+    ],
+    "technical_notes": "Retain the evidence lines verbatim if the review needs to be documented or escalated."
+  },
+  "Researcher": {
+    "audience": "Researcher",
+    "executive_summary": "Monitoring indicates the research model is showing instability in current monitoring. 2 evidence-backed issues were identified. Use the unchanged evidence lines when discussing validity or reproducibility.",
+    "findings": "Research Model Assessment:\nStudy status: showing instability in current monitoring\nAssessment confidence: 85%\n\nObserved investigation signals:\n1. Data Drift Detected: High-priority investigation signal (score=0.920)\n   Evidence: Feature X drifted by 0.45\n   Evidence: Feature Y drifted by 0.32\n2. Label Noise Present: Moderate investigation signal (score=0.780)\n   Evidence: 15% of labels may be incorrect\n\nNote: Use this report to frame investigation and replication work, not to overstate conclusion-level effects.",
+    "impact_assessment": "These findings summarize monitored model behavior relevant to study review. They do not by themselves prove validity, reproducibility, or conclusion-level outcomes.",
+    "confidence_explanation": "The 85% confidence score indicates how strongly the observed evidence supports this assessment. It is confidence in the investigation, not proof of research conclusions.",
+    "recommendations": [
+      "Retrain model with recent data",
+      "Investigate label quality",
+      "Monitor feature drift"
+    ],
+    "technical_notes": "Preserve the evidence text exactly if you cite it in research notes or follow-up analysis."
+  }
+}

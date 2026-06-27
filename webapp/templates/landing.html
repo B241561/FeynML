@@ -1,793 +1,1658 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="hero-gradient">
-    <div class="container py-5 mt-5">
-        <div class="row align-items-center g-5">
-            <div class="col-lg-6 animate-up hero-copy">
-                <h1 class="display-3 fw-bold mb-4">
-                    Debug your ML models <br>
-                    <span class="text-gradient">with precision.</span>
-                </h1>
-                <p class="lead text-muted mb-5 fs-4">
-                    FeynML is the professional standard for ML failure investigation. 
-                    Detect drift, audit calibration, and identify root causes in seconds.
-                </p>
-                <div class="d-flex gap-3">
-                    <a href="{{ url_for('index') }}" class="btn btn-indigo btn-lg px-5 rounded-pill shadow">
-                        Launch Engine
-                    </a>
-                    <a href="{{ url_for('features') }}" class="btn btn-outline-indigo btn-lg px-5 rounded-pill">
-                        Explore Features
-                    </a>
-                </div>
-                <div class="mt-5 d-flex align-items-center gap-4 text-muted small">
-                    <div><i class="bi bi-check2-circle text-success me-2"></i>No-code Analysis</div>
-                    <div><i class="bi bi-check2-circle text-success me-2"></i>Statistical Rigor</div>
-                    <div><i class="bi bi-check2-circle text-success me-2"></i>SaaS Optimized</div>
-                </div>
-            </div>
 
-            <div class="col-lg-6 animate-up" style="animation-delay: 0.2s;">
-                <div class="position-relative">
-                    <div class="bg-indigo-600 rounded-4 shadow-lg overflow-hidden p-2">
+<!-- ============================================================
+     FEYNML LANDING PAGE
+     Hero · Stats · Feynman · How It Works · Capabilities
+     · Framework · Tech Stack · Bento · CTA
+     ============================================================ -->
 
-                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1000"
-                             class="img-fluid rounded-3 opacity-90"
-                             alt="Dashboard Preview">
-
-                    </div>
-
-                    <!-- Floating Stat Cards -->
-                    <div class="position-absolute top-0 start-0 translate-middle-y mt-5 ms-n4 glass-card p-3 rounded-3 shadow animate-up" style="animation-delay: 0.4s;">
-                        <div class="small text-muted mb-1">Drift Detected</div>
-                        <div class="h5 mb-0 text-danger fw-bold">8 Features</div>
-                    </div>
-
-                    <div class="position-absolute bottom-0 end-0 mb-5 me-n4 glass-card p-3 rounded-3 shadow animate-up" style="animation-delay: 0.6s;">
-                        <div class="small text-muted mb-1">Audit Score</div>
-                        <div class="h5 mb-0 text-success fw-bold">98.4%</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 <style>
-/* ───────────────────────────────────────────────────
-   HERO SECTION BALANCE FIX
-─────────────────────────────────────────────────── */
-
-.hero-gradient {
-    position: relative;
-    overflow: hidden;
+/* ── Design tokens ───────────────────────────────────────────── */
+:root {
+  --lp-cyan:        #38bdf8;
+  --lp-cyan-dim:    rgba(56,189,248,0.12);
+  --lp-cyan-glow:   rgba(14,165,233,0.22);
+  --lp-indigo:      #6366f1;
+  --lp-navy:        rgba(15,23,42,0.80);
+  --lp-border:      rgba(56,189,248,0.10);
+  --lp-muted:       #94a3b8;
+  --lp-section-gap: 96px;
 }
 
-.hero-gradient::before,
-.hero-gradient::after {
-    content: "";
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.5;
-    z-index: 0;
-    animation: orb-drift 8s ease-in-out infinite alternate;
+/* ── Shared section anatomy ──────────────────────────────────── */
+.lp-section { padding: var(--lp-section-gap) 0; }
+.lp-eyebrow {
+  font-family: monospace;
+  font-size: 0.68rem;
+  letter-spacing: 4px;
+  color: var(--lp-cyan);
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 10px;
+}
+.lp-h2 {
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.15;
+  margin-bottom: 14px;
+}
+.lp-h2 .g {
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.lp-sub {
+  font-size: 1rem;
+  color: var(--lp-muted);
+  line-height: 1.75;
+  max-width: 560px;
+}
+.lp-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,0.18), transparent);
+  margin: 0;
 }
 
-.hero-gradient::before {
-    width: 600px;
-    height: 600px;
-    top: -180px;
-    left: -160px;
-    background: radial-gradient(circle at center, rgba(26, 58, 110, 0.55) 0%, transparent 70%);
-    filter: blur(120px);
+/* ── HERO ────────────────────────────────────────────────────── */
+.hero-section {
+  min-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px 0;
+  position: relative;
+}
+/* Subtle radial bg glow */
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 800px; height: 600px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(14,165,233,0.08) 0%, transparent 65%);
+  pointer-events: none;
+}
+.hero-card {
+  background: rgba(15,23,42,0.72);
+  border: 1px solid rgba(56,189,248,0.10);
+  border-radius: 24px;
+  padding: 56px 48px;
+  width: 100%;
+  max-width: 1120px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+/* Top accent line */
+.hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 5%, rgba(56,189,248,0.4) 40%, rgba(99,102,241,0.4) 60%, transparent 95%);
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: monospace;
+  font-size: 0.7rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--lp-cyan);
+  background: rgba(56,189,248,0.08);
+  border: 1px solid rgba(56,189,248,0.18);
+  border-radius: 100px;
+  padding: 6px 14px;
+  margin-bottom: 24px;
+}
+.hero-badge-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--lp-cyan);
+  animation: heroPulse 2s ease infinite;
+}
+@keyframes heroPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}
+.hero-h1 {
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 800;
+  line-height: 1.08;
+  color: #fff;
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+}
+.hero-h1 .grad {
+  background: linear-gradient(90deg, #38bdf8 0%, #818cf8 60%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-lead {
+  font-size: 1.1rem;
+  color: var(--lp-muted);
+  line-height: 1.8;
+  margin-bottom: 36px;
+  max-width: 480px;
+}
+.hero-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 36px;
+}
+.hero-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.65);
+}
+.hero-check i { color: #4ade80; font-size: 0.9rem; }
+
+/* Screenshot container */
+.hero-screen-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+}
+.hero-screen-img {
+  width: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 1px solid rgba(56,189,248,0.22);
+  box-shadow: 0 0 80px rgba(14,165,233,0.18), 0 24px 64px rgba(0,0,0,0.5);
+}
+.hero-badge-float {
+  position: absolute;
+  background: rgba(10,18,35,0.92);
+  border: 1px solid rgba(56,189,248,0.28);
+  border-radius: 10px;
+  padding: 7px 14px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.6;
+  backdrop-filter: blur(8px);
+}
+.hero-badge-float strong { font-size: 13px; font-weight: 700; }
+
+/* ── JARVIS LOGO STRIP ───────────────────────────────────────── */
+.logo-strip {
+  width: 100%;
+  max-width: 1120px;
+  margin: 40px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.logo-strip-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.logo-strip-left a { display: block; text-decoration: none; }
+.logo-strip-caption {
+  font-family: monospace;
+  font-size: 9px;
+  color: var(--lp-cyan);
+  letter-spacing: 4px;
+  opacity: 0.45;
+  margin-top: 6px;
+  padding-left: 4px;
+  text-transform: uppercase;
+}
+.logo-strip-right {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.logo-strip-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: monospace;
+  gap: 6px;
+}
+.logo-strip-stat-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: rgba(56,189,248,0.10);
+  border: 1px solid rgba(56,189,248,0.18);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  color: #38bdf8;
+  margin-bottom: 2px;
+}
+.logo-strip-stat span:first-of-type {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #38bdf8;
+  line-height: 1;
+}
+.logo-strip-stat span:last-of-type {
+  font-size: 0.62rem;
+  letter-spacing: 2px;
+  color: #94a3b8;
+  opacity: 0.6;
+  text-transform: uppercase;
+  margin-top: 1px;
 }
 
-.hero-gradient::after {
-    width: 500px;
-    height: 500px;
-    bottom: -120px;
-    right: -100px;
-    background: radial-gradient(circle at center, rgba(13, 79, 60, 0.45) 0%, transparent 70%);
-    filter: blur(100px);
-    opacity: 0.4;
-    animation-delay: 0.6s;
+/* ── FEYNMAN INSPIRATION ─────────────────────────────────────── */
+.feynman-section { padding: var(--lp-section-gap) 0; }
+.feynman-card-new {
+  background: rgba(15,23,42,0.75);
+  border: 1px solid var(--lp-border);
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+}
+.feynman-card-new::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 5%, rgba(56,189,248,0.35) 50%, transparent 95%);
+}
+.feynman-quote-new {
+  font-size: clamp(1.2rem, 2.5vw, 1.65rem);
+  font-weight: 300;
+  font-style: italic;
+  color: rgba(255,255,255,0.88);
+  line-height: 1.65;
+  position: relative;
+  padding-left: 24px;
+  border-left: 2px solid var(--lp-cyan);
+}
+.feynman-tag {
+  display: inline-block;
+  font-family: monospace;
+  font-size: 0.68rem;
+  letter-spacing: 3px;
+  color: var(--lp-cyan);
+  opacity: 0.65;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.feynman-pillars {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid var(--lp-border);
+  margin-top: 36px;
+}
+.feynman-pillar {
+  flex: 1;
+  padding: 20px 24px;
+  border-right: 1px solid var(--lp-border);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.75);
+  letter-spacing: 0.5px;
+}
+.feynman-pillar:last-child { border-right: none; }
+.feynman-pillar span {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: var(--lp-muted);
+  margin-top: 3px;
+  letter-spacing: 0;
 }
 
-@keyframes orb-drift {
-    from { transform: translate(0, 0); }
-    to { transform: translate(14px, -14px); }
+/* ── HOW IT WORKS ────────────────────────────────────────────── */
+.hiw-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  position: relative;
+  gap: 0;
+  margin-top: 48px;
+}
+/* Connecting line */
+.hiw-grid::before {
+  content: '';
+  position: absolute;
+  top: 28px;
+  left: calc(16.66% + 20px);
+  right: calc(16.66% + 20px);
+  height: 1px;
+  background: linear-gradient(90deg, var(--lp-cyan-dim), rgba(56,189,248,0.3), var(--lp-cyan-dim));
+}
+.hiw-card {
+  background: rgba(15,23,42,0.65);
+  border: 1px solid var(--lp-border);
+  border-radius: 18px;
+  padding: 36px 28px;
+  margin: 0 8px;
+  transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+  position: relative;
+}
+.hiw-card:hover {
+  border-color: rgba(56,189,248,0.28);
+  transform: translateY(-5px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.3), 0 0 0 1px rgba(56,189,248,0.08);
+}
+.hiw-num {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  background: var(--lp-cyan-dim);
+  border: 1px solid rgba(56,189,248,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--lp-cyan);
+  margin-bottom: 22px;
+  position: relative;
+  z-index: 1;
+}
+.hiw-icon {
+  font-size: 1.5rem;
+  color: var(--lp-cyan);
+  margin-bottom: 14px;
+}
+.hiw-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.92);
+  margin-bottom: 10px;
+}
+.hiw-text {
+  font-size: 0.85rem;
+  color: var(--lp-muted);
+  line-height: 1.75;
+}
+@media (max-width: 768px) {
+  .hiw-grid { grid-template-columns: 1fr; }
+  .hiw-grid::before { display: none; }
+  .hiw-card { margin: 0 0 16px; }
 }
 
-.hero-gradient > .container {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    gap: 1.5rem;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 3rem 2rem;
+/* ── PLATFORM CAPABILITIES ───────────────────────────────────── */
+.cap-grid-lp {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 48px;
+}
+.cap-lp-card {
+  background: rgba(15,23,42,0.65);
+  border: 1px solid var(--lp-border);
+  border-radius: 18px;
+  padding: 30px 26px;
+  transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+.cap-lp-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.cap-lp-card.blue::after  { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
+.cap-lp-card.orange::after{ background: linear-gradient(90deg, #fb923c, #f59e0b); }
+.cap-lp-card.green::after { background: linear-gradient(90deg, #4ade80, #22d3ee); }
+.cap-lp-card:hover { border-color: rgba(56,189,248,0.25); transform: translateY(-4px); }
+.cap-lp-card:hover::after { opacity: 1; }
+
+.cap-lp-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--lp-border);
+}
+.cap-lp-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.cap-lp-item:last-child { margin-bottom: 0; }
+.cap-lp-item-icon {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+}
+.cap-lp-item-icon.blue   { background: rgba(14,165,233,0.12); color: #38bdf8; }
+.cap-lp-item-icon.orange { background: rgba(251,146,60,0.12);  color: #fb923c; }
+.cap-lp-item-icon.green  { background: rgba(74,222,128,0.12);  color: #4ade80; }
+.cap-lp-item-title { font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.82); margin-bottom: 2px; }
+.cap-lp-item-text  { font-size: 0.72rem; color: var(--lp-muted); line-height: 1.5; }
+
+@media (max-width: 900px) {
+  .cap-grid-lp { grid-template-columns: 1fr; }
 }
 
-/* ───────────────────────────────────────────────────
-   LEFT CONTENT PANEL
-─────────────────────────────────────────────────── */
-
-.hero-copy {
-    flex: 0 0 45%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 3rem 2.5rem;
-    border-radius: 1.25rem;
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+/* ── FRAMEWORK ───────────────────────────────────────────────── */
+.fw-track {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-top: 48px;
+  position: relative;
+}
+.fw-track::before {
+  content: '';
+  position: absolute;
+  top: 32px; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,0.2), transparent);
+}
+.fw-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 0 4px;
+}
+.fw-hex {
+  width: 64px; height: 64px;
+  border-radius: 16px;
+  background: rgba(15,23,42,0.8);
+  border: 1px solid var(--lp-border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--lp-cyan);
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 1;
+  transition: all 0.25s;
+}
+.fw-node:hover .fw-hex {
+  background: rgba(56,189,248,0.1);
+  border-color: rgba(56,189,248,0.4);
+  box-shadow: 0 0 24px rgba(14,165,233,0.2);
+}
+.fw-body { text-align: center; }
+.fw-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.88);
+  margin-bottom: 4px;
+}
+.fw-desc {
+  font-size: 0.68rem;
+  color: var(--lp-muted);
+  line-height: 1.55;
+}
+@media (max-width: 700px) {
+  .fw-track { grid-template-columns: 1fr 1fr; gap: 16px; }
+  .fw-track::before { display: none; }
 }
 
-.hero-copy h1.display-3 {
-    font-family: var(--font-heading);
-    font-size: clamp(2.5rem, 5vw, 4rem);
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-    max-width: 14ch;
-    margin-bottom: 24px;
+/* ── TECH STRIP ──────────────────────────────────────────────── */
+.tech-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 40px;
+  justify-content: center;
+}
+.tech-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15,23,42,0.7);
+  border: 1px solid var(--lp-border);
+  border-radius: 100px;
+  padding: 9px 18px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.78);
+  transition: border-color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+.tech-chip:hover {
+  border-color: rgba(56,189,248,0.3);
+  background: rgba(56,189,248,0.06);
+}
+.tech-chip i { color: var(--lp-cyan); font-size: 0.85rem; }
+.tech-chip .tc-role {
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--lp-muted);
+  margin-left: 2px;
 }
 
-.hero-copy h1 .text-gradient {
-    background: linear-gradient(135deg, #4fc3f7, #00e5ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+/* ── BENTO GRID ──────────────────────────────────────────────── */
+.bento-new {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 16px;
+  margin-top: 48px;
+}
+.bn-card {
+  background: rgba(15,23,42,0.7);
+  border: 1px solid var(--lp-border);
+  border-radius: 20px;
+  padding: 32px;
+  transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+.bn-card:hover {
+  border-color: rgba(56,189,248,0.25);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 64px rgba(0,0,0,0.3);
+}
+.bn-wide { grid-column: span 2; }
+.bn-icon {
+  width: 48px; height: 48px;
+  border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.35rem;
+  margin-bottom: 20px;
+}
+.bn-icon.cyan   { background: rgba(56,189,248,0.12); color: #38bdf8; }
+.bn-icon.amber  { background: rgba(251,191,36,0.12); color: #fbbf24; }
+.bn-icon.green  { background: rgba(74,222,128,0.12); color: #4ade80; }
+.bn-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.92);
+  margin-bottom: 10px;
+}
+.bn-text {
+  font-size: 0.83rem;
+  color: var(--lp-muted);
+  line-height: 1.75;
+}
+@media (max-width: 768px) {
+  .bento-new { grid-template-columns: 1fr; }
+  .bn-wide { grid-column: span 1; }
 }
 
-.hero-copy p.lead {
-    font-size: 1.05rem;
-    line-height: 1.75;
-    color: rgba(255, 255, 255, 0.7);
-    max-width: 600px;
+/* ── CTA ─────────────────────────────────────────────────────── */
+.cta-new {
+  padding: var(--lp-section-gap) 0;
 }
-
-.hero-copy .d-flex {
-    margin-top: 32px;
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
+.cta-box {
+  background: linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(12,74,110,0.3) 100%);
+  border: 1px solid rgba(56,189,248,0.15);
+  border-radius: 24px;
+  padding: 72px 48px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
 }
-
-.hero-copy .btn-indigo {
-    background: linear-gradient(135deg, #1565c0, #0288d1);
-    border: none;
-    padding: 14px 32px;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    letter-spacing: 0.01em;
-    box-shadow: 0 4px 20px rgba(2, 136, 209, 0.4);
-    transition: transform 0.2s, box-shadow 0.2s;
-    color: #fff;
+.cta-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,0.5), rgba(99,102,241,0.5), transparent);
 }
-
-.hero-copy .btn-indigo:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 28px rgba(2, 136, 209, 0.55);
+.cta-box::after {
+  content: '';
+  position: absolute;
+  bottom: -120px; left: 50%;
+  transform: translateX(-50%);
+  width: 500px; height: 300px;
+  background: radial-gradient(ellipse, rgba(14,165,233,0.08) 0%, transparent 65%);
+  pointer-events: none;
 }
-
-.hero-copy .btn-outline-indigo {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.85);
-    padding: 14px 32px;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    letter-spacing: 0.01em;
-    transition: background 0.2s, transform 0.2s;
+.cta-h2 {
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
 }
-
-.hero-copy .btn-outline-indigo:hover {
-    background: rgba(255, 255, 255, 0.06);
-    transform: translateY(-2px);
+.cta-h2 .g {
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
-
-/* ───────────────────────────────────────────────────
-   RIGHT DASHBOARD PREVIEW
-─────────────────────────────────────────────────── */
-
-.hero-gradient > .container > .row {
-    display: contents;
+.cta-body {
+  font-size: 1rem;
+  color: var(--lp-muted);
+  max-width: 480px;
+  margin: 0 auto 36px;
+  line-height: 1.75;
 }
-
-.hero-gradient > .container > .row > .col-lg-6:last-child {
-    flex: 0 0 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.hero-gradient > .container > .row > .col-lg-6:last-child .position-relative {
-    width: 100%;
-    height: auto;
-    max-height: 500px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.hero-gradient > .container > .row > .col-lg-6:last-child .bg-indigo-600 {
-    width: 100%;
-    height: 100%;
-    border-radius: 1.25rem;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-}
-
-.hero-gradient > .container > .row > .col-lg-6:last-child img.img-fluid {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: top;
-    display: block;
-}
-
-/* ───────────────────────────────────────────────────
-   RESPONSIVE
-─────────────────────────────────────────────────── */
-
-@media (max-width: 992px) {
-    .hero-gradient > .container {
-        flex-direction: column;
-        padding: 2rem 1.5rem;
-        gap: 1.5rem;
-    }
-
-    .hero-copy {
-        flex: 1 1 100%;
-        min-height: auto;
-        width: 100%;
-        padding: 2.5rem 2rem;
-    }
-
-    .hero-gradient > .container > .row > .col-lg-6:last-child {
-        flex: 1 1 100%;
-        width: 100%;
-    }
-
-    .hero-gradient > .container > .row > .col-lg-6:last-child .position-relative {
-        height: auto;
-        max-height: 400px;
-    }
+.cta-btn-row {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 </style>
 
-<!-- Premium Inspiration Section -->
-<div class="container py-5 my-5">
-    <div class="card inspiration-card p-0 border-0 rounded-5 overflow-hidden shadow-2xl animate-up">
-        <div class="row g-0 align-items-stretch">
-            <div class="col-lg-6 p-5 p-md-5 d-flex flex-column justify-content-center">
-                <div class="mb-4">
-                    <span class="badge bg-indigo-50 text-indigo-600 px-3 py-2 rounded-pill small fw-bold text-uppercase tracking-wider">
-                        Guiding Philosophy
-                    </span>
-                </div>
-                
-                <h2 class="display-4 feynman-name mb-4">Richard Feynman</h2>
-                
-                <div class="inspiration-quote-container mb-4">
-                    <div class="quote-container">
-                        <span class="quote-mark">❝</span>
-                        <p class="feynman-quote">
-                            "If you can't explain it simply, then you don't understand it well enough."
-                        </p>
-                    </div>
-                </div>
-                
-                <p class="lead text-secondary mb-4 opacity-90">
-                    Modern machine learning systems often behave like black boxes. 
-                    FeynML translates complex ML failures into clear, actionable 
-                    explanations that students, engineers, and practitioners can understand.
-                </p>
-                
-                <div class="d-flex align-items-center gap-3 pt-3 border-top mt-2">
-                    <div class="h6 mb-0 fw-bold text-indigo-600">Clarity.</div>
-                    <div class="h6 mb-0 fw-bold text-indigo-600">Simplicity.</div>
-                    <div class="h6 mb-0 fw-bold text-indigo-600">Understanding.</div>
-                </div>
-            </div>
-            <div class="col-lg-6 position-relative">
-    <div class="feynman-image-wrapper h-100">
-        <img src="{{ url_for('static', filename='images/myimage.jpg') }}"
-             class="img-fluid feynman-hero-img"
-             alt="Richard Feynman">
-        <div class="image-overlay"></div>
-    </div>
-</div>
-        </div>
-    </div>
-</div>
 
-<section class="how-it-works" style="padding: 80px 0; text-align: center;">
-    <style>
-    .section-badge {
-        display: inline-block;
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #4fc3f7;
-        background: rgba(79, 195, 247, 0.1);
-        border: 1px solid rgba(79, 195, 247, 0.2);
-        border-radius: 100px;
-        padding: 6px 16px;
-        margin-bottom: 16px;
-    }
-    [data-theme="light"] .section-badge,
-    .light .section-badge {
-        background: #DBEAFE;
-        color: #1D4ED8;
-        border-color: #93C5FD;
-        font-weight: 600;
-    }
-    [data-theme="dark"] .section-badge,
-    .dark .section-badge {
-        background: rgba(79, 195, 247, 0.1);
-        color: #93C5FD;
-        border-color: rgba(79, 195, 247, 0.2);
-    }
-    .steps-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 24px;
-        max-width: 900px;
-        margin: 48px auto 0;
-        position: relative;
-    }
-    .step-card {
-        background: rgba(15, 23, 42, 0.65);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 32px 24px;
-        text-align: left;
-        position: relative;
-        transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-    }
-    [data-theme="light"] .step-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
-    }
-    .step-card:hover {
-        border-color: rgba(79,195,247,0.3);
-        transform: translateY(-4px);
-    }
-    .step-number {
-        font-size: 3rem;
-        font-weight: 800;
-        color: rgba(79, 195, 247, 0.12);
-        line-height: 1;
-        margin-bottom: 16px;
-        font-family: var(--font-heading);
-    }
-    [data-theme="light"] .step-number {
-        color: #cbd5e1;
-    }
-    [data-theme="dark"] .step-number {
-        color: rgba(59, 130, 246, 0.18);
-    }
-    .step-card h3 {
-        font-size: 1rem;
-        font-weight: 600;
-        color: rgba(255,255,255,0.92);
-        margin-bottom: 10px;
-    }
-    [data-theme="light"] .step-card h3 {
-        color: #0f172a;
-    }
-    .step-card p {
-        font-size: 0.95rem;
-        color: rgba(255,255,255,0.78);
-        line-height: 1.8;
-    }
-    [data-theme="light"] .step-card p {
-        color: #475569;
-    }
-    @media (max-width: 768px) {
-        .steps-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-    </style>
-    <p class="section-badge">How it works</p>
-    <h2 class="section-title">From upload to insight in 3 steps</h2>
-    <p class="section-subtitle">No configuration. No boilerplate. Just answers.</p>
+<!-- ══════════════════════════════════════════════════════════════
+     HERO
+     ══════════════════════════════════════════════════════════════ -->
+<div class="hero-section">
 
-    <div class="steps-grid">
-        <div class="step-card">
-            <div class="step-number">01</div>
-            <div class="step-icon mb-3"><i class="bi bi-cloud-arrow-up-fill text-info" style="font-size: 1.5rem;"></i></div>
-            <h3>Upload your dataset</h3>
-            <p>Drop a CSV or JSON. FeynML accepts datasets up to 50MB and automatically detects column types, target variables, and data structure.</p>
+  <!-- Hero card -->
+  <div class="hero-card animate-up">
+    <div class="row align-items-center g-5">
+
+      <!-- LEFT — copy -->
+      <div class="col-12 col-lg-6">
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          ML Failure Investigation Engine
         </div>
-        <div class="step-card">
-            <div class="step-number">02</div>
-            <div class="step-icon mb-3"><i class="bi bi-brain text-info" style="font-size: 1.5rem;"></i></div>
-            <h3>Run diagnostics</h3>
-            <p>Choose from drift detection, label noise analysis, leakage detection, calibration audit, fairness check, or full pipeline scan.</p>
+        <h1 class="hero-h1">
+          Debug your ML models<br>
+          <span class="grad">with precision.</span>
+        </h1>
+        <p class="hero-lead">
+          FeynML is the professional standard for ML failure investigation.
+          Detect drift, audit calibration, and identify root causes in seconds —
+          no code required.
+        </p>
+        <div class="d-flex gap-3 flex-wrap">
+          <a href="{{ url_for('index') }}" class="btn btn-indigo btn-lg px-5 rounded-pill shadow">
+            Launch Engine
+          </a>
+          <a href="{{ url_for('features') }}" class="btn btn-outline-indigo btn-lg px-5 rounded-pill">
+            Explore Features
+          </a>
         </div>
-        <div class="step-card">
-            <div class="step-number">03</div>
-            <div class="step-icon mb-3"><i class="bi bi-file-earmark-text-fill text-info" style="font-size: 1.5rem;"></i></div>
-            <h3>Get actionable reports</h3>
-            <p>Receive a detailed failure report with root cause explanations, severity scores, and fix recommendations — exportable as PDF.</p>
+        <div class="hero-checks">
+          <div class="hero-check"><i class="bi bi-check2-circle"></i> No-code Analysis</div>
+          <div class="hero-check"><i class="bi bi-check2-circle"></i> Statistical Rigor</div>
+          <div class="hero-check"><i class="bi bi-check2-circle"></i> SaaS Optimized</div>
         </div>
+      </div>
+
+      <!-- RIGHT — screenshot -->
+      <div class="col-12 col-lg-6 d-flex justify-content-center">
+        <div class="hero-screen-wrap">
+          <img
+            src="{{ url_for('static', filename='images/hero_screenshot.avif') }}"
+            alt="FeynML dashboard — drift detection and model diagnostics"
+            class="hero-screen-img"
+          />
+          <!-- Drift badge -->
+          <div class="hero-badge-float" style="top:14px; left:14px;">
+            Drift Detected<br>
+            <strong style="color:#fb923c;">8 Features</strong>
+          </div>
+          <!-- Audit badge -->
+          <div class="hero-badge-float" style="bottom:14px; right:14px;">
+            Audit Score<br>
+            <strong style="color:#4ade80; font-size:16px;">98.4%</strong>
+          </div>
+        </div>
+      </div>
+
     </div>
-</section>
+  </div>
 
-<!-- Platform Capabilities & Roadmap -->
-<div class="container py-5 my-5">
-    <style>
-    .capability-card {
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        border-radius: 16px;
-        padding: 24px;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-    .capability-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, #4fc3f7, transparent);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    .capability-card:hover {
-        background: rgba(255, 255, 255, 0.06);
-        border-color: rgba(79, 195, 247, 0.3);
-        transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(79, 195, 247, 0.1);
-    }
-    .capability-card:hover::before {
-        opacity: 1;
-    }
-    .capability-item {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 18px;
-        align-items: flex-start;
-    }
-    .capability-item:last-child {
-        margin-bottom: 0;
-    }
-    .capability-item-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        background: rgba(79, 195, 247, 0.12);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-    .capability-item-icon i {
-        color: #4fc3f7 !important;
-    }
-    .capability-card-title {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: rgba(255, 255, 255, 0.92);
-        margin-bottom: 6px;
-    }
-    .capability-item-text {
-        font-size: 0.78rem;
-        color: rgba(255, 255, 255, 0.5);
-        line-height: 1.5;
-    }
-    .row.row-cols-1.row-cols-md-2.row-cols-lg-3 > .col:nth-of-type(1) .capability-card {
-        border-top: 2px solid #4fc3f7;
-    }
-    .row.row-cols-1.row-cols-md-2.row-cols-lg-3 > .col:nth-of-type(2) .capability-card {
-        border-top: 2px solid #ff7043;
-    }
-    .row.row-cols-1.row-cols-md-2.row-cols-lg-3 > .col:nth-of-type(3) .capability-card {
-        border-top: 2px solid #66bb6a;
-    }
-    </style>
-    <div class="text-center mb-5 animate-up">
-        <h2 class="display-5 fw-bold mb-3 section-title">Platform Capabilities & Roadmap</h2>
-        <p class="text-muted section-subtitle">What FeynML can do today, its current limitations, and the future roadmap for AI-first failure investigation.</p>
+  <!-- JARVIS logo strip — left-aligned, links to /about -->
+  <div class="logo-strip">
+    <div class="logo-strip-left">
+      <a href="/about" title="Explore FeynML Architecture">
+        <svg width="200" viewBox="0 0 680 420"
+             role="img" xmlns="http://www.w3.org/2000/svg"
+             style="filter: drop-shadow(0 0 10px rgba(14,165,233,0.25)); max-width:200px;">
+          <title>FeynML JARVIS Logo</title>
+          <radialGradient id="lp-bg" cx="50%" cy="48%" r="40%">
+            <stop offset="0%"   stop-color="#0284c7" stop-opacity="0.12"/>
+            <stop offset="100%" stop-color="#060d1a" stop-opacity="0"/>
+          </radialGradient>
+          <rect width="680" height="420" fill="url(#lp-bg)"/>
+          <g class="fml-op">
+            <circle cx="340" cy="200" r="145" fill="none" stroke="#38bdf8" stroke-width="0.3"/>
+            <circle cx="340" cy="200" r="150" fill="none" stroke="#0ea5e9" stroke-width="0.2"/>
+          </g>
+          <circle cx="340" cy="200" r="118" fill="none" stroke="#0ea5e9" stroke-width="0.5" opacity="0.2"/>
+          <circle cx="340" cy="200" r="122" fill="none" stroke="#38bdf8" stroke-width="0.3" opacity="0.12"/>
+          <g stroke="#38bdf8" stroke-width="1.2" opacity="0.45">
+            <line x1="340" y1="79"  x2="340" y2="68"/>
+            <line x1="340" y1="321" x2="340" y2="332"/>
+            <line x1="219" y1="200" x2="208" y2="200"/>
+            <line x1="461" y1="200" x2="472" y2="200"/>
+            <line x1="424" y1="116" x2="432" y2="108"/>
+            <line x1="256" y1="116" x2="248" y2="108"/>
+            <line x1="424" y1="284" x2="432" y2="292"/>
+            <line x1="256" y1="284" x2="248" y2="292"/>
+          </g>
+          <g class="fml-r4"><circle cx="340" cy="200" r="108" fill="none" stroke="#0369a1" stroke-width="0.8" stroke-dasharray="5 15 3 20 5 10" opacity="0.35"/></g>
+          <g class="fml-r1">
+            <circle cx="340" cy="200" r="92" fill="none" stroke="#0ea5e9" stroke-width="1.8" stroke-dasharray="32 9 9 9 55 9 9 9" opacity="0.72"/>
+            <rect x="336" y="107" width="8" height="2" rx="1" fill="#38bdf8" opacity="0.7"/>
+            <rect x="336" y="291" width="8" height="2" rx="1" fill="#38bdf8" opacity="0.7"/>
+            <rect x="247" y="198" width="2" height="4" rx="1" fill="#38bdf8" opacity="0.7"/>
+            <rect x="431" y="198" width="2" height="4" rx="1" fill="#38bdf8" opacity="0.7"/>
+          </g>
+          <g class="fml-r2">
+            <circle cx="340" cy="200" r="72" fill="none" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="22 7 7 7 44 7" opacity="0.65"/>
+            <circle cx="340"   cy="128" r="4" fill="#7dd3fc" opacity="0.9"/>
+            <circle cx="340"   cy="128" r="7" fill="none" stroke="#7dd3fc" stroke-width="0.5" opacity="0.4"/>
+            <circle cx="402.4" cy="236" r="4" fill="#7dd3fc" opacity="0.9"/>
+            <circle cx="402.4" cy="236" r="7" fill="none" stroke="#7dd3fc" stroke-width="0.5" opacity="0.4"/>
+            <circle cx="277.6" cy="236" r="4" fill="#7dd3fc" opacity="0.9"/>
+            <circle cx="277.6" cy="236" r="7" fill="none" stroke="#7dd3fc" stroke-width="0.5" opacity="0.4"/>
+          </g>
+          <g class="fml-r3">
+            <circle cx="340" cy="200" r="52" fill="none" stroke="#0284c7" stroke-width="1.8" stroke-dasharray="12 5 5 5 24 5" opacity="0.85"/>
+            <circle class="fml-scan" cx="340" cy="148" r="3" fill="#bae6fd"/>
+          </g>
+          <g opacity="0.065" stroke="#38bdf8" stroke-width="0.6" fill="none">
+            <polygon points="340,174 366,189 366,219 340,234 314,219 314,189"/>
+            <polygon points="340,154 374,173 374,213 340,232 306,213 306,173"/>
+            <polygon points="340,136 380,159 380,209 340,232 300,209 300,159"/>
+          </g>
+          <g opacity="0.4" stroke="#38bdf8" stroke-width="0.6" fill="none">
+            <line x1="215" y1="180" x2="248" y2="180"/><line x1="208" y1="185" x2="248" y2="185"/><line x1="215" y1="190" x2="240" y2="190"/>
+            <line x1="215" y1="210" x2="248" y2="210"/><line x1="208" y1="215" x2="248" y2="215"/><line x1="215" y1="220" x2="240" y2="220"/>
+          </g>
+          <g opacity="0.4" stroke="#38bdf8" stroke-width="0.6" fill="none">
+            <line x1="432" y1="180" x2="465" y2="180"/><line x1="432" y1="185" x2="472" y2="185"/><line x1="440" y1="190" x2="465" y2="190"/>
+            <line x1="432" y1="210" x2="465" y2="210"/><line x1="432" y1="215" x2="472" y2="215"/><line x1="440" y1="220" x2="465" y2="220"/>
+          </g>
+          <text x="204" y="179" font-family="monospace" font-size="8.5" fill="#7dd3fc" opacity="0.55" text-anchor="end">ECE</text>
+          <text x="204" y="189" font-family="monospace" font-size="7"   fill="#38bdf8" opacity="0.35" text-anchor="end">0.024</text>
+          <text x="204" y="211" font-family="monospace" font-size="8.5" fill="#7dd3fc" opacity="0.55" text-anchor="end">PSI</text>
+          <text x="204" y="221" font-family="monospace" font-size="7"   fill="#38bdf8" opacity="0.35" text-anchor="end">STABLE</text>
+          <text x="476" y="179" font-family="monospace" font-size="8.5" fill="#7dd3fc" opacity="0.55">AUC</text>
+          <text x="476" y="189" font-family="monospace" font-size="7"   fill="#38bdf8" opacity="0.35">0.98</text>
+          <text x="476" y="211" font-family="monospace" font-size="8.5" fill="#7dd3fc" opacity="0.55">KS</text>
+          <text x="476" y="221" font-family="monospace" font-size="7"   fill="#38bdf8" opacity="0.35">ΔSTAT</text>
+          <circle cx="210" cy="195" r="1.5" fill="#0ea5e9" class="fml-hud"/>
+          <circle cx="470" cy="195" r="1.5" fill="#0ea5e9" class="fml-hud" style="animation-delay:.8s"/>
+          <circle cx="340" cy="200" r="34" fill="#082f49" opacity="0.5"/>
+          <circle cx="340" cy="200" r="28" fill="#0c4a6e" opacity="0.65"/>
+          <circle cx="340" cy="200" r="22" fill="#075985" opacity="0.75"/>
+          <circle cx="340" cy="200" r="17" fill="#0284c7" opacity="0.82"/>
+          <circle cx="340" cy="200" r="12" fill="#38bdf8" opacity="0.88"/>
+          <circle cx="340" cy="200" class="fml-core" fill="#bae6fd" opacity="0.97"/>
+          <g stroke="#082f49" stroke-width="1.8" opacity="0.95" stroke-linecap="round">
+            <line x1="340" y1="184" x2="340" y2="195"/><line x1="340" y1="205" x2="340" y2="216"/>
+            <line x1="324" y1="200" x2="335" y2="200"/><line x1="345" y1="200" x2="356" y2="200"/>
+            <line x1="329" y1="189" x2="337" y2="197"/><line x1="343" y1="203" x2="351" y2="211"/>
+            <line x1="351" y1="189" x2="343" y2="197"/><line x1="337" y1="203" x2="329" y2="211"/>
+          </g>
+          <line x1="274" y1="312" x2="406" y2="312" stroke="#0ea5e9" stroke-width="0.5" opacity="0.3"/>
+          <text x="340" y="338" font-family="Inter,-apple-system,BlinkMacSystemFont,sans-serif" font-size="34" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="5" class="fml-txt">FeynML</text>
+          <text x="340" y="360" font-family="monospace" font-size="10" fill="#38bdf8" text-anchor="middle" letter-spacing="6" opacity="0.75">ML FAILURE ENGINE</text>
+          <circle cx="244" cy="356" r="1.5" fill="#0ea5e9" opacity="0.4"/>
+          <circle cx="436" cy="356" r="1.5" fill="#0ea5e9" opacity="0.4"/>
+        </svg>
+      </a>
+      <p class="logo-strip-caption">Click to explore architecture</p>
     </div>
 
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 animate-up">
-        <div class="col">
-            <div class="capability-card h-100 p-4">
-                <h5 class="capability-card-title mb-4">Current Capabilities</h5>
-                <div class="capability-item">
-                    <div class="capability-item-icon text-info"><i class="bi bi-check-circle"></i></div>
-                    <div>
-                        <div class="capability-item-title">Feature Drift Detection</div>
-                        <div class="capability-item-text">Detect distribution shifts across model inputs and targets.</div>
-                    </div>
-                </div>
-                <div class="capability-item">
-                    <div class="capability-item-icon text-info"><i class="bi bi-check-circle"></i></div>
-                    <div>
-                        <div class="capability-item-title">Calibration Analysis</div>
-                        <div class="capability-item-text">Audit score reliability and probability calibration.</div>
-                    </div>
-                </div>
-                <div class="capability-item">
-                    <div class="capability-item-icon text-info"><i class="bi bi-check-circle"></i></div>
-                    <div>
-                        <div class="capability-item-title">Label Noise Detection</div>
-                        <div class="capability-item-text">Flag inconsistent labels and annotation drift.</div>
-                    </div>
-                </div>
-                <div class="capability-item">
-                    <div class="capability-item-icon text-info"><i class="bi bi-check-circle"></i></div>
-                    <div>
-                        <div class="capability-item-title">Leakage Detection</div>
-                        <div class="capability-item-text">Surface potential target leakage and data contamination.</div>
-                    </div>
-                </div>
-                <div class="capability-item">
-                    <div class="capability-item-icon text-info"><i class="bi bi-check-circle"></i></div>
-                    <div>
-                        <div class="capability-item-title">Missingness Analysis</div>
-                        <div class="capability-item-text">Evaluate missing value patterns and feature coverage.</div>
-                    </div>
-                </div>
-                <div class="capability-item">
-                    <div class="capability-item-icon text-info"><i class="bi bi-check-circle"></i></div>
-                    <div>
-                        <div class="capability-item-title">Fairness Audit</div>
-                        <div class="capability-item-text">Assess model performance across sensitive groups.</div>
-                    </div>
-                </div>
-            </div>
+    <!-- Quick stats on the right -->
+    <div class="logo-strip-right">
+
+      <div class="logo-strip-stat">
+        <div class="logo-strip-stat-icon">
+          <i class="bi bi-cpu"></i>
         </div>
-        <div class="col">
-            <div class="capability-card h-100 p-4">
-                <h5 class="capability-card-title mb-4">Technical Limits</h5>
-                <div class="capability-item">
-                    <div class="capability-item-icon text-warning"><i class="bi bi-exclamation-triangle"></i></div>
-                    <div>
-                        <div class="capability-item-title">Recommended Upload Size</div>
-                        <div class="capability-item-text">50 MB</div>
-                    </div>
-                </div>
-                <div class="capability-item">
-                    <div class="capability-item-icon text-info"><i class="bi bi-info-circle"></i></div>
-                    <div>
-                        <div class="capability-item-title">Tested Dataset Size</div>
-                        <div class="capability-item-text">Up to 500k rows</div>
-                    </div>
-                </div>
-                <div class="capability-item">
-                    <div class="capability-item-icon text-info"><i class="bi bi-file-earmark-text"></i></div>
-                    <div>
-                        <div class="capability-item-title">Supported Formats</div>
-                        <div class="capability-item-text">CSV, JSON</div>
-                    </div>
-                </div>
-                <div class="capability-item">
-                    <div class="capability-item-icon text-warning"><i class="bi bi-clock-history"></i></div>
-                    <div>
-                        <div class="capability-item-title">Real-time Monitoring</div>
-                        <div class="capability-item-text">Not Available</div>
-                    </div>
-                </div>
-                <div class="capability-item">
-                    <div class="capability-item-icon text-warning"><i class="bi bi-stack"></i></div>
-                    <div>
-                        <div class="capability-item-title">Multi-table Support</div>
-                        <div class="capability-item-text">Not Available</div>
-                    </div>
-                </div>
-                <div class="capability-item">
-                    <div class="capability-item-icon text-info"><i class="bi bi-gear-wide-connected"></i></div>
-                    <div>
-                        <div class="capability-item-title">GPU Acceleration</div>
-                        <div class="capability-item-text">Planned</div>
-                    </div>
-                </div>
-            </div>
+        <span>6</span>
+        <span>Diagnostic Modules</span>
+      </div>
+
+      <div class="logo-strip-stat">
+        <div class="logo-strip-stat-icon">
+          <i class="bi bi-table"></i>
         </div>
-        <div class="col">
-            <div class="capability-card h-100 p-4">
-                <h5 class="capability-card-title mb-4">Future Roadmap</h5>
-                <div class="roadmap-group mb-4">
-                    <div class="roadmap-year">2026</div>
-                    <div class="roadmap-item">
-                        <span class="roadmap-dot"></span>
-                        <span>SHAP Integration</span>
-                    </div>
-                    <div class="roadmap-item">
-                        <span class="roadmap-dot"></span>
-                        <span>LIME Integration</span>
-                    </div>
-                    <div class="roadmap-item">
-                        <span class="roadmap-dot"></span>
-                        <span>Slice Discovery</span>
-                    </div>
-                </div>
-                <div class="roadmap-group">
-                    <div class="roadmap-year">2027</div>
-                    <div class="roadmap-item">
-                        <span class="roadmap-dot"></span>
-                        <span>LLM Investigation Agent</span>
-                    </div>
-                    <div class="roadmap-item">
-                        <span class="roadmap-dot"></span>
-                        <span>Root Cause Analysis</span>
-                    </div>
-                    <div class="roadmap-item">
-                        <span class="roadmap-dot"></span>
-                        <span>Cloud Deployment</span>
-                    </div>
-                    <div class="roadmap-item">
-                        <span class="roadmap-dot"></span>
-                        <span>Real-Time Monitoring</span>
-                    </div>
-                </div>
-            </div>
+        <span>500K</span>
+        <span>Rows Tested</span>
+      </div>
+
+      <div class="logo-strip-stat">
+        <div class="logo-strip-stat-icon">
+          <i class="bi bi-diagram-3"></i>
         </div>
+        <span>5</span>
+        <span>Investigation Phases</span>
+      </div>
+
+      <div class="logo-strip-stat">
+        <div class="logo-strip-stat-icon">
+          <i class="bi bi-file-earmark-pdf"></i>
+        </div>
+        <span>PDF</span>
+        <span>Report Export</span>
+      </div>
+
     </div>
+  </div>
+
+</div><!-- /hero-section -->
+
+<div class="lp-divider" style="margin-top: 64px;"></div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     FEYNMAN INSPIRATION
+     ══════════════════════════════════════════════════════════════ -->
+<div class="feynman-section">
+  <div class="container" style="max-width: 1120px;">
+    <div class="feynman-card-new animate-up">
+      <div class="row g-0 align-items-stretch">
+
+        <!-- Left — quote & copy -->
+        <div class="col-lg-6 p-5">
+          <p class="feynman-tag">Guiding Philosophy</p>
+          <h2 class="lp-h2" style="margin-bottom: 28px;">
+            Richard <span class="g">Feynman</span>
+          </h2>
+          <div class="feynman-quote-new">
+            "If you can't explain it simply, you don't understand it well enough."
+          </div>
+          <p class="lp-sub mt-4" style="font-size: 0.92rem;">
+            Modern ML systems often fail silently. FeynML translates complex failure modes
+            into clear, actionable explanations — the Feynman technique applied to
+            machine learning diagnostics.
+          </p>
+          <div class="feynman-pillars">
+            <div class="feynman-pillar">Clarity<span>Every result explained</span></div>
+            <div class="feynman-pillar">Simplicity<span>No-code interface</span></div>
+            <div class="feynman-pillar">Rigor<span>Stats-grounded</span></div>
+          </div>
+        </div>
+
+        <!-- Right — image -->
+        <div class="col-lg-6 position-relative" style="min-height: 360px;">
+          <div class="feynman-image-wrapper h-100">
+            <img src="{{ url_for('static', filename='images/myimage.jpg') }}"
+                 class="img-fluid feynman-hero-img"
+                 alt="Richard Feynman">
+            <div class="image-overlay"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="container py-5 my-5">
-    <div class="phase-roadmap-heading animate-up">
-        <h3>FeynML Investigation Framework</h3>
-        <p>Five structured phases used to diagnose, observe, explain, and debug machine learning systems.</p>
-    </div>
+<div class="lp-divider"></div>
 
-    <div class="phase-roadmap animate-up">
-        <div class="phase-node">
-            <div class="hex">P0</div>
-            <span>Foundations</span>
-            <small>Math • Stats • ML Basics</small>
-        </div>
-        <div class="phase-node">
-            <div class="hex">P1</div>
-            <span>Diagnostics</span>
-            <small>Metrics • Calibration • Fairness</small>
-        </div>
-        <div class="phase-node">
-            <div class="hex">P2</div>
-            <span>Observability</span>
-            <small>Drift • Monitoring • Slices</small>
-        </div>
-        <div class="phase-node">
-            <div class="hex">P3</div>
-            <span>Root Cause</span>
-            <small>SHAP • LIME • Failure Analysis</small>
-        </div>
-        <div class="phase-node">
-            <div class="hex">P4</div>
-            <span>Data Debugging</span>
-            <small>Leakage • Missing Data • Causality</small>
-        </div>
-    </div>
 
-    <div class="text-center mb-5 animate-up" style="margin-top: 2.5rem;">
-        <h2 class="display-5 fw-bold mb-3 section-title">Built Using</h2>
-        <p class="text-muted section-subtitle">The core technologies powering the FeynML diagnostic engine.</p>
-    </div>
+<!-- ══════════════════════════════════════════════════════════════
+     HOW IT WORKS
+     ══════════════════════════════════════════════════════════════ -->
+<div class="lp-section">
+  <div class="container text-center" style="max-width: 1120px;">
+    <p class="lp-eyebrow">How it works</p>
+    <h2 class="lp-h2">From upload to insight <span class="g">in 3 steps</span></h2>
+    <p class="lp-sub mx-auto">No configuration. No boilerplate. Just answers.</p>
 
-    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-7 g-4 animate-up" style="animation-delay: 0.2s;">
-        <div class="col">
-            <div class="tech-badge">
-                <i class="bi bi-gear-fill tech-icon"></i>
-                <div>
-                    <span class="tech-name">Flask</span>
-                    <span class="tech-role">Web framework</span>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="tech-badge">
-                <i class="bi bi-table tech-icon"></i>
-                <div>
-                    <span class="tech-name">Pandas</span>
-                    <span class="tech-role">Data processing</span>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="tech-badge">
-                <i class="bi bi-calculator tech-icon"></i>
-                <div>
-                    <span class="tech-name">NumPy</span>
-                    <span class="tech-role">Numerical compute</span>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="tech-badge">
-                <i class="bi bi-graph-up-arrow tech-icon"></i>
-                <div>
-                    <span class="tech-name">SciPy</span>
-                    <span class="tech-role">Scientific computing</span>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="tech-badge">
-                <i class="bi bi-cpu tech-icon"></i>
-                <div>
-                    <span class="tech-name">Scikit-Learn</span>
-                    <span class="tech-role">ML algorithms</span>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="tech-badge">
-                <i class="bi bi-bar-chart-fill tech-icon"></i>
-                <div>
-                    <span class="tech-name">Plotly</span>
-                    <span class="tech-role">Visualizations</span>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="tech-badge">
-                <i class="bi bi-code-slash tech-icon"></i>
-                <div>
-                    <span class="tech-name">Jinja2</span>
-                    <span class="tech-role">Templating</span>
-                </div>
-            </div>
-        </div>
+    <div class="hiw-grid animate-up">
+      <div class="hiw-card">
+        <div class="hiw-num">01</div>
+        <div class="hiw-icon"><i class="bi bi-cloud-arrow-up-fill"></i></div>
+        <div class="hiw-title">Upload your dataset</div>
+        <p class="hiw-text">Drop a CSV or JSON. FeynML accepts datasets up to 50MB and automatically detects column types, target variables, and data structure.</p>
+      </div>
+      <div class="hiw-card">
+        <div class="hiw-num">02</div>
+        <div class="hiw-icon"><i class="bi bi-cpu-fill"></i></div>
+        <div class="hiw-title">Run diagnostics</div>
+        <p class="hiw-text">Choose from drift detection, label noise analysis, leakage detection, calibration audit, fairness check, or a full pipeline scan.</p>
+      </div>
+      <div class="hiw-card">
+        <div class="hiw-num">03</div>
+        <div class="hiw-icon"><i class="bi bi-file-earmark-text-fill"></i></div>
+        <div class="hiw-title">Get actionable reports</div>
+        <p class="hiw-text">Receive a detailed failure report with root cause explanations, severity scores, and fix recommendations — exportable as PDF.</p>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- Feature Bento Grid -->
-<div class="container py-5 my-5">
-    <div class="text-center mb-5 animate-up">
-        <h2 class="display-5 fw-bold mb-3">Engineered for Accuracy</h2>
-        <p class="text-muted">Comprehensive diagnostics across the entire ML lifecycle.</p>
+<div class="lp-divider"></div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     PLATFORM CAPABILITIES & ROADMAP  — v2 (updated icons + content)
+     Drop-in replacement for the existing section in landing.html
+     ══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* ── Design tokens (match existing lp vars) ─────────────────── */
+:root {
+  --lp-cyan:      #38bdf8;
+  --lp-cyan-dim:  rgba(56,189,248,0.12);
+  --lp-indigo:    #6366f1;
+  --lp-border:    rgba(56,189,248,0.10);
+  --lp-muted:     #94a3b8;
+}
+
+/* ── Capabilities grid ───────────────────────────────────────── */
+.cap-grid-lp {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 48px;
+}
+.cap-lp-card {
+  background: rgba(15,23,42,0.65);
+  border: 1px solid var(--lp-border);
+  border-radius: 18px;
+  padding: 30px 26px;
+  transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+.cap-lp-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.cap-lp-card.blue::after   { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
+.cap-lp-card.orange::after { background: linear-gradient(90deg, #fb923c, #f59e0b); }
+.cap-lp-card.green::after  { background: linear-gradient(90deg, #4ade80, #22d3ee); }
+.cap-lp-card:hover {
+  border-color: rgba(56,189,248,0.25);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 48px rgba(0,0,0,0.28);
+}
+.cap-lp-card:hover::after  { opacity: 1; }
+
+.cap-lp-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--lp-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cap-lp-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.cap-lp-item:last-child { margin-bottom: 0; }
+.cap-lp-item-icon {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+}
+.cap-lp-item-icon.blue   { background: rgba(14,165,233,0.14);  color: #38bdf8; }
+.cap-lp-item-icon.orange { background: rgba(251,146,60,0.14);  color: #fb923c; }
+.cap-lp-item-icon.green  { background: rgba(74,222,128,0.14);  color: #4ade80; }
+.cap-lp-item-icon.indigo { background: rgba(99,102,241,0.14);  color: #818cf8; }
+.cap-lp-item-icon.amber  { background: rgba(251,191,36,0.14);  color: #fbbf24; }
+.cap-lp-item-title { font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 2px; }
+.cap-lp-item-text  { font-size: 0.72rem; color: var(--lp-muted); line-height: 1.5; }
+
+/* Road­map year badge */
+.rm-year-badge {
+  font-family: monospace;
+  font-size: 0.6rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 100px;
+  margin-bottom: 12px;
+  display: inline-block;
+}
+.rm-year-badge.done    { background: rgba(74,222,128,0.12); color: #4ade80;  border: 1px solid rgba(74,222,128,0.25); }
+.rm-year-badge.active  { background: rgba(56,189,248,0.12); color: #38bdf8;  border: 1px solid rgba(56,189,248,0.25); }
+.rm-year-badge.planned { background: rgba(99,102,241,0.12); color: #818cf8;  border: 1px solid rgba(99,102,241,0.25); }
+
+/* Status dot on roadmap items */
+.rm-status {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.rm-status.shipped { background: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,0.6); }
+.rm-status.wip     { background: #38bdf8; box-shadow: 0 0 6px rgba(56,189,248,0.6); animation: rmPulse 2s ease infinite; }
+.rm-status.future  { background: #6366f1; opacity: 0.7; }
+@keyframes rmPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+@media (max-width: 900px) {
+  .cap-grid-lp { grid-template-columns: 1fr; }
+}
+
+/* ── Tech strip ──────────────────────────────────────────────── */
+.tech-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 40px;
+  justify-content: center;
+}
+.tech-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15,23,42,0.7);
+  border: 1px solid var(--lp-border);
+  border-radius: 100px;
+  padding: 9px 18px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.82);
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  white-space: nowrap;
+  cursor: default;
+}
+.tech-chip:hover {
+  border-color: var(--chip-accent, rgba(56,189,248,0.35));
+  background: rgba(56,189,248,0.06);
+  transform: translateY(-2px);
+}
+.tech-chip .tc-logo {
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.tech-chip .tc-role {
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--lp-muted);
+  margin-left: 2px;
+}
+</style>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     CAPABILITIES & ROADMAP
+     ══════════════════════════════════════════════════════════════ -->
+<div class="lp-section">
+  <div class="container" style="max-width: 1120px;">
+    <div class="text-center animate-up">
+      <p class="lp-eyebrow">Platform</p>
+      <h2 class="lp-h2">Capabilities &amp; <span class="g">Roadmap</span></h2>
+      <p class="lp-sub mx-auto">What FeynML does today, its current limits, and where it's headed.</p>
     </div>
-    
-    <div class="bento-grid animate-up" style="animation-delay: 0.2s;">
-        <div class="bento-item">
-            <div class="feature-icon"><i class="bi bi-activity"></i></div>
-            <h4 class="fw-bold mb-3">Drift Observability</h4>
-            <p class="text-muted small">Monitor covariate and target drift with automated KS-tests and PSI metrics.</p>
+
+    <div class="cap-grid-lp animate-up">
+
+      <!-- ── Column 1: Current Capabilities ── -->
+      <div class="cap-lp-card blue">
+        <div class="cap-lp-title">
+          <i class="bi bi-check2-circle text-info"></i>
+          Current Capabilities
         </div>
-        <div class="bento-item">
-            <div class="feature-icon" style="background: var(--sev-medium-bg); color: var(--sev-medium);"><i class="bi bi-graph-up"></i></div>
-            <h4 class="fw-bold mb-3">Calibration Audit</h4>
-            <p class="text-muted small">Identify miscalibration in probability scores and improve model reliability.</p>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon blue"><i class="bi bi-activity"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Feature Drift Detection</div>
+            <div class="cap-lp-item-text">KS-test, PSI, Jensen-Shannon across all feature types.</div>
+          </div>
         </div>
-        <div class="bento-item">
-            <div class="feature-icon" style="background: var(--sev-high-bg); color: var(--sev-high);"><i class="bi bi-shield-check"></i></div>
-            <h4 class="fw-bold mb-3">Leakage Detection</h4>
-            <p class="text-muted small">Prevent target leakage and ensure your model generalizes to production data.</p>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon blue"><i class="bi bi-graph-up-arrow"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Calibration Analysis</div>
+            <div class="cap-lp-item-text">ECE, MCE, Brier score, reliability diagrams.</div>
+          </div>
         </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon blue"><i class="bi bi-tag"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Label Noise Detection</div>
+            <div class="cap-lp-item-text">Inconsistent labels and annotation drift flagging.</div>
+          </div>
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon blue"><i class="bi bi-shield-exclamation"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Leakage Detection</div>
+            <div class="cap-lp-item-text">Target leakage and data contamination surfaces.</div>
+          </div>
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon blue"><i class="bi bi-puzzle"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Missingness Analysis</div>
+            <div class="cap-lp-item-text">MCAR, MAR, MNAR patterns and coverage gaps.</div>
+          </div>
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon blue"><i class="bi bi-people"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Fairness Audit</div>
+            <div class="cap-lp-item-text">SPD, disparate impact, equalized odds across groups.</div>
+          </div>
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon indigo"><i class="bi bi-translate"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Domain Translation Layer</div>
+            <div class="cap-lp-item-text">Explains reports in 9 audience types via Groq LLM.</div>
+          </div>
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon indigo"><i class="bi bi-bar-chart-steps"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Smart EDA</div>
+            <div class="cap-lp-item-text">Automated exploratory analysis with distribution insights.</div>
+          </div>
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon indigo"><i class="bi bi-chat-dots"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Chat With Your Data</div>
+            <div class="cap-lp-item-text">Natural language queries on your uploaded dataset.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Column 2: Technical Limits ── -->
+      <div class="cap-lp-card orange">
+        <div class="cap-lp-title">
+          <i class="bi bi-exclamation-triangle text-warning"></i>
+          Technical Limits
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon orange"><i class="bi bi-hdd"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Recommended Upload Size</div>
+            <div class="cap-lp-item-text">50 MB per dataset.</div>
+          </div>
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon orange"><i class="bi bi-table"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Tested Dataset Size</div>
+            <div class="cap-lp-item-text">Up to 500,000 rows validated.</div>
+          </div>
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon orange"><i class="bi bi-file-earmark-text"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Supported Formats</div>
+            <div class="cap-lp-item-text">CSV and JSON only.</div>
+          </div>
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon orange"><i class="bi bi-reception-4"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Real-time Monitoring</div>
+            <div class="cap-lp-item-text">Not yet available — batch analysis only.</div>
+          </div>
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon orange"><i class="bi bi-diagram-3"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Multi-table Support</div>
+            <div class="cap-lp-item-text">Single-dataset input only at this time.</div>
+          </div>
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon orange"><i class="bi bi-gpu-card"></i></div>
+          <div>
+            <div class="cap-lp-item-title">GPU Acceleration</div>
+            <div class="cap-lp-item-text">Planned for Phase 5.</div>
+          </div>
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon orange"><i class="bi bi-cloud-slash"></i></div>
+          <div>
+            <div class="cap-lp-item-title">Model File Upload</div>
+            <div class="cap-lp-item-text">.pkl / .joblib not yet supported — CSV proxy only.</div>
+          </div>
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon orange"><i class="bi bi-person-lock"></i></div>
+          <div>
+            <div class="cap-lp-item-title">User Auth / Accounts</div>
+            <div class="cap-lp-item-text">No login system yet — session-scoped only.</div>
+          </div>
+        </div>
+
+        <div class="cap-lp-item">
+          <div class="cap-lp-item-icon amber"><i class="bi bi-robot"></i></div>
+          <div>
+            <div class="cap-lp-item-title">LLM Dependency</div>
+            <div class="cap-lp-item-text">Groq API required for Domain Translation & Chat modules.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Column 3: Roadmap ── -->
+      <div class="cap-lp-card green">
+        <div class="cap-lp-title">
+          <i class="bi bi-map text-success"></i>
+          Future Roadmap
+        </div>
+
+        <!-- 2025 — Shipped -->
+        <div class="rm-year-badge done mb-2">✓ 2025 · Shipped</div>
+
+        <div class="cap-lp-item">
+          <div class="rm-status shipped mt-1"></div>
+          <div>
+            <div class="cap-lp-item-icon green" style="display:none"></div>
+            <div class="cap-lp-item-title d-flex align-items-center gap-2">
+              <i class="bi bi-check2" style="color:#4ade80; font-size:0.75rem;"></i>
+              6 Diagnostic Modules
+            </div>
+            <div class="cap-lp-item-text">Drift, Calibration, Noise, Leakage, Fairness, Missingness.</div>
+          </div>
+        </div>
+        <div class="cap-lp-item">
+          <div class="rm-status shipped mt-1"></div>
+          <div>
+            <div class="cap-lp-item-title d-flex align-items-center gap-2">
+              <i class="bi bi-check2" style="color:#4ade80; font-size:0.75rem;"></i>
+              PDF Report Export
+            </div>
+            <div class="cap-lp-item-text">Full investigation summary as downloadable PDF.</div>
+          </div>
+        </div>
+        <div class="cap-lp-item">
+          <div class="rm-status shipped mt-1"></div>
+          <div>
+            <div class="cap-lp-item-title d-flex align-items-center gap-2">
+              <i class="bi bi-check2" style="color:#4ade80; font-size:0.75rem;"></i>
+              Domain Translation + Chat
+            </div>
+            <div class="cap-lp-item-text">LLM-powered audience adaptation & conversational queries.</div>
+          </div>
+        </div>
+
+        <div style="height: 1px; background: var(--lp-border); margin: 16px 0;"></div>
+
+        <!-- 2026 — In Progress -->
+        <div class="rm-year-badge active mb-2">◉ 2026 · In Progress</div>
+
+        <div class="cap-lp-item">
+          <div class="rm-status wip mt-1"></div>
+          <div>
+            <div class="cap-lp-item-title d-flex align-items-center gap-2">
+              <i class="bi bi-lightning-charge" style="color:#38bdf8; font-size:0.75rem;"></i>
+              Phase B Intelligence
+            </div>
+            <div class="cap-lp-item-text">PSI-weighted root cause ranking & severity calibration.</div>
+          </div>
+        </div>
+        <div class="cap-lp-item">
+          <div class="rm-status wip mt-1"></div>
+          <div>
+            <div class="cap-lp-item-title d-flex align-items-center gap-2">
+              <i class="bi bi-intersect" style="color:#38bdf8; font-size:0.75rem;"></i>
+              SHAP Integration
+            </div>
+            <div class="cap-lp-item-text">Feature-level explainability baked into failure reports.</div>
+          </div>
+        </div>
+        <div class="cap-lp-item">
+          <div class="rm-status future mt-1"></div>
+          <div>
+            <div class="cap-lp-item-title d-flex align-items-center gap-2">
+              <i class="bi bi-sliders" style="color:#818cf8; font-size:0.75rem;"></i>
+              Slice Discovery
+            </div>
+            <div class="cap-lp-item-text">Automatic failure hotspot detection across data segments.</div>
+          </div>
+        </div>
+
+        <div style="height: 1px; background: var(--lp-border); margin: 16px 0;"></div>
+
+        <!-- 2027 — Planned -->
+        <div class="rm-year-badge planned mb-2">→ 2027 · Planned</div>
+
+        <div class="cap-lp-item">
+          <div class="rm-status future mt-1"></div>
+          <div>
+            <div class="cap-lp-item-title d-flex align-items-center gap-2">
+              <i class="bi bi-robot" style="color:#818cf8; font-size:0.75rem;"></i>
+              LLM Investigation Agent
+            </div>
+            <div class="cap-lp-item-text">Autonomous multi-step failure diagnosis via AI agent.</div>
+          </div>
+        </div>
+        <div class="cap-lp-item">
+          <div class="rm-status future mt-1"></div>
+          <div>
+            <div class="cap-lp-item-title d-flex align-items-center gap-2">
+              <i class="bi bi-reception-4" style="color:#818cf8; font-size:0.75rem;"></i>
+              Real-Time Monitoring
+            </div>
+            <div class="cap-lp-item-text">Live drift alerts and production data stream support.</div>
+          </div>
+        </div>
+        <div class="cap-lp-item">
+          <div class="rm-status future mt-1"></div>
+          <div>
+            <div class="cap-lp-item-title d-flex align-items-center gap-2">
+              <i class="bi bi-cloud-arrow-up" style="color:#818cf8; font-size:0.75rem;"></i>
+              Cloud Deployment
+            </div>
+            <div class="cap-lp-item-text">One-click deploy with persistent storage and multi-user.</div>
+          </div>
+        </div>
+
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- CTA Section -->
-    <div class="container cta-section">
-        <div class="cta-card animate-up">
-            <h2>Ready to audit your model?</h2>
-            <p class="cta-copy mx-auto mb-5">Start your investigation with FeynML's research-backed diagnostic suite.</p>
-            <a href="{{ url_for('index') }}" class="enterprise-cta-button d-inline-flex align-items-center justify-content-center">
-                Start Investigation
-            </a>
+<div class="lp-divider"></div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     TECH STACK  —  updated with proper colored icons
+     ══════════════════════════════════════════════════════════════ -->
+<div class="lp-section">
+  <div class="container text-center" style="max-width: 1120px;">
+    <p class="lp-eyebrow">Stack</p>
+    <h2 class="lp-h2">Built <span class="g">Using</span></h2>
+    <p class="lp-sub mx-auto">
+      Every dependency in FeynML was chosen deliberately — no bloat, no magic wrappers.
+    </p>
+
+    <div class="tech-strip animate-up">
+
+      <!-- Flask -->
+      <div class="tech-chip" style="--chip-accent: rgba(255,255,255,0.3);">
+        <div class="tc-logo">
+          <!-- Flask SVG icon -->
+          <svg width="18" height="18" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <path d="M60.35 0c-3.1 0-6 1.9-7.3 4.7L32 55H96L74.95 4.7C73.65 1.9 70.75 0 67.65 0H60.35z" fill="#fff" opacity="0.85"/>
+            <path d="M32 55l-16 48c-1.3 4 1.7 8 5.8 8h80.4c4.1 0 7.1-4 5.8-8L96 55H32z" fill="#fff" opacity="0.6"/>
+            <circle cx="64" cy="80" r="12" fill="#38bdf8" opacity="0.9"/>
+          </svg>
         </div>
+        Flask
+        <span class="tc-role">· Web framework</span>
+      </div>
+
+      <!-- Python -->
+      <div class="tech-chip" style="--chip-accent: rgba(255,212,59,0.4);">
+        <div class="tc-logo">
+          <svg width="18" height="18" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <path d="M63.7 3C35 3 36.9 15.3 36.9 15.3V28h27.3v4H23.2S3 29.7 3 58.7s17.9 28 17.9 28H32v-13.5s-.6-17.9 17.6-17.9h30.3s17 .3 17-16.5V19.4C96.9 2.5 80 3 63.7 3zM47.2 11.5c3.1 0 5.5 2.5 5.5 5.5s-2.5 5.5-5.5 5.5-5.5-2.5-5.5-5.5 2.4-5.5 5.5-5.5z" fill="#ffd43b"/>
+            <path d="M64.3 125c28.7 0 26.8-12.3 26.8-12.3V99.7H63.8V95.7h41s20.2 2.3 20.2-26.7-17.9-28-17.9-28H96v13.5s.6 17.9-17.6 17.9H48.1s-17-.3-17 16.5V108.6C31.1 125.5 48 125 64.3 125zM80.8 116.5c-3.1 0-5.5-2.5-5.5-5.5s2.5-5.5 5.5-5.5 5.5 2.5 5.5 5.5-2.4 5.5-5.5 5.5z" fill="#4584b6"/>
+          </svg>
+        </div>
+        Python 3.11
+        <span class="tc-role">· Runtime</span>
+      </div>
+
+      <!-- Pandas -->
+      <div class="tech-chip" style="--chip-accent: rgba(150,0,150,0.35);">
+        <div class="tc-logo" style="background:rgba(150,0,150,0.15); border-radius:4px;">
+          <svg width="16" height="16" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+            <rect x="76"  y="56"  width="80" height="240" rx="16" fill="#e70488"/>
+            <rect x="76"  y="340" width="80" height="116" rx="16" fill="#e70488" opacity="0.5"/>
+            <rect x="216" y="116" width="80" height="280" rx="16" fill="#150458"/>
+            <rect x="216" y="56"  width="80" height="40"  rx="16" fill="#150458" opacity="0.5"/>
+            <rect x="356" y="56"  width="80" height="116" rx="16" fill="#e70488" opacity="0.5"/>
+            <rect x="356" y="216" width="80" height="240" rx="16" fill="#e70488"/>
+          </svg>
+        </div>
+        Pandas
+        <span class="tc-role">· Data wrangling</span>
+      </div>
+
+      <!-- NumPy -->
+      <div class="tech-chip" style="--chip-accent: rgba(75,139,190,0.4);">
+        <div class="tc-logo" style="background:rgba(75,139,190,0.15); border-radius:4px;">
+          <svg width="16" height="16" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <path d="M64 8L8 40v48l56 32 56-32V40z" fill="#4b8bbe" opacity="0.8"/>
+            <path d="M64 8l56 32-56 32L8 40z" fill="#4b8bbe"/>
+            <path d="M8 40l56 32v48L8 88z" fill="#3a6f98"/>
+            <path d="M120 40L64 72v48l56-32z" fill="#2e5c80"/>
+          </svg>
+        </div>
+        NumPy
+        <span class="tc-role">· Numerical compute</span>
+      </div>
+
+      <!-- SciPy -->
+      <div class="tech-chip" style="--chip-accent: rgba(0,114,189,0.4);">
+        <div class="tc-logo" style="background:rgba(0,114,189,0.15); border-radius:4px; font-size:11px; font-weight:800; color:#0072bd; font-family:monospace;">Sc</div>
+        SciPy
+        <span class="tc-role">· Statistics</span>
+      </div>
+
+      <!-- Scikit-Learn -->
+      <div class="tech-chip" style="--chip-accent: rgba(247,148,30,0.4);">
+        <div class="tc-logo" style="background:rgba(247,148,30,0.15); border-radius:4px;">
+          <svg width="16" height="16" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="64" cy="64" r="52" fill="none" stroke="#f7941e" stroke-width="10"/>
+            <circle cx="64" cy="64" r="20" fill="#3499cd"/>
+            <circle cx="64" cy="20" r="10" fill="#f7941e"/>
+            <circle cx="64" cy="108" r="10" fill="#f7941e"/>
+            <circle cx="20" cy="64" r="10" fill="#f7941e"/>
+            <circle cx="108" cy="64" r="10" fill="#f7941e"/>
+          </svg>
+        </div>
+        Scikit-Learn
+        <span class="tc-role">· ML algorithms</span>
+      </div>
+
+      <!-- Plotly -->
+      <div class="tech-chip" style="--chip-accent: rgba(99,110,250,0.4);">
+        <div class="tc-logo" style="background:rgba(99,110,250,0.15); border-radius:4px;">
+          <svg width="16" height="16" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8"  y="60" width="28" height="60" rx="4" fill="#636efa"/>
+            <rect x="50" y="32" width="28" height="88" rx="4" fill="#ef553b"/>
+            <rect x="92" y="8"  width="28" height="112" rx="4" fill="#00cc96"/>
+          </svg>
+        </div>
+        Plotly
+        <span class="tc-role">· Visualizations</span>
+      </div>
+
+      <!-- Jinja2 -->
+      <div class="tech-chip" style="--chip-accent: rgba(180,40,40,0.35);">
+        <div class="tc-logo" style="background:rgba(180,40,40,0.15); border-radius:4px; font-size:10px; font-weight:800; color:#e44; font-family:monospace;">J2</div>
+        Jinja2
+        <span class="tc-role">· Templating</span>
+      </div>
+
+      <!-- Groq API -->
+      <div class="tech-chip" style="--chip-accent: rgba(249,115,22,0.35);">
+        <div class="tc-logo" style="background:rgba(249,115,22,0.15); border-radius:4px;">
+          <svg width="16" height="16" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="64" cy="64" r="48" fill="none" stroke="#f97316" stroke-width="12"/>
+            <path d="M64 32 A32 32 0 0 1 96 64" fill="none" stroke="#f97316" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="64" cy="64" r="10" fill="#f97316"/>
+          </svg>
+        </div>
+        Groq API
+        <span class="tc-role">· LLM inference</span>
+      </div>
+
+      <!-- Render -->
+      <div class="tech-chip" style="--chip-accent: rgba(70,199,158,0.35);">
+        <div class="tc-logo" style="background:rgba(70,199,158,0.15); border-radius:4px;">
+          <svg width="16" height="16" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <path d="M24 104 L64 24 L104 104" fill="none" stroke="#46c79e" stroke-width="16" stroke-linejoin="round" stroke-linecap="round"/>
+            <line x1="44" y1="72" x2="84" y2="72" stroke="#46c79e" stroke-width="12" stroke-linecap="round"/>
+          </svg>
+        </div>
+        Render
+        <span class="tc-role">· Deployment</span>
+      </div>
+
     </div>
+  </div>
+</div>
+
+<div class="lp-divider"></div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     INVESTIGATION FRAMEWORK
+     ══════════════════════════════════════════════════════════════ -->
+<div class="lp-section">
+  <div class="container text-center" style="max-width: 1120px;">
+    <p class="lp-eyebrow">Methodology</p>
+    <h2 class="lp-h2">FeynML <span class="g">Investigation Framework</span></h2>
+    <p class="lp-sub mx-auto">Five structured phases to diagnose, observe, explain, and debug any ML system.</p>
+
+    <div class="fw-track animate-up">
+      <div class="fw-node">
+        <div class="fw-hex">P0</div>
+        <div class="fw-body">
+          <div class="fw-name">Foundations</div>
+          <div class="fw-desc">Math · Statistics · ML Basics</div>
+        </div>
+      </div>
+      <div class="fw-node">
+        <div class="fw-hex">P1</div>
+        <div class="fw-body">
+          <div class="fw-name">Diagnostics</div>
+          <div class="fw-desc">Metrics · Calibration · Fairness</div>
+        </div>
+      </div>
+      <div class="fw-node">
+        <div class="fw-hex">P2</div>
+        <div class="fw-body">
+          <div class="fw-name">Observability</div>
+          <div class="fw-desc">Drift · Monitoring · Slices</div>
+        </div>
+      </div>
+      <div class="fw-node">
+        <div class="fw-hex">P3</div>
+        <div class="fw-body">
+          <div class="fw-name">Root Cause</div>
+          <div class="fw-desc">SHAP · LIME · Failure Analysis</div>
+        </div>
+      </div>
+      <div class="fw-node">
+        <div class="fw-hex">P4</div>
+        <div class="fw-body">
+          <div class="fw-name">Data Debugging</div>
+          <div class="fw-desc">Leakage · Missing · Causality</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="lp-divider"></div>
+
+
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     FEATURE BENTO GRID
+     ══════════════════════════════════════════════════════════════ -->
+<div class="lp-section">
+  <div class="container" style="max-width: 1120px;">
+    <div class="text-center animate-up">
+      <p class="lp-eyebrow">Features</p>
+      <h2 class="lp-h2">Engineered for <span class="g">Accuracy</span></h2>
+      <p class="lp-sub mx-auto">Comprehensive diagnostics across the entire ML lifecycle.</p>
+    </div>
+
+    <div class="bento-new animate-up">
+
+      <!-- Wide card — Drift -->
+      <div class="bn-card bn-wide">
+        <div class="bn-icon cyan"><i class="bi bi-activity"></i></div>
+        <div class="bn-title">Drift Observability</div>
+        <p class="bn-text">Monitor covariate and target drift with automated KS-tests and PSI metrics. Get per-feature severity ratings and historical drift timelines at a glance.</p>
+      </div>
+
+      <!-- Narrow — Calibration -->
+      <div class="bn-card">
+        <div class="bn-icon amber"><i class="bi bi-graph-up"></i></div>
+        <div class="bn-title">Calibration Audit</div>
+        <p class="bn-text">Identify miscalibration in probability scores and improve model reliability before production deployment.</p>
+      </div>
+
+      <!-- Wide — Leakage -->
+      <div class="bn-card bn-wide">
+        <div class="bn-icon green"><i class="bi bi-shield-check"></i></div>
+        <div class="bn-title">Leakage Detection</div>
+        <p class="bn-text">Prevent target leakage and ensure your model generalizes to real production data. Surface contaminated features automatically using mutual information and SHAP-based signals.</p>
+      </div>
+
+      <!-- Narrow — Fairness -->
+      <div class="bn-card">
+        <div class="bn-icon cyan"><i class="bi bi-people-fill"></i></div>
+        <div class="bn-title">Fairness Audit</div>
+        <p class="bn-text">Measure demographic parity, equalized odds, and disparate impact across all sensitive groups in your dataset.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="lp-divider"></div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     CTA
+     ══════════════════════════════════════════════════════════════ -->
+<div class="cta-new">
+  <div class="container" style="max-width: 1120px;">
+    <div class="cta-box animate-up">
+      <p class="lp-eyebrow" style="justify-content: center; display: flex; margin-bottom: 16px;">Ready to investigate?</p>
+      <h2 class="cta-h2">
+        Audit your model with<br>
+        <span class="g">research-backed precision.</span>
+      </h2>
+      <p class="cta-body">
+        Start your investigation with FeynML's statistical diagnostic suite.
+        Upload a dataset, run a module, get a PDF report — in under 60 seconds.
+      </p>
+      <div class="cta-btn-row">
+        <a href="{{ url_for('index') }}" class="btn btn-indigo btn-lg px-5 rounded-pill shadow">
+          Start Investigation
+        </a>
+        <a href="{{ url_for('about') }}" class="btn btn-outline-indigo btn-lg px-5 rounded-pill">
+          Learn More
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

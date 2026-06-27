@@ -113,12 +113,12 @@ def _chi2_statistic(test_result):
 def _domain_auc(dc):
     """Normalize domain_classifier_drift output (domain_auc or legacy auc)."""
     if not dc or dc.get("error"):
-        return 0.5
+        return None
     for key in ("domain_auc", "auc"):
         val = dc.get(key)
         if isinstance(val, (int, float)):
             return float(val)
-    return 0.5
+    return None
 
 
 def _feature_column(rows, col_idx, categorical=False):
@@ -199,6 +199,22 @@ class DriftEngine(BaseModule):
 
         return False
 
+    def _is_model_output_column(self, feature_name: str) -> bool:
+        """
+        Detect if a column looks like a model output rather than an input feature.
+        """
+        if not feature_name:
+            return False
+
+        return feature_name.lower() in {
+            "prediction",
+            "pred",
+            "y_pred",
+            "predicted",
+            "probability",
+            "score",
+        }
+
     def set_reference(self, X_reference, feature_names=None, categorical_cols=None):
         """
         Register the reference (training) dataset.
@@ -211,13 +227,17 @@ class DriftEngine(BaseModule):
         n_feat = len(X_reference[0]) if X_reference else 0
         self._feature_names = feature_names or [f"f{i}" for i in range(n_feat)]
         
-        # Detect and exclude identifier columns
+        # Detect and exclude identifier / model output columns
         self._excluded_features = set()
         for fname in self._feature_names:
             if self._is_identifier_column(fname):
                 self._excluded_features.add(fname)
                 self._audit_log.append(f"[Feature Excluded] {fname} (Identifier Column)")
                 self._log(f"Excluding identifier column: {fname}")
+            elif self._is_model_output_column(fname):
+                self._excluded_features.add(fname)
+                self._audit_log.append(f"[Feature Excluded] {fname} (Model Output Column)")
+                self._log(f"Excluding model output column: {fname}")
         
         if categorical_cols:
             if isinstance(categorical_cols[0], str):
@@ -257,15 +277,17 @@ class DriftEngine(BaseModule):
                 severity="HIGH"
             )
 
-        n_feat = len(self._feature_names)
+        analyzed_indices = [
+            j for j, fname in enumerate(self._feature_names)
+            if fname not in self._excluded_features
+        ]
+        analyzed_feature_names = [self._feature_names[j] for j in analyzed_indices]
+        n_feat = len(analyzed_feature_names)
         per_feature = []
         drifted, warned = [], []
 
-        for j, fname in enumerate(self._feature_names):
-            # Skip excluded identifier columns
-            if fname in self._excluded_features:
-                continue
-            
+        for j in analyzed_indices:
+            fname = self._feature_names[j]
             is_cat = j in self._categorical
             ref_col = _feature_column(self._reference, j, categorical=is_cat)
             cur_col = _feature_column(X_current, j, categorical=is_cat)
@@ -321,21 +343,32 @@ class DriftEngine(BaseModule):
             psi_str = f"{psi_v:.4f}" if psi_v is not None else "n/a"
             self._log(f"  {fname}: {feature_entry['status']} (p={p_str}, psi={psi_str})")
 
-        domain_auc = 0.5
+        domain_auc = None
+        domain_error = None
         try:
+            reference_filtered = [
+                [row[j] for j in analyzed_indices if j < len(row)]
+                for row in self._reference
+            ]
+            current_filtered = [
+                [row[j] for j in analyzed_indices if j < len(row)]
+                for row in X_current
+            ]
             dc = domain_classifier_drift(
-                self._reference, X_current, self._feature_names
+                reference_filtered, current_filtered, analyzed_feature_names
             )
             domain_auc = _domain_auc(dc)
+            domain_error = dc.get("error") if dc else None
         except Exception as ex:
             self._log(f"Domain classifier failed: {ex}")
+            domain_error = str(ex)
 
         # PSI summary
         psi_vals = [f["psi"] for f in per_feature if f.get("psi") is not None]
         mean_psi = sum(psi_vals) / max(len(psi_vals), 1)
 
         # Severity
-        if len(drifted) > n_feat * 0.5 or domain_auc > 0.85:
+        if len(drifted) > n_feat * 0.5 or (domain_auc is not None and domain_auc > 0.85):
             sev = "CRITICAL"
         elif drifted:
             sev = "HIGH"
@@ -348,19 +381,20 @@ class DriftEngine(BaseModule):
             "per_feature":   per_feature,
             "drifted":       drifted,
             "warned":        warned,
-            "domain_auc":    round(domain_auc, 4),
+            "domain_auc":    round(domain_auc, 4) if domain_auc is not None else None,
+            "domain_error":  domain_error,
             "mean_psi":      round(mean_psi, 4),
             "n_features":    n_feat,
             "num_drifted_features": len(drifted),
             "num_warned_features":  len(warned),
-            "alerts": self._build_alerts(drifted, warned, domain_auc, mean_psi),
+            "alerts": self._build_alerts(drifted, warned, domain_auc, mean_psi, domain_error),
             "excluded_features": list(self._excluded_features),
             "audit_log": self._audit_log,
         }
 
         return self._result(findings, severity=sev, module_name="DriftEngine")
 
-    def _build_alerts(self, drifted, warned, domain_auc, mean_psi):
+    def _build_alerts(self, drifted, warned, domain_auc, mean_psi, domain_error=None):
         alerts = []
         if drifted:
             alerts.append({
@@ -374,11 +408,16 @@ class DriftEngine(BaseModule):
                 "message": f"{len(warned)} feature(s) show borderline drift: "
                            f"{warned[:5]}. Monitor closely.",
             })
-        if domain_auc > 0.75:
+        if domain_auc is not None and domain_auc > 0.75:
             alerts.append({
                 "level":   "HIGH",
                 "message": f"Domain classifier AUC={domain_auc:.3f} indicates "
                            "the production distribution is distinguishable from training.",
+            })
+        if domain_error:
+            alerts.append({
+                "level":   "INFO",
+                "message": f"Domain classifier unavailable: {domain_error}",
             })
         if not alerts:
             alerts.append({"level": "INFO", "message": "No drift detected."})

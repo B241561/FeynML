@@ -77,7 +77,21 @@ Audience: {display_audience}
 
 Rules:
 - Use terminology natural to THIS audience only
-- Always state the business/clinical/legal impact
+- Describe only effects directly supported by the supplied technical evidence.
+- Do not infer business, financial, legal, clinical, underwriting, compliance, revenue, portfolio, reputational, or patient outcomes unless such evidence is explicitly provided in the input.
+- Prefer evidence-grounded interpretation language like:
+  * Feature distribution differs from training data.
+  * Prediction reliability may decrease.
+  * Model behavior should be reviewed.
+  * Calibration quality has degraded.
+  * Additional validation is recommended.
+- Avoid consequence-based claims like:
+  * Revenue loss.
+  * Portfolio losses.
+  * Incorrect loan approvals.
+  * Regulatory exposure.
+  * Reputational damage.
+  * Patient harm.
 - Give ONE specific recommended action
 - CRITICAL severity = urgent, alarming language
 - HIGH severity = important but not emergency
@@ -101,7 +115,7 @@ Translate this for: {display_audience}
             completion = client.chat.completions.create(
                 model=MODEL_NAME,
                 messages=messages,
-                temperature=0.7,
+                temperature=0.2,
                 max_tokens=200,
                 top_p=1,
                 stream=False,

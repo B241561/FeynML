@@ -1,0 +1,480 @@
+:root {
+    --hud-primary: #38bdf8;
+    --hud-secondary: #0ea5e9;
+    --hud-tertiary: #0284c7;
+    --hud-core: #7dd3fc;
+    --hud-core-strong: #e0f2fe;
+    --hud-text: #ffffff;
+    --hud-subtext: #38bdf8;
+    --hud-shadow: rgba(56, 189, 248, 0.28);
+    --hud-shell: rgba(14, 165, 233, 0.14);
+    --hud-grid: rgba(56, 189, 248, 0.08);
+    --hud-readout: rgba(56, 189, 248, 0.4);
+}
+
+[data-theme="light"] {
+    --hud-primary: #0284c7;
+    --hud-secondary: #0369a1;
+    --hud-tertiary: #1d4ed8;
+    --hud-core: #0ea5e9;
+    --hud-core-strong: #e0f2fe;
+    --hud-text: #0f172a;
+    --hud-subtext: #0369a1;
+    --hud-shadow: rgba(14, 165, 233, 0.18);
+    --hud-shell: rgba(14, 165, 233, 0.1);
+    --hud-grid: rgba(2, 132, 199, 0.12);
+    --hud-readout: rgba(3, 105, 161, 0.36);
+}
+
+.feynml-logo[data-logo-theme="dark"] {
+    --hud-primary: #38bdf8;
+    --hud-secondary: #0ea5e9;
+    --hud-tertiary: #0284c7;
+    --hud-core: #7dd3fc;
+    --hud-core-strong: #ffffff;
+    --hud-text: #ffffff;
+    --hud-subtext: #38bdf8;
+    --hud-shadow: rgba(56, 189, 248, 0.32);
+    --hud-shell: rgba(14, 165, 233, 0.15);
+    --hud-grid: rgba(56, 189, 248, 0.08);
+    --hud-readout: rgba(56, 189, 248, 0.4);
+}
+
+.feynml-logo[data-logo-theme="light"] {
+    --hud-primary: #0284c7;
+    --hud-secondary: #0369a1;
+    --hud-tertiary: #1d4ed8;
+    --hud-core: #0ea5e9;
+    --hud-core-strong: #0f172a;
+    --hud-text: #0f172a;
+    --hud-subtext: #0369a1;
+    --hud-shadow: rgba(14, 165, 233, 0.16);
+    --hud-shell: rgba(14, 165, 233, 0.09);
+    --hud-grid: rgba(2, 132, 199, 0.12);
+    --hud-readout: rgba(3, 105, 161, 0.36);
+}
+
+.feynml-logo {
+    --logo-icon-size: 6.25rem;
+    --logo-gap: 0.9rem;
+    --logo-title-size: 1.65rem;
+    --logo-title-spacing: 0.18em;
+    --logo-subtitle-size: 0.72rem;
+    --logo-speed-factor: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--logo-gap);
+    color: var(--hud-text);
+    position: relative;
+    isolation: isolate;
+}
+
+.feynml-logo--small {
+    --logo-icon-size: 2.5rem;
+    --logo-gap: 0.7rem;
+    --logo-title-size: 1rem;
+    --logo-title-spacing: 0.09em;
+    --logo-subtitle-size: 0.48rem;
+}
+
+.feynml-logo--medium {
+    --logo-icon-size: 4.5rem;
+    --logo-gap: 0.9rem;
+    --logo-title-size: 1.45rem;
+    --logo-title-spacing: 0.12em;
+    --logo-subtitle-size: 0.65rem;
+}
+
+.feynml-logo--large {
+    --logo-icon-size: clamp(8rem, 18vw, 12rem);
+    --logo-gap: clamp(1rem, 2vw, 1.6rem);
+    --logo-title-size: clamp(1.9rem, 4vw, 3.2rem);
+    --logo-title-spacing: 0.16em;
+    --logo-subtitle-size: clamp(0.7rem, 1.2vw, 0.95rem);
+}
+
+.feynml-logo__mark {
+    width: var(--logo-icon-size);
+    flex: 0 0 auto;
+    position: relative;
+    filter: drop-shadow(0 0 24px var(--hud-shadow));
+    transition: transform 220ms ease, filter 220ms ease;
+    will-change: transform, filter;
+}
+
+.feynml-logo__svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+}
+
+.feynml-logo__wordmark {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.feynml-logo__title,
+.feynml-logo__subtitle {
+    display: block;
+    white-space: nowrap;
+}
+
+.feynml-logo__title {
+    font-family: var(--font-heading, 'Inter', sans-serif);
+    font-size: var(--logo-title-size);
+    line-height: 0.95;
+    font-weight: 800;
+    letter-spacing: var(--logo-title-spacing);
+    color: var(--hud-text);
+}
+
+.feynml-logo__subtitle {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: var(--logo-subtitle-size);
+    letter-spacing: 0.45em;
+    color: var(--hud-subtext);
+    opacity: 0.88;
+}
+
+.feynml-logo__frame-line,
+.feynml-logo__ticks line,
+.feynml-logo__readouts line,
+.feynml-logo__hex-grid polygon,
+.feynml-logo__core-spokes line {
+    fill: none;
+    vector-effect: non-scaling-stroke;
+}
+
+.feynml-logo__frame-line--outer {
+    stroke: var(--hud-secondary);
+    stroke-width: 0.8;
+    opacity: 0.22;
+}
+
+.feynml-logo__frame-line--halo {
+    stroke: var(--hud-primary);
+    stroke-width: 0.45;
+    opacity: 0.16;
+}
+
+.feynml-logo__ticks line {
+    stroke: var(--hud-primary);
+    stroke-width: 1.1;
+    opacity: 0.42;
+}
+
+.feynml-logo__ring-path--outer {
+    stroke: var(--hud-secondary);
+    stroke-width: 1.8;
+    stroke-dasharray: 30 8 8 8 50 8 8 8;
+    opacity: 0.76;
+}
+
+.feynml-logo__ring-path--mid {
+    stroke: var(--hud-primary);
+    stroke-width: 1.2;
+    stroke-dasharray: 20 6 6 6 40 6;
+    opacity: 0.68;
+}
+
+.feynml-logo__ring-path--inner {
+    stroke: var(--hud-tertiary);
+    stroke-width: 1.5;
+    stroke-dasharray: 10 4 4 4 20 4;
+    opacity: 0.84;
+}
+
+.feynml-logo__ring-node {
+    fill: var(--hud-core);
+    opacity: 0.95;
+}
+
+.feynml-logo__glow-shell {
+    fill: none;
+    stroke: var(--hud-primary);
+    stroke-width: 18;
+    opacity: 0;
+    filter: blur(18px);
+}
+
+.feynml-logo__glow-shell--outer {
+    stroke: var(--hud-secondary);
+}
+
+.feynml-logo__glow-shell--inner {
+    stroke: var(--hud-primary);
+}
+
+.feynml-logo__hex-grid polygon {
+    stroke: var(--hud-primary);
+    stroke-width: 0.75;
+    opacity: 0.1;
+}
+
+.feynml-logo__core-shell--outer {
+    fill: color-mix(in srgb, var(--hud-tertiary) 50%, transparent);
+    opacity: 0.6;
+}
+
+.feynml-logo__core-shell--mid {
+    fill: color-mix(in srgb, var(--hud-secondary) 60%, transparent);
+    opacity: 0.72;
+}
+
+.feynml-logo__core-shell--inner {
+    fill: color-mix(in srgb, var(--hud-primary) 75%, transparent);
+    opacity: 0.84;
+}
+
+.feynml-logo__core-orb {
+    fill: var(--hud-core);
+    opacity: 0.96;
+    filter: drop-shadow(0 0 14px var(--hud-shadow));
+}
+
+.feynml-logo__core-spokes line {
+    stroke: color-mix(in srgb, var(--hud-text) 42%, var(--hud-tertiary) 58%);
+    stroke-width: 1.6;
+    opacity: 0.88;
+}
+
+.feynml-logo__readouts line {
+    stroke: var(--hud-primary);
+    stroke-width: 0.7;
+    opacity: 0.35;
+}
+
+.feynml-logo__readout-text {
+    font-family: var(--font-mono, monospace);
+    font-size: 8px;
+    fill: var(--hud-subtext);
+    opacity: 0.62;
+    letter-spacing: 0.1em;
+}
+
+.feynml-logo__ring,
+.feynml-logo__scan-orbit,
+.feynml-logo__core-aura,
+.feynml-logo__ambient,
+.feynml-logo__wordmark {
+    transform-origin: center;
+    transform-box: fill-box;
+    will-change: transform, opacity, filter;
+}
+
+.feynml-logo[data-animated="true"] .feynml-logo__ambient {
+    animation: fml-ambient 5s ease-in-out infinite;
+}
+
+.feynml-logo[data-animated="true"] .feynml-logo__ring--outer {
+    animation:
+        fml-boot-ring 650ms cubic-bezier(.22, 1, .36, 1) 120ms both,
+        fml-spin calc(9s / var(--logo-speed-factor)) linear 620ms infinite;
+}
+
+.feynml-logo[data-animated="true"] .feynml-logo__ring--mid {
+    animation:
+        fml-boot-ring 700ms cubic-bezier(.22, 1, .36, 1) 320ms both,
+        fml-spin-reverse calc(5s / var(--logo-speed-factor)) linear 880ms infinite;
+}
+
+.feynml-logo[data-animated="true"] .feynml-logo__ring--inner {
+    animation:
+        fml-boot-ring 720ms cubic-bezier(.22, 1, .36, 1) 500ms both,
+        fml-spin calc(12s / var(--logo-speed-factor)) linear 1120ms infinite;
+}
+
+.feynml-logo[data-animated="true"] .feynml-logo__scan-orbit {
+    animation:
+        fml-boot-ring 500ms cubic-bezier(.22, 1, .36, 1) 720ms both,
+        fml-spin calc(3.2s / var(--logo-speed-factor)) linear 1120ms infinite;
+}
+
+.feynml-logo[data-animated="true"] .feynml-logo__core-aura {
+    animation:
+        fml-boot-core 1.1s ease-out 150ms both,
+        fml-core-pulse calc(2.2s / var(--logo-speed-factor)) ease-in-out 1.1s infinite;
+}
+
+.feynml-logo[data-animated="true"] .feynml-logo__mark {
+    animation: fml-fade-in 900ms ease-out both;
+}
+
+.feynml-logo[data-animated="true"] .feynml-logo__wordmark {
+    animation: fml-wordmark-in 700ms ease-out 420ms both;
+}
+
+.feynml-logo[data-intro="false"] .feynml-logo__mark,
+.feynml-logo[data-intro="false"] .feynml-logo__wordmark {
+    animation: none !important;
+}
+
+.feynml-logo[data-intro="false"][data-animated="true"] .feynml-logo__ring--outer {
+    animation: fml-spin calc(9s / var(--logo-speed-factor)) linear infinite;
+}
+
+.feynml-logo[data-intro="false"][data-animated="true"] .feynml-logo__ring--mid {
+    animation: fml-spin-reverse calc(5s / var(--logo-speed-factor)) linear infinite;
+}
+
+.feynml-logo[data-intro="false"][data-animated="true"] .feynml-logo__ring--inner {
+    animation: fml-spin calc(12s / var(--logo-speed-factor)) linear infinite;
+}
+
+.feynml-logo[data-intro="false"][data-animated="true"] .feynml-logo__scan-orbit {
+    animation: fml-spin calc(3.2s / var(--logo-speed-factor)) linear infinite;
+}
+
+.feynml-logo[data-intro="false"][data-animated="true"] .feynml-logo__core-aura {
+    animation: fml-core-pulse calc(2.2s / var(--logo-speed-factor)) ease-in-out infinite;
+}
+
+.feynml-logo[data-hover-effects="false"] {
+    cursor: default;
+}
+
+.feynml-logo[data-hover-effects="true"] {
+    cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .feynml-logo[data-hover-effects="true"]:hover {
+        --logo-speed-factor: 1.24;
+    }
+
+    .feynml-logo[data-hover-effects="true"]:hover .feynml-logo__mark {
+        transform: translateY(-1px) scale(1.015);
+        filter: drop-shadow(0 0 32px color-mix(in srgb, var(--hud-shadow) 85%, transparent));
+    }
+
+    .feynml-logo[data-hover-effects="true"]:hover .feynml-logo__core-aura {
+        animation-duration: 1.6s;
+    }
+
+    .feynml-logo[data-hover-effects="true"]:hover .feynml-logo__glow-shell {
+        opacity: 0.5;
+    }
+}
+
+.feynml-logo.is-paused *,
+.feynml-logo[data-animated="false"] * {
+    animation-play-state: paused !important;
+}
+
+.feynml-logo[data-animated="false"] .feynml-logo__ring,
+.feynml-logo[data-animated="false"] .feynml-logo__scan-orbit,
+.feynml-logo[data-animated="false"] .feynml-logo__core-aura,
+.feynml-logo[data-animated="false"] .feynml-logo__ambient,
+.feynml-logo[data-animated="false"] .feynml-logo__mark,
+.feynml-logo[data-animated="false"] .feynml-logo__wordmark {
+    animation: none !important;
+}
+
+.feynml-logo[data-animated="false"] .feynml-logo__glow-shell {
+    opacity: 0.2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .feynml-logo {
+        --logo-speed-factor: 1;
+    }
+
+    .feynml-logo *,
+    .feynml-logo__mark,
+    .feynml-logo__wordmark {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .feynml-logo__glow-shell {
+        opacity: 0.18;
+    }
+}
+
+@keyframes fml-spin {
+    from { transform: translate(0, 0) rotate(0deg); }
+    to { transform: translate(0, 0) rotate(360deg); }
+}
+
+@keyframes fml-spin-reverse {
+    from { transform: translate(0, 0) rotate(0deg); }
+    to { transform: translate(0, 0) rotate(-360deg); }
+}
+
+@keyframes fml-core-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.95; }
+    50% { transform: scale(1.12); opacity: 0.78; }
+}
+
+@keyframes fml-ambient {
+    0%, 100% { opacity: 0.38; }
+    50% { opacity: 0.72; }
+}
+
+@keyframes fml-boot-ring {
+    0% { opacity: 0; transform: translate(0, 0) scale(0.86); }
+    100% { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+
+@keyframes fml-boot-core {
+    0% { opacity: 0; transform: scale(0.58); }
+    55% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fml-fade-in {
+    0% { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fml-wordmark-in {
+    0% { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 767.98px) {
+    .feynml-logo--large {
+        --logo-icon-size: min(10rem, 48vw);
+        --logo-gap: 0.9rem;
+    }
+
+    .feynml-logo--small .feynml-logo__subtitle {
+        letter-spacing: 0.28em;
+    }
+}
+
+.navbar-brand-logo {
+    --logo-icon-size: 2.6rem;
+    --logo-gap: 0.7rem;
+    --logo-title-size: 1.2rem;
+    --logo-title-spacing: 0.08em;
+    --logo-subtitle-size: 0.42rem;
+}
+
+.navbar-brand-logo .feynml-logo__subtitle,
+.dashboard-header-logo .feynml-logo__subtitle {
+    display: none;
+}
+
+.footer-brand-logo {
+    --logo-icon-size: 2.4rem;
+    --logo-gap: 0.7rem;
+    --logo-title-size: 1rem;
+    --logo-title-spacing: 0.08em;
+    --logo-subtitle-size: 0.42rem;
+}
+
+.footer-brand-logo .feynml-logo__subtitle {
+    opacity: 0.7;
+}
+
+.dashboard-header-logo {
+    --logo-icon-size: 2.6rem;
+    --logo-gap: 0.7rem;
+    --logo-title-size: 1.1rem;
+    --logo-title-spacing: 0.08em;
+}

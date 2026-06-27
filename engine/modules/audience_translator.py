@@ -1,7 +1,10 @@
 """
-Audience Translation Layer for FeynML Phase 3
+Audience Translation Layer for FeynML Phase 3.
 
-Converts investigation findings into audience-specific language.
+Converts investigation findings into audience-specific language while keeping:
+- evidence text unchanged
+- recommendations unchanged
+- downstream consequence claims evidence-safe
 """
 
 from typing import Dict, List, Any, Optional
@@ -10,25 +13,445 @@ from typing import Dict, List, Any, Optional
 class AudienceTranslator:
     """
     Translates ML investigation findings into audience-specific reports.
-    
-    Supported audiences:
-    - ML Engineer: Technical depth, metrics, code-level details
-    - Executive: Business impact, ROI, strategic recommendations
-    - Doctor: Clinical impact, patient outcomes, medical terminology
-    - Loan Officer: Risk assessment, financial impact, compliance
-    - Student: Educational focus, learning objectives, simplified concepts
     """
-    
-    AUDIENCES = ["ML Engineer", "Executive", "Doctor", "Loan Officer", "Student", "HR Manager", "Insurance Analyst", "Legal / Compliance Officer", "Researcher"]
-    
+
+    AUDIENCES = [
+        "ML Engineer",
+        "Executive",
+        "Doctor",
+        "Loan Officer",
+        "Student",
+        "HR Manager",
+        "Insurance Analyst",
+        "Legal / Compliance Officer",
+        "Researcher",
+    ]
+
+    AUDIENCE_PROFILES: Dict[str, Dict[str, Any]] = {
+        "ML Engineer": {
+            "title": "Technical Model Assessment",
+            "status_label": "System status",
+            "status_map": {
+                "Healthy": "stable in monitoring",
+                "Warning": "showing review-worthy signals",
+                "Degraded": "degraded in monitoring",
+                "Critical": "requires immediate technical review",
+                "Unknown": "status unclear",
+            },
+            "issues_label": "Observed technical signals",
+            "severity_map": {
+                "CRITICAL": "Critical technical signal",
+                "HIGH": "High-priority technical signal",
+                "MEDIUM": "Moderate technical signal",
+                "LOW": "Low-priority technical signal",
+            },
+            "summary_template": (
+                "Monitoring flags the model as {status_text}. "
+                "{issue_sentence} Review the evidence below before making pipeline changes."
+            ),
+            "issue_sentence_map": {
+                0: "No technical review signals were observed.",
+                1: "One technical review signal was observed.",
+                "many": "{count} technical review signals were observed.",
+            },
+            "impact_assessment": (
+                "This translation highlights observed monitoring evidence for technical diagnosis. "
+                "It indicates where model behavior should be reviewed, but does not by itself prove downstream production outcomes."
+            ),
+            "confidence_explanation_template": (
+                "The {confidence}% confidence score reflects how strongly the observed monitoring signals support the current diagnosis. "
+                "It is confidence in the investigation, not a guarantee of downstream system impact."
+            ),
+            "technical_notes": (
+                "Use the evidence lines as-is for debugging. Compare them with drift, calibration, and data-quality reports before changing the model or features."
+            ),
+            "note": "Treat the evidence as diagnostic input for technical review.",
+            "include_score": True,
+            "max_causes": 5,
+            "max_evidence": 2,
+            "show_risk_level": True,
+            "risk_label": "Risk level",
+        },
+        "Executive": {
+            "title": "Model Oversight Summary",
+            "status_label": "Oversight status",
+            "status_map": {
+                "Healthy": "operating within expected bounds",
+                "Warning": "showing signals that warrant review",
+                "Degraded": "operating below expected bounds",
+                "Critical": "requiring urgent review",
+                "Unknown": "not yet clear",
+            },
+            "issues_label": "Evidence-backed review items",
+            "severity_map": {
+                "CRITICAL": "Urgent review item",
+                "HIGH": "Priority review item",
+                "MEDIUM": "Review item",
+                "LOW": "Monitor item",
+            },
+            "summary_template": (
+                "Monitoring shows the model is {status_text}. "
+                "{issue_sentence} The wording below stays close to the observed evidence and avoids unsupported business claims."
+            ),
+            "issue_sentence_map": {
+                0: "No monitoring signals require review.",
+                1: "One monitoring signal requires review.",
+                "many": "{count_word} monitoring signals require review.",
+            },
+            "impact_assessment": (
+                "This summary identifies where model review may be needed for governance and operating decisions. "
+                "It does not by itself establish revenue, customer, or other downstream business outcomes."
+            ),
+            "confidence_explanation_template": (
+                "The {confidence}% confidence score indicates how consistently the available evidence supports this assessment. "
+                "It is not a claim about business impact certainty."
+            ),
+            "technical_notes": "Additional technical detail can be reviewed separately if needed.",
+            "note": "Use this summary for oversight and prioritization, not as proof of business loss.",
+            "include_score": False,
+            "max_causes": 3,
+            "max_evidence": 1,
+            "show_risk_level": True,
+            "risk_label": "Risk level",
+        },
+        "Doctor": {
+            "title": "Clinical Decision Support Review",
+            "status_label": "Support model status",
+            "status_map": {
+                "Healthy": "reliable in current monitoring",
+                "Warning": "showing signals that need review",
+                "Degraded": "less reliable in current monitoring",
+                "Critical": "requiring immediate review",
+                "Unknown": "unclear from current information",
+            },
+            "issues_label": "Observed model signals",
+            "severity_map": {
+                "CRITICAL": "Urgent review signal",
+                "HIGH": "Important review signal",
+                "MEDIUM": "Moderate review signal",
+                "LOW": "Low-level review signal",
+            },
+            "summary_template": (
+                "Monitoring indicates the clinical decision-support model is {status_text}. "
+                "{issue_sentence} Keep using clinical judgment while the evidence is reviewed."
+            ),
+            "issue_sentence_map": {
+                0: "No clinical-model review signals were observed.",
+                1: "One clinical-model review signal was observed.",
+                "many": "{count_word} clinical-model review signals were observed.",
+            },
+            "impact_assessment": (
+                "These findings describe monitored model behavior relevant to clinical review. "
+                "They do not by themselves establish patient outcomes or care consequences."
+            ),
+            "confidence_explanation_template": (
+                "The {confidence}% confidence score reflects how strongly the observed evidence supports the current model assessment. "
+                "It is confidence in the investigation, not a clinical guarantee."
+            ),
+            "technical_notes": "Use the evidence lines to coordinate follow-up with the model monitoring or analytics team.",
+            "note": "Clinical judgment should remain primary while these signals are investigated.",
+            "include_score": False,
+            "max_causes": 3,
+            "max_evidence": 2,
+            "show_risk_level": True,
+            "risk_label": "Risk level",
+        },
+        "Loan Officer": {
+            "title": "Credit Model Review",
+            "status_label": "Model review status",
+            "status_map": {
+                "Healthy": "stable in monitoring",
+                "Warning": "showing signals that need review",
+                "Degraded": "showing reduced reliability in monitoring",
+                "Critical": "requiring urgent review",
+                "Unknown": "not yet clear",
+            },
+            "issues_label": "Observed review signals",
+            "severity_map": {
+                "CRITICAL": "Urgent lending review signal",
+                "HIGH": "High-priority lending review signal",
+                "MEDIUM": "Moderate lending review signal",
+                "LOW": "Low-level lending review signal",
+            },
+            "summary_template": (
+                "Monitoring indicates the credit model is {status_text}. "
+                "{issue_sentence} Review the evidence before relying on the model in lending workflows."
+            ),
+            "issue_sentence_map": {
+                0: "No lending-model review signals were observed.",
+                1: "One lending-model review signal was observed.",
+                "many": "{count} lending-model review signals were observed.",
+            },
+            "impact_assessment": (
+                "This translation summarizes monitored model behavior relevant to lending review. "
+                "It does not by itself prove borrower, portfolio, or default outcomes."
+            ),
+            "confidence_explanation_template": (
+                "The {confidence}% confidence score shows how well the observed evidence supports this model assessment. "
+                "It is not a guarantee about loan outcomes."
+            ),
+            "technical_notes": "Pair these findings with policy and governance review where needed.",
+            "note": "Use the evidence for model review, alongside existing lending controls.",
+            "include_score": False,
+            "max_causes": 3,
+            "max_evidence": 1,
+            "show_risk_level": True,
+            "risk_label": "Risk level",
+        },
+        "Student": {
+            "title": "Model Health Explanation",
+            "status_label": "Current status",
+            "status_map": {
+                "Healthy": "looking stable",
+                "Warning": "showing signs that should be reviewed",
+                "Degraded": "showing weaker performance signals",
+                "Critical": "needing urgent review",
+                "Unknown": "not yet clear",
+            },
+            "issues_label": "What the evidence shows",
+            "severity_map": {
+                "CRITICAL": "Very important signal",
+                "HIGH": "Important signal",
+                "MEDIUM": "Moderate signal",
+                "LOW": "Minor signal",
+            },
+            "summary_template": (
+                "The model is {status_text} according to monitoring. "
+                "{issue_sentence} The wording below stays simple, but the evidence itself is unchanged."
+            ),
+            "issue_sentence_map": {
+                0: "No important model issues were found.",
+                1: "One important model issue was found.",
+                "many": "{count_word} important model issues were found.",
+            },
+            "impact_assessment": (
+                "This explanation points to where the model needs review based on observed evidence. "
+                "It does not claim any specific real-world outcome by itself."
+            ),
+            "confidence_explanation_template": (
+                "The {confidence}% confidence score tells you how strongly the available evidence supports this explanation. "
+                "It is confidence in the diagnosis, not proof of what happens next."
+            ),
+            "technical_notes": "Read the evidence lines first, then compare them with the recommended actions.",
+            "note": "Use this version to understand the investigation without changing the underlying facts.",
+            "include_score": False,
+            "max_causes": 3,
+            "max_evidence": 2,
+            "show_risk_level": True,
+            "risk_label": "Risk level",
+        },
+        "HR Manager": {
+            "title": "HR Model Review",
+            "status_label": "Decision-support status",
+            "status_map": {
+                "Healthy": "reliable in monitoring",
+                "Warning": "showing signals that need review",
+                "Degraded": "less reliable in monitoring",
+                "Critical": "requiring immediate review",
+                "Unknown": "unclear from current information",
+            },
+            "issues_label": "Observed review signals",
+            "severity_map": {
+                "CRITICAL": "Urgent HR review signal",
+                "HIGH": "Important HR review signal",
+                "MEDIUM": "Moderate HR review signal",
+                "LOW": "Low-level HR review signal",
+            },
+            "summary_template": (
+                "Monitoring indicates the HR decision-support model is {status_text}. "
+                "{issue_sentence} Use the evidence for review, alongside standard HR judgment."
+            ),
+            "issue_sentence_map": {
+                0: "No HR model review signals were observed.",
+                1: "One HR model review signal was observed.",
+                "many": "{count} HR model review signals were observed.",
+            },
+            "impact_assessment": (
+                "These findings summarize monitored model behavior relevant to HR review. "
+                "They do not by themselves establish hiring, performance, or retention outcomes."
+            ),
+            "confidence_explanation_template": (
+                "The {confidence}% confidence score reflects how strongly the observed evidence supports this assessment. "
+                "It is not a guarantee about workforce outcomes."
+            ),
+            "technical_notes": "Escalate technical follow-up to the analytics team if evidence repeats across monitoring cycles.",
+            "note": "HR judgment should remain primary while model signals are investigated.",
+            "include_score": False,
+            "max_causes": 3,
+            "max_evidence": 1,
+            "show_risk_level": True,
+            "risk_label": "Risk level",
+        },
+        "Insurance Analyst": {
+            "title": "Insurance Model Review",
+            "status_label": "Model review status",
+            "status_map": {
+                "Healthy": "stable in monitoring",
+                "Warning": "showing signals that need review",
+                "Degraded": "showing reduced reliability in monitoring",
+                "Critical": "requiring urgent review",
+                "Unknown": "not yet clear",
+            },
+            "issues_label": "Observed review signals",
+            "severity_map": {
+                "CRITICAL": "Urgent underwriting review signal",
+                "HIGH": "High-priority underwriting review signal",
+                "MEDIUM": "Moderate underwriting review signal",
+                "LOW": "Low-level underwriting review signal",
+            },
+            "summary_template": (
+                "Monitoring indicates the insurance model is {status_text}. "
+                "{issue_sentence} Review the evidence before making reliance decisions in underwriting workflows."
+            ),
+            "issue_sentence_map": {
+                0: "No underwriting review signals were observed.",
+                1: "One underwriting review signal was observed.",
+                "many": "{count} underwriting review signals were observed.",
+            },
+            "impact_assessment": (
+                "This translation summarizes monitored model behavior relevant to underwriting review. "
+                "It does not by itself prove claims, pricing, or portfolio outcomes."
+            ),
+            "confidence_explanation_template": (
+                "The {confidence}% confidence score reflects how consistently the available evidence supports this assessment. "
+                "It is not a guarantee about underwriting outcomes."
+            ),
+            "technical_notes": "Use the evidence lines together with governance materials if a formal review is needed.",
+            "note": "Use this report for model review and documentation, not as proof of downstream insurance outcomes.",
+            "include_score": False,
+            "max_causes": 3,
+            "max_evidence": 1,
+            "show_risk_level": True,
+            "risk_label": "Risk level",
+        },
+        "Legal / Compliance Officer": {
+            "title": "Model Governance Review",
+            "status_label": "Governance status",
+            "status_map": {
+                "Healthy": "within expected monitoring bounds",
+                "Warning": "showing review-worthy governance signals",
+                "Degraded": "showing elevated governance concern",
+                "Critical": "requiring immediate governance review",
+                "Unknown": "not yet clear",
+            },
+            "issues_label": "Documented review signals",
+            "severity_map": {
+                "CRITICAL": "Urgent governance review signal",
+                "HIGH": "High-priority governance review signal",
+                "MEDIUM": "Moderate governance review signal",
+                "LOW": "Low-level governance review signal",
+            },
+            "summary_template": (
+                "Monitoring indicates the model is {status_text} from a governance perspective. "
+                "{issue_sentence} The wording below stays close to the evidence and avoids unsupported legal conclusions."
+            ),
+            "issue_sentence_map": {
+                0: "No governance review signals were observed.",
+                1: "One governance review signal was observed.",
+                "many": "{count} governance review signals were observed.",
+            },
+            "impact_assessment": (
+                "This translation identifies monitored model signals relevant to governance review and documentation. "
+                "It does not by itself establish legal violation, enforcement, or penalty outcomes."
+            ),
+            "confidence_explanation_template": (
+                "The {confidence}% confidence score reflects the strength and consistency of the observed evidence for this review. "
+                "It is not a legal conclusion."
+            ),
+            "technical_notes": "Retain the evidence lines verbatim if the review needs to be documented or escalated.",
+            "note": "Document the observed signals and follow-up steps separately from any legal conclusion.",
+            "include_score": False,
+            "max_causes": 3,
+            "max_evidence": 2,
+            "show_risk_level": True,
+            "risk_label": "Risk level",
+        },
+        "Researcher": {
+            "title": "Research Model Assessment",
+            "status_label": "Study status",
+            "status_map": {
+                "Healthy": "stable in current monitoring",
+                "Warning": "showing signals worth investigation",
+                "Degraded": "showing instability in current monitoring",
+                "Critical": "requiring immediate investigation",
+                "Unknown": "unclear from current evidence",
+            },
+            "issues_label": "Observed investigation signals",
+            "severity_map": {
+                "CRITICAL": "Urgent investigation signal",
+                "HIGH": "High-priority investigation signal",
+                "MEDIUM": "Moderate investigation signal",
+                "LOW": "Low-level investigation signal",
+            },
+            "summary_template": (
+                "Monitoring indicates the research model is {status_text}. "
+                "{issue_sentence} Use the unchanged evidence lines when discussing validity or reproducibility."
+            ),
+            "issue_sentence_map": {
+                0: "No investigation signals were detected.",
+                1: "One investigation signal was detected.",
+                "many": "{count_word} investigation signals were detected.",
+            },
+            "impact_assessment": (
+                "These findings summarize monitored model behavior relevant to study review. "
+                "They do not by themselves prove validity, reproducibility, or conclusion-level outcomes."
+            ),
+            "confidence_explanation_template": (
+                "The {confidence}% confidence score indicates how strongly the observed evidence supports this assessment. "
+                "It is confidence in the investigation, not proof of research conclusions."
+            ),
+            "technical_notes": "Preserve the evidence text exactly if you cite it in research notes or follow-up analysis.",
+            "note": "Use this report to frame investigation and replication work, not to overstate conclusion-level effects.",
+            "include_score": True,
+            "max_causes": 5,
+            "max_evidence": 2,
+            "show_risk_level": True,
+            "risk_label": "Risk level",
+        },
+        "General": {
+            "title": "Model Review",
+            "status_label": "Status",
+            "status_map": {
+                "Healthy": "stable in monitoring",
+                "Warning": "showing signals that need review",
+                "Degraded": "showing reduced reliability in monitoring",
+                "Critical": "requiring urgent review",
+                "Unknown": "not yet clear",
+            },
+            "issues_label": "Observed signals",
+            "severity_map": {
+                "CRITICAL": "Urgent review signal",
+                "HIGH": "High-priority review signal",
+                "MEDIUM": "Moderate review signal",
+                "LOW": "Low-level review signal",
+            },
+            "summary_template": (
+                "Monitoring indicates the model is {status_text}. {issue_sentence}"
+            ),
+            "issue_sentence_map": {
+                0: "No review signals were observed.",
+                1: "One review signal was observed.",
+                "many": "{count} review signals were observed.",
+            },
+            "impact_assessment": (
+                "This summary reflects observed evidence and indicates where model review may be needed. "
+                "It does not by itself prove downstream outcomes."
+            ),
+            "confidence_explanation_template": (
+                "The {confidence}% confidence score reflects how strongly the observed evidence supports this assessment."
+            ),
+            "technical_notes": "Consult the detailed monitoring report for more context.",
+            "note": "",
+            "include_score": False,
+            "max_causes": 5,
+            "max_evidence": 2,
+            "show_risk_level": False,
+        },
+    }
+
     def __init__(self, verbose: bool = False):
         self.verbose = verbose
 
-    @staticmethod
-    def _resolve_executive_summary(ai_investigator: Dict[str, Any]) -> str:
-        """Use evidence-grounded summary from AI Investigator when available."""
-        return (ai_investigator.get("executive_summary") or "").strip()
-    
     def translate(
         self,
         root_cause: Dict[str, Any],
@@ -37,23 +460,13 @@ class AudienceTranslator:
     ) -> Dict[str, Any]:
         """
         Translate investigation findings for all supported audiences.
-        
-        Args:
-            root_cause: Root cause analysis output
-            ai_investigator: AI investigator output
-            
-        Returns:
-            Dictionary with audience-specific reports
         """
         audience_reports = {}
-        
+
         for audience in self.AUDIENCES:
             if self.verbose:
                 print(f"Translating for audience: {audience}")
-            
-            # If available, use audience-specific AI Investigator output so that
-            # any sections that reference `ai_investigator.*` aren't stuck in a
-            # single (often technical) style.
+
             ai_data = ai_investigator
             if ai_investigator_by_audience and isinstance(ai_investigator_by_audience, dict):
                 ai_data = ai_investigator_by_audience.get(audience, ai_investigator)
@@ -61,15 +474,12 @@ class AudienceTranslator:
             audience_reports[audience] = self._translate_for_audience(
                 audience, root_cause, ai_data
             )
-        
+
         return audience_reports
-    
+
     def _translate_for_audience(
         self, audience: str, root_cause: Dict[str, Any], ai_investigator: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """
-        Translate findings for a specific audience.
-        """
         if audience == "ML Engineer":
             return self._translate_for_engineer(root_cause, ai_investigator)
         elif audience == "Executive":
@@ -90,657 +500,168 @@ class AudienceTranslator:
             return self._translate_for_researcher(root_cause, ai_investigator)
         else:
             return self._translate_generic(root_cause, ai_investigator)
-            
+
+    @staticmethod
+    def _get_recommendations(root_cause: Dict[str, Any], ai_investigator: Dict[str, Any]) -> List[str]:
+        recommendations = root_cause.get("recommended_actions", [])
+        if recommendations:
+            return list(recommendations)
+        return list(ai_investigator.get("recommended_actions", []) or [])
+
+    @staticmethod
+    def _normalize_root_causes(root_cause: Dict[str, Any]) -> List[Dict[str, Any]]:
+        return list(root_cause.get("root_causes", []) or [])
+
+    @staticmethod
+    def _count_word(count: int) -> str:
+        small_counts = {
+            0: "Zero",
+            1: "One",
+            2: "Two",
+            3: "Three",
+            4: "Four",
+            5: "Five",
+        }
+        return small_counts.get(count, str(count))
+
+    def _issue_sentence(self, audience: str, root_causes: List[Dict[str, Any]]) -> str:
+        count = len(root_causes)
+        profile = self.AUDIENCE_PROFILES.get(audience, self.AUDIENCE_PROFILES["General"])
+        issue_map = profile.get("issue_sentence_map", {})
+        if count in issue_map:
+            return issue_map[count].format(count=count, count_word=self._count_word(count))
+        template = issue_map.get("many", "{count} review signals were observed.")
+        return template.format(count=count, count_word=self._count_word(count))
+
+    def _build_executive_summary(
+        self,
+        audience: str,
+        health_status: str,
+        confidence: int,
+        root_causes: List[Dict[str, Any]],
+    ) -> str:
+        profile = self.AUDIENCE_PROFILES.get(audience, self.AUDIENCE_PROFILES["General"])
+        status_text = profile["status_map"].get(health_status, profile["status_map"]["Unknown"])
+        return profile["summary_template"].format(
+            status_text=status_text,
+            confidence=confidence,
+            issue_sentence=self._issue_sentence(audience, root_causes),
+        )
+
+    def _build_findings(
+        self,
+        audience: str,
+        root_cause: Dict[str, Any],
+        ai_investigator: Dict[str, Any],
+    ) -> str:
+        profile = self.AUDIENCE_PROFILES.get(audience, self.AUDIENCE_PROFILES["General"])
+        health_status = root_cause.get("health_status", "Unknown")
+        confidence = root_cause.get("confidence", 0)
+        root_causes = self._normalize_root_causes(root_cause)
+        risk_level = ai_investigator.get("risk_level", "UNKNOWN")
+
+        lines = [
+            f"{profile['title']}:",
+            f"{profile['status_label']}: {profile['status_map'].get(health_status, profile['status_map']['Unknown'])}",
+            f"Assessment confidence: {confidence}%",
+        ]
+
+        if profile.get("show_risk_level"):
+            lines.append(f"{profile.get('risk_label', 'Risk level')}: {risk_level}")
+
+        if root_causes:
+            lines.extend(["", f"{profile['issues_label']}:"])
+            # Display ALL root causes dynamically, not limited by max_causes
+            for i, cause in enumerate(root_causes, 1):
+                severity = str(cause.get("severity", "LOW")).upper()
+                severity_text = profile["severity_map"].get(severity, severity)
+                line = f"{i}. {cause.get('cause', 'Unknown')}: {severity_text}"
+                if profile.get("include_score"):
+                    line += f" (score={cause.get('score', 0):.3f})"
+                lines.append(line)
+
+                for evidence in (cause.get("evidence", []) or []):
+                    lines.append(f"   Evidence: {evidence}")
+        else:
+            lines.extend(["", "No root causes were listed in the current summary."])
+
+        note = profile.get("note", "").strip()
+        if note:
+            lines.extend(["", f"Note: {note}"])
+
+        return "\n".join(lines)
+
+    def _build_audience_report(
+        self,
+        audience: str,
+        root_cause: Dict[str, Any],
+        ai_investigator: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        profile = self.AUDIENCE_PROFILES.get(audience, self.AUDIENCE_PROFILES["General"])
+        health_status = root_cause.get("health_status", "Unknown")
+        confidence = root_cause.get("confidence", 0)
+        root_causes = self._normalize_root_causes(root_cause)
+
+        return {
+            "audience": audience if audience in self.AUDIENCE_PROFILES else "General",
+            "executive_summary": self._build_executive_summary(
+                audience, health_status, confidence, root_causes
+            ),
+            "findings": self._build_findings(audience, root_cause, ai_investigator),
+            "impact_assessment": profile["impact_assessment"],
+            "confidence_explanation": profile["confidence_explanation_template"].format(
+                confidence=confidence
+            ),
+            "recommendations": self._get_recommendations(root_cause, ai_investigator),
+            "technical_notes": profile["technical_notes"],
+        }
+
     def _translate_for_hr_manager(
         self, root_cause: Dict[str, Any], ai_investigator: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """HR-focused translation for employee attrition/performance models."""
-        health_status = root_cause.get("health_status", "Unknown")
-        confidence = root_cause.get("confidence", 0)
-        root_causes = root_cause.get("root_causes", [])
-        risk_level = ai_investigator.get("risk_level", "UNKNOWN")
-        
-        # HR terminology
-        hr_status = {
-            "Healthy": "Reliable",
-            "Warning": "Needs Monitoring",
-            "Degraded": "Unreliable",
-            "Critical": "High Risk",
-            "Unknown": "Uncertain"
-        }
-        
-        reliability = hr_status.get(health_status, "Uncertain")
-        
-        findings = f"HR Model Assessment:\n"
-        findings += f"Model reliability for HR decisions: {reliability}\n"
-        findings += f"Assessment confidence: {confidence}%\n\n"
-        
-        if root_causes:
-            findings += "Potential HR Impact:\n"
-            for i, cause in enumerate(root_causes[:3], 1):
-                severity = cause.get('severity', 'LOW')
-                hr_severity = {
-                    'CRITICAL': 'High - May affect employee decisions',
-                    'HIGH': 'Moderate - Review recommended',
-                    'MEDIUM': 'Low - Monitor',
-                    'LOW': 'Minimal'
-                }.get(severity, severity)
-                
-                findings += f"{i}. {cause.get('cause', 'Unknown')}: {hr_severity}\n"
-        
-        findings += f"\nOverall Risk Level: {risk_level}\n"
-        findings += "\nNote: Always use HR judgment alongside model predictions."
-        
-        executive_summary = self._resolve_executive_summary(ai_investigator)
-        if not executive_summary:
-            executive_summary = (
-                f"HR decision support model reliable. No significant issues detected. "
-                f"Continue normal operations. Confidence: {confidence}%."
-            )
-        
-        # HR recommendations
-        hr_recommendations = []
-        for rec in (recommendations := root_cause.get("recommended_actions", []) or ai_investigator.get("recommended_actions", [])):
-            hr_recommendations.append(f"HR Action: {rec}")
-        
-        # Impact assessment (HR)
-        impact_assessment = "HR implications include potential impact on hiring decisions, performance evaluations, and employee retention strategies."
-        
-        # Confidence explanation (HR)
-        confidence_explanation = f"Confidence score of {confidence}% reflects the strength of evidence from model performance monitoring and HR validation."
-        
-        # Technical notes (HR)
-        technical_notes = "Model performance and validation details are available in the full HR analytics report."
-        
-        return {
-            "audience": "HR Manager",
-            "executive_summary": executive_summary,
-            "findings": findings,
-            "impact_assessment": impact_assessment,
-            "confidence_explanation": confidence_explanation,
-            "recommendations": hr_recommendations,
-            "technical_notes": technical_notes
-        }
-    
+        return self._build_audience_report("HR Manager", root_cause, ai_investigator)
+
     def _translate_for_insurance_analyst(
         self, root_cause: Dict[str, Any], ai_investigator: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Insurance-focused translation for risk scoring models."""
-        health_status = root_cause.get("health_status", "Unknown")
-        confidence = root_cause.get("confidence", 0)
-        root_causes = root_cause.get("root_causes", [])
-        risk_level = ai_investigator.get("risk_level", "UNKNOWN")
-        
-        # Insurance terminology
-        insurance_status = {
-            "Healthy": "Low Risk",
-            "Warning": "Monitor Closely",
-            "Degraded": "Moderate Risk",
-            "Critical": "High Risk",
-            "Unknown": "Uncertain Risk"
-        }
-        
-        assessment_risk = insurance_status.get(health_status, "Uncertain")
-        
-        findings = f"Insurance Risk Model Assessment:\n"
-        findings += f"Model risk classification: {assessment_risk}\n"
-        findings += f"Assessment confidence: {confidence}%\n\n"
-        
-        if root_causes:
-            findings += "Risk Factors Identified:\n"
-            for i, cause in enumerate(root_causes[:3], 1):
-                severity = cause.get('severity', 'LOW')
-                insurance_severity = {
-                    'CRITICAL': 'High - May affect underwriting accuracy',
-                    'HIGH': 'Moderate - Monitor closely',
-                    'MEDIUM': 'Low - Track trends',
-                    'LOW': 'Minimal'
-                }.get(severity, severity)
-                
-                findings += f"{i}. {cause.get('cause', 'Unknown')}: {insurance_severity}\n"
-        
-        findings += f"\nOverall Risk Level: {risk_level}\n"
-        findings += "\nCompliance Note: Ensure model meets insurance regulatory requirements."
-        
-        executive_summary = self._resolve_executive_summary(ai_investigator)
-        if not executive_summary:
-            executive_summary = (
-                f"Insurance risk model reliable. No significant issues detected. "
-                f"Continue normal operations. Risk level: {risk_level}."
-            )
-        
-        # Insurance recommendations
-        insurance_recommendations = []
-        for rec in (recommendations := root_cause.get("recommended_actions", []) or ai_investigator.get("recommended_actions", [])):
-            insurance_recommendations.append(f"Risk Management: {rec}")
-        
-        # Impact assessment (insurance)
-        impact_assessment = "Portfolio impact includes potential for inaccurate risk assessments, increased claims costs, and compliance implications from unreliable model outputs."
-        
-        # Confidence explanation (insurance)
-        confidence_explanation = f"Confidence score of {confidence}% is based on monitoring of model performance metrics, risk prediction accuracy, and compliance validation checks."
-        
-        # Technical notes (insurance)
-        technical_notes = "Model performance and compliance documentation are available in the regulatory reporting package."
-        
-        return {
-            "audience": "Insurance Analyst",
-            "executive_summary": executive_summary,
-            "findings": findings,
-            "impact_assessment": impact_assessment,
-            "confidence_explanation": confidence_explanation,
-            "recommendations": insurance_recommendations,
-            "technical_notes": technical_notes
-        }
-    
+        return self._build_audience_report("Insurance Analyst", root_cause, ai_investigator)
+
     def _translate_for_compliance_officer(
         self, root_cause: Dict[str, Any], ai_investigator: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Compliance-focused translation for legal and fairness audits."""
-        health_status = root_cause.get("health_status", "Unknown")
-        confidence = root_cause.get("confidence", 0)
-        root_causes = root_cause.get("root_causes", [])
-        risk_level = ai_investigator.get("risk_level", "UNKNOWN")
-        
-        # Compliance terminology
-        compliance_status = {
-            "Healthy": "Compliant",
-            "Warning": "Needs Review",
-            "Degraded": "Potentially Non-Compliant",
-            "Critical": "Non-Compliant",
-            "Unknown": "Uncertain"
-        }
-        
-        assessment_status = compliance_status.get(health_status, "Uncertain")
-        
-        findings = f"Model Compliance Assessment:\n"
-        findings += f"Current compliance status: {assessment_status}\n"
-        findings += f"Assessment confidence: {confidence}%\n\n"
-        
-        if root_causes:
-            findings += "Potential Compliance Risks:\n"
-            for i, cause in enumerate(root_causes[:3], 1):
-                severity = cause.get('severity', 'LOW')
-                compliance_severity = {
-                    'CRITICAL': 'High - Immediate action required',
-                    'HIGH': 'Moderate - Review and document',
-                    'MEDIUM': 'Low - Monitor',
-                    'LOW': 'Minimal'
-                }.get(severity, severity)
-                
-                findings += f"{i}. {cause.get('cause', 'Unknown')}: {compliance_severity}\n"
-        
-        findings += f"\nOverall Risk Level: {risk_level}\n"
-        findings += "\nNote: Document all findings and actions taken for audit trail purposes."
-        
-        executive_summary = self._resolve_executive_summary(ai_investigator)
-        if not executive_summary:
-            executive_summary = (
-                f"Model compliant. No significant compliance issues detected. "
-                f"Continue normal operations. Risk level: {risk_level}."
-            )
-        
-        # Compliance recommendations
-        compliance_recommendations = []
-        for rec in (recommendations := root_cause.get("recommended_actions", []) or ai_investigator.get("recommended_actions", [])):
-            compliance_recommendations.append(f"Compliance Action: {rec}")
-        
-        # Impact assessment (compliance)
-        impact_assessment = "Compliance implications include potential for regulatory violations, fines, and reputational damage from unfair or unreliable model outputs."
-        
-        # Confidence explanation (compliance)
-        confidence_explanation = f"Confidence score of {confidence}% is based on analysis of fairness metrics, bias detection, and model performance validation."
-        
-        # Technical notes (compliance)
-        technical_notes = "Full audit trail and compliance documentation are available in the model governance package."
-        
-        return {
-            "audience": "Legal / Compliance Officer",
-            "executive_summary": executive_summary,
-            "findings": findings,
-            "impact_assessment": impact_assessment,
-            "confidence_explanation": confidence_explanation,
-            "recommendations": compliance_recommendations,
-            "technical_notes": technical_notes
-        }
-    
+        return self._build_audience_report("Legal / Compliance Officer", root_cause, ai_investigator)
+
     def _translate_for_researcher(
         self, root_cause: Dict[str, Any], ai_investigator: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Research-focused translation for academic/experimental models."""
-        health_status = root_cause.get("health_status", "Unknown")
-        confidence = root_cause.get("confidence", 0)
-        root_causes = root_cause.get("root_causes", [])
-        recommendations = root_cause.get("recommended_actions", []) or ai_investigator.get("recommended_actions", [])
-        
-        # Research terminology
-        research_status = {
-            "Healthy": "Stable",
-            "Warning": "Anomalies Detected",
-            "Degraded": "Unstable",
-            "Critical": "Requires Immediate Attention",
-            "Unknown": "Status Unclear"
-        }
-        
-        model_status = research_status.get(health_status, "Unclear")
-        
-        findings = f"Research Model Assessment:\n"
-        findings += f"Current model status: {model_status}\n"
-        findings += f"Investigation confidence: {confidence}%\n\n"
-        
-        if root_causes:
-            findings += "Identified Issues:\n"
-            for i, cause in enumerate(root_causes[:5], 1):
-                findings += f"{i}. {cause.get('cause', 'Unknown')} (Severity: {cause.get('severity', 'LOW')}, Score: {cause.get('score', 0):.3f})\n"
-                if cause.get('evidence'):
-                    findings += f"   Evidence: {', '.join(cause['evidence'][:2])}\n"
-        
-        # Use AI investigator findings if available
-        if ai_investigator.get("investigation_findings"):
-            findings += f"\nDetailed Analysis:\n{ai_investigator['investigation_findings']}\n"
-        
-        executive_summary = self._resolve_executive_summary(ai_investigator)
-        if not executive_summary:
-            executive_summary = (
-                f"Research model stable. No significant issues detected. "
-                f"Continue research operations. Confidence: {confidence}%."
-            )
-        
-        # Impact assessment (research)
-        impact_assessment = "Research implications include potential challenges to study validity, reproducibility, and the reliability of experimental conclusions."
-        
-        # Confidence explanation (research)
-        confidence_explanation = f"Confidence score of {confidence}% is based on comprehensive analysis of model performance metrics, feature stability, and statistical validation."
-        
-        # Technical notes (research)
-        technical_notes = "Detailed performance metrics, statistical analyses, and reproducibility information are available in the full research report."
-        
-        # Research recommendations
-        research_recommendations = []
-        for rec in recommendations:
-            research_recommendations.append(f"Research Action: {rec}")
-        
-        return {
-            "audience": "Researcher",
-            "executive_summary": executive_summary,
-            "findings": findings,
-            "impact_assessment": impact_assessment,
-            "confidence_explanation": confidence_explanation,
-            "recommendations": research_recommendations,
-            "technical_notes": technical_notes
-        }
-    
+        return self._build_audience_report("Researcher", root_cause, ai_investigator)
+
     def _translate_for_engineer(
         self, root_cause: Dict[str, Any], ai_investigator: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Technical translation for ML engineers."""
-        health_status = root_cause.get("health_status", "Unknown")
-        confidence = root_cause.get("confidence", 0)
-        root_causes = root_cause.get("root_causes", [])
-        recommendations = root_cause.get("recommended_actions", [])
-        
-        # Build technical summary
-        findings = f"Model health status: {health_status}\n"
-        findings += f"Confidence score: {confidence}%\n\n"
-        
-        if root_causes:
-            findings += "Primary technical issues identified:\n"
-            for i, cause in enumerate(root_causes[:5], 1):
-                findings += f"{i}. {cause.get('cause', 'Unknown')} (Severity: {cause.get('severity', 'LOW')})\n"
-                findings += f"   Score: {cause.get('score', 0):.3f}\n"
-                if cause.get('evidence'):
-                    findings += f"   Evidence: {', '.join(cause['evidence'][:2])}\n"
-                findings += "\n"
-        
-        # Use AI investigator findings if available
-        if ai_investigator.get("investigation_findings"):
-            findings += f"\nDetailed Analysis:\n{ai_investigator['investigation_findings']}\n"
-        
-        executive_summary = self._resolve_executive_summary(ai_investigator)
-        if not executive_summary:
-            executive_summary = (
-                f"Model operating normally. Minor issues detected. "
-                f"Continue monitoring. Confidence: {confidence}%."
-            )
-        
-        # Impact assessment (technical)
-        impact_assessment = "Technical impact includes potential reduction in prediction accuracy, calibration drift, and increased risk of unreliable outputs for production workloads."
-        
-        # Confidence explanation (technical)
-        confidence_explanation = f"Confidence score of {confidence}% is based on root cause analysis of drift metrics (PSI, KS), calibration error (ECE, Brier score), and feature importance stability."
-        
-        # Technical notes
-        technical_notes = "Technical recommendations focus on feature drift mitigation, model recalibration, and retraining with updated datasets. Key metrics to monitor: PSI, KS, calibration ECE, feature importance variance over time."
-        
-        return {
-            "audience": "ML Engineer",
-            "executive_summary": executive_summary,
-            "findings": findings,
-            "impact_assessment": impact_assessment,
-            "confidence_explanation": confidence_explanation,
-            "recommendations": recommendations or ai_investigator.get("recommended_actions", []),
-            "technical_notes": technical_notes
-        }
-    
+        return self._build_audience_report("ML Engineer", root_cause, ai_investigator)
+
     def _translate_for_executive(
         self, root_cause: Dict[str, Any], ai_investigator: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Business-focused translation for executives."""
-        health_status = root_cause.get("health_status", "Unknown")
-        confidence = root_cause.get("confidence", 0)
-        root_causes = root_cause.get("root_causes", [])
-        risk_level = ai_investigator.get("risk_level", "UNKNOWN")
-        
-        # Business impact language
-        status_translation = {
-            "Healthy": "operational",
-            "Warning": "showing signs of degradation",
-            "Degraded": "underperforming",
-            "Critical": "at risk",
-            "Unknown": "status unclear"
-        }
-        
-        business_status = status_translation.get(health_status, "uncertain")
-        
-        # Build business summary
-        findings = f"Business Impact Assessment:\n"
-        findings += f"Current model performance is {business_status} with {confidence}% confidence in assessment.\n\n"
-        
-        if root_causes:
-            findings += "Key Business Risks:\n"
-            for i, cause in enumerate(root_causes[:3], 1):
-                severity = cause.get('severity', 'LOW')
-                business_severity = {
-                    'CRITICAL': 'High - Immediate attention required',
-                    'HIGH': 'High - Priority action needed',
-                    'MEDIUM': 'Medium - Monitor closely',
-                    'LOW': 'Low - Track for trends'
-                }.get(severity, severity)
-                
-                findings += f"{i}. {cause.get('cause', 'Unknown')}: {business_severity}\n"
-        
-        findings += f"\nOverall Risk Level: {risk_level}\n"
-        
-        if ai_investigator.get("impact_assessment"):
-            findings += f"\n{ai_investigator['impact_assessment']}\n"
-        
-        executive_summary = self._resolve_executive_summary(ai_investigator)
-        if not executive_summary:
-            executive_summary = (
-                f"Model operating normally. No significant business impact detected. "
-                f"Continue operations. Risk level: {risk_level}."
-            )
-        
-        # Translate recommendations to business language
-        business_recommendations = []
-        for rec in (recommendations := root_cause.get("recommended_actions", []) or ai_investigator.get("recommended_actions", [])):
-            # Simplify technical recommendations
-            rec_lower = rec.lower()
-            if "retrain" in rec_lower:
-                business_recommendations.append("Schedule model retraining to improve accuracy")
-            elif "feature" in rec_lower:
-                business_recommendations.append("Review and optimize input data features")
-            elif "drift" in rec_lower:
-                business_recommendations.append("Monitor for data drift and update training data")
-            elif "calibration" in rec_lower:
-                business_recommendations.append("Improve model confidence calibration")
-            else:
-                business_recommendations.append(rec)
-        
-        # Impact assessment (business)
-        impact_assessment = "Business risk includes potential revenue impact from incorrect decisions, operational friction from unreliable outputs, and increased scrutiny from stakeholders."
-        
-        # Confidence explanation (business)
-        confidence_explanation = f"Confidence score of {confidence}% reflects our level of certainty in the identified issues and recommended actions based on comprehensive model health monitoring."
-        
-        # Technical notes (lightweight for exec)
-        technical_notes = "Technical details are available upon request from the data science team."
-        
-        return {
-            "audience": "Executive",
-            "executive_summary": executive_summary,
-            "findings": findings,
-            "impact_assessment": impact_assessment,
-            "confidence_explanation": confidence_explanation,
-            "recommendations": business_recommendations,
-            "technical_notes": technical_notes
-        }
-    
+        return self._build_audience_report("Executive", root_cause, ai_investigator)
+
     def _translate_for_doctor(
         self, root_cause: Dict[str, Any], ai_investigator: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Clinical-focused translation for medical professionals."""
-        health_status = root_cause.get("health_status", "Unknown")
-        confidence = root_cause.get("confidence", 0)
-        root_causes = root_cause.get("root_causes", [])
-        
-        # Clinical terminology
-        clinical_status = {
-            "Healthy": "reliable",
-            "Warning": "needs monitoring",
-            "Degraded": "variable",
-            "Critical": "unreliable",
-            "Unknown": "uncertain"
-        }
-        
-        reliability = clinical_status.get(health_status, "uncertain")
-        
-        findings = f"Clinical Decision Support Assessment:\n"
-        findings += f"Model reliability for clinical decisions: {reliability}\n"
-        findings += f"Confidence in assessment: {confidence}%\n\n"
-        
-        if root_causes:
-            findings += "Potential Clinical Impact:\n"
-            for i, cause in enumerate(root_causes[:3], 1):
-                severity = cause.get('severity', 'LOW')
-                clinical_severity = {
-                    'CRITICAL': 'High - May affect patient care',
-                    'HIGH': 'Moderate - Review recommended',
-                    'MEDIUM': 'Low - Monitor',
-                    'LOW': 'Minimal'
-                }.get(severity, severity)
-                
-                findings += f"{i}. {cause.get('cause', 'Unknown')}: {clinical_severity}\n"
-        
-        findings += "\nNote: Always use clinical judgment alongside model predictions."
-        
-        executive_summary = self._resolve_executive_summary(ai_investigator)
-        if not executive_summary:
-            executive_summary = (
-                f"Clinical decision support reliable. No significant issues detected. "
-                f"Continue normal operations. Confidence: {confidence}%."
-            )
-        
-        # Clinical recommendations
-        clinical_recommendations = []
-        for rec in (recommendations := root_cause.get("recommended_actions", []) or ai_investigator.get("recommended_actions", [])):
-            clinical_recommendations.append(f"Clinical: {rec}")
-        
-        # Impact assessment (clinical)
-        impact_assessment = "Clinical implications include potential impact on diagnostic reliability, patient risk stratification, and overall quality of care decisions."
-        
-        # Confidence explanation (clinical)
-        confidence_explanation = f"Confidence score of {confidence}% reflects the strength of evidence from model performance monitoring and clinical validation."
-        
-        # Technical notes (clinical)
-        technical_notes = "Technical performance metrics and validation details are available in the full model monitoring report."
-        
-        return {
-            "audience": "Doctor",
-            "executive_summary": executive_summary,
-            "findings": findings,
-            "impact_assessment": impact_assessment,
-            "confidence_explanation": confidence_explanation,
-            "recommendations": clinical_recommendations,
-            "technical_notes": technical_notes
-        }
-    
+        return self._build_audience_report("Doctor", root_cause, ai_investigator)
+
     def _translate_for_loan_officer(
         self, root_cause: Dict[str, Any], ai_investigator: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Risk-focused translation for loan officers."""
-        health_status = root_cause.get("health_status", "Unknown")
-        confidence = root_cause.get("confidence", 0)
-        root_causes = root_cause.get("root_causes", [])
-        risk_level = ai_investigator.get("risk_level", "UNKNOWN")
-        
-        # Risk assessment language
-        risk_status = {
-            "Healthy": "Low Risk",
-            "Warning": "Monitor Closely",
-            "Degraded": "Moderate Risk",
-            "Critical": "High Risk",
-            "Unknown": "Uncertain Risk"
-        }
-        
-        assessment_risk = risk_status.get(health_status, "Uncertain")
-        
-        findings = f"Credit Risk Model Assessment:\n"
-        findings += f"Model risk classification: {assessment_risk}\n"
-        findings += f"Assessment confidence: {confidence}%\n\n"
-        
-        if root_causes:
-            findings += "Risk Factors Identified:\n"
-            for i, cause in enumerate(root_causes[:3], 1):
-                severity = cause.get('severity', 'LOW')
-                risk_impact = {
-                    'CRITICAL': 'High - May affect approval accuracy',
-                    'HIGH': 'Moderate - Monitor closely',
-                    'MEDIUM': 'Low - Track trends',
-                    'LOW': 'Minimal'
-                }.get(severity, severity)
-                
-                findings += f"{i}. {cause.get('cause', 'Unknown')}: {risk_impact}\n"
-        
-        findings += f"\nOverall Risk Level: {risk_level}\n"
-        findings += "\nCompliance Note: Ensure model meets regulatory requirements."
-        
-        executive_summary = self._resolve_executive_summary(ai_investigator)
-        if not executive_summary:
-            executive_summary = (
-                f"Credit risk model reliable. No significant issues detected. "
-                f"Continue normal operations. Risk level: {risk_level}."
-            )
-        
-        # Risk-focused recommendations
-        risk_recommendations = []
-        for rec in (recommendations := root_cause.get("recommended_actions", []) or ai_investigator.get("recommended_actions", [])):
-            risk_recommendations.append(f"Risk Management: {rec}")
-        
-        # Impact assessment (risk/loan)
-        impact_assessment = "Portfolio impact includes potential for inaccurate credit decisions, increased default risk, and compliance implications from unreliable model outputs."
-        
-        # Confidence explanation (risk/loan)
-        confidence_explanation = f"Confidence score of {confidence}% is based on monitoring of model performance metrics, default prediction accuracy, and compliance validation checks."
-        
-        # Technical notes (loan)
-        technical_notes = "Model performance and compliance documentation are available in the regulatory reporting package."
-        
-        return {
-            "audience": "Loan Officer",
-            "executive_summary": executive_summary,
-            "findings": findings,
-            "impact_assessment": impact_assessment,
-            "confidence_explanation": confidence_explanation,
-            "recommendations": risk_recommendations,
-            "technical_notes": technical_notes
-        }
-    
+        return self._build_audience_report("Loan Officer", root_cause, ai_investigator)
+
     def _translate_for_student(
         self, root_cause: Dict[str, Any], ai_investigator: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Simplified professional translation for students."""
-        health_status = root_cause.get("health_status", "Unknown")
-        confidence = root_cause.get("confidence", 0)
-        root_causes = root_cause.get("root_causes", [])
-        recommendations = root_cause.get("recommended_actions", []) or ai_investigator.get("recommended_actions", [])
-        
-        # Professional but simplified language
-        status_translation = {
-            "Healthy": "operating within normal parameters",
-            "Warning": "showing signs of degradation",
-            "Degraded": "performance below acceptable thresholds",
-            "Critical": "requires immediate attention",
-            "Unknown": "status unclear"
-        }
-        
-        model_status = status_translation.get(health_status, "status unclear")
-        
-        # Build professional findings
-        findings = f"Model Health Assessment:\n"
-        findings += f"Current status: {model_status}\n"
-        findings += f"Investigation confidence: {confidence}%\n\n"
-        
-        if root_causes:
-            findings += "Identified Issues:\n"
-            for i, cause in enumerate(root_causes[:3], 1):
-                severity = cause.get('severity', 'LOW')
-                findings += f"{i}. {cause.get('cause', 'Unknown')} (Severity: {severity})\n"
-        
-        executive_summary = self._resolve_executive_summary(ai_investigator)
-        if not executive_summary:
-            executive_summary = (
-                f"Model operating within normal parameters. No significant issues detected. "
-                f"Continue monitoring."
-            )
-        
-        # Impact assessment (simplified professional)
-        impact_assessment = "Unreliable model predictions may lead to incorrect decisions. Addressing identified issues is critical to restoring model performance."
-        
-        # Confidence explanation (simplified)
-        confidence_explanation = f"Confidence score of {confidence}% is based on analysis of model health metrics and detected anomalies."
-        
-        # Technical notes (simplified)
-        technical_notes = "Review recommended actions to address identified issues and restore model performance."
-        
-        # Actionable recommendations with prefix
-        action_recommendations = []
-        for rec in recommendations:
-            action_recommendations.append(f"ACTION REQUIRED: {rec}")
-        
-        return {
-            "audience": "Student",
-            "executive_summary": executive_summary,
-            "findings": findings,
-            "impact_assessment": impact_assessment,
-            "confidence_explanation": confidence_explanation,
-            "recommendations": action_recommendations,
-            "technical_notes": technical_notes
-        }
-    
+        return self._build_audience_report("Student", root_cause, ai_investigator)
+
     def _translate_generic(
         self, root_cause: Dict[str, Any], ai_investigator: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Generic translation for unknown audiences."""
-        health_status = root_cause.get("health_status", "Unknown")
-        confidence = root_cause.get("confidence", 0)
-        root_causes = root_cause.get("root_causes", [])
-        
-        findings = f"Model Health: {health_status}\n"
-        findings += f"Confidence: {confidence}%\n\n"
-        
-        if root_causes:
-            findings += "Issues Identified:\n"
-            for i, cause in enumerate(root_causes[:5], 1):
-                findings += f"{i}. {cause.get('cause', 'Unknown')} (Severity: {cause.get('severity', 'LOW')})\n"
-        
-        executive_summary = self._resolve_executive_summary(ai_investigator)
-        if not executive_summary:
-            executive_summary = f"Model health status: {health_status} with {confidence}% confidence. "
-            if root_causes:
-                executive_summary += f"{len(root_causes)} issues identified."
-        
-        # Default fields
-        impact_assessment = ai_investigator.get("impact_assessment", "Impact assessment not available.")
-        confidence_explanation = ai_investigator.get("confidence_explanation", "Confidence explanation not available.")
-        technical_notes = ai_investigator.get("technical_notes", "Technical notes not available.")
-        
-        return {
-            "audience": "General",
-            "executive_summary": executive_summary,
-            "findings": findings,
-            "impact_assessment": impact_assessment,
-            "confidence_explanation": confidence_explanation,
-            "recommendations": root_cause.get("recommended_actions", []) or ai_investigator.get("recommended_actions", []),
-            "technical_notes": technical_notes
-        }
+        return self._build_audience_report("General", root_cause, ai_investigator)

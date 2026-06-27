@@ -1,0 +1,68 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="vertexGlow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="18" result="blur1"/>
+      <feColorMatrix in="blur1" type="matrix" values="0 0 0 0 0.0235 0 0 0 0 0.7137 0 0 0 0 0.8314 0 0 0 0.9 0" result="glow1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="glow1"/>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="auraGlow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+    <linearGradient id="coreGlow" x1="512" y1="216" x2="512" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#67E8F9"/>
+    </linearGradient>
+    <style>
+      .bg { fill: #0f0f0f; }
+      .incoming { stroke: #06b6d4; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 13 14; }
+      .outgoing { stroke: #10b981; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 13 14; }
+      .orbit-indigo { stroke: #4f46e5; stroke-width: 3; opacity: 0.4; fill: none; }
+      .orbit-violet { stroke: #8b5cf6; stroke-width: 3; opacity: 0.4; fill: none; }
+      .particle-label { fill: #E2E8F0; font-size: 30px; font-family: Inter, Geist, Arial, sans-serif; letter-spacing: 0.04em; }
+      .brand { fill: #FFFFFF; font-size: 80px; font-weight: 600; font-family: Inter, Geist, Arial, sans-serif; letter-spacing: 0.02em; }
+      .subtitle { fill: #94a3b8; font-size: 34px; font-family: Inter, Geist, Arial, sans-serif; letter-spacing: 0.14em; text-transform: lowercase; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1024" height="1024" rx="64"/>
+
+  <g transform="translate(0 6)">
+    <line class="incoming" x1="220" y1="232" x2="512" y2="288"/>
+    <line class="incoming" x1="220" y1="344" x2="512" y2="288"/>
+
+    <line class="outgoing" x1="512" y1="288" x2="804" y2="218"/>
+    <line class="outgoing" x1="512" y1="288" x2="804" y2="358"/>
+
+    <text class="particle-label" x="182" y="229">e-</text>
+    <text class="particle-label" x="182" y="356">e+</text>
+    <text class="particle-label" x="826" y="217">γ</text>
+    <text class="particle-label" x="826" y="372">γ</text>
+
+    <g transform="translate(512 288)">
+      <ellipse cx="0" cy="0" rx="126" ry="52" class="orbit-indigo">
+        <animateTransform attributeName="transform" type="rotate" from="12" to="372" dur="14s" repeatCount="indefinite"/>
+      </ellipse>
+      <ellipse cx="0" cy="0" rx="92" ry="146" class="orbit-violet">
+        <animateTransform attributeName="transform" type="rotate" from="74" to="-286" dur="18s" repeatCount="indefinite"/>
+      </ellipse>
+
+      <circle cx="0" cy="0" r="34" fill="#06b6d4" opacity="0.18" filter="url(#auraGlow)">
+        <animate attributeName="r" values="34;42;34" dur="2.8s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.16;0.28;0.16" dur="2.8s" repeatCount="indefinite"/>
+      </circle>
+
+      <circle cx="0" cy="0" r="16" fill="url(#coreGlow)" filter="url(#vertexGlow)"/>
+      <circle cx="0" cy="0" r="6" fill="#FFFFFF"/>
+    </g>
+  </g>
+
+  <g text-anchor="middle">
+    <text class="brand" x="512" y="708">FeynML</text>
+    <text class="subtitle" x="512" y="760">particle vertex</text>
+  </g>
+</svg>

@@ -1,78 +1,799 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container py-5 mt-5">
-    <div class="row g-5 align-items-center">
-        <div class="col-lg-6 animate-up">
-            <h1 class="display-4 fw-bold mb-4">About FeynML</h1>
-            <p class="lead text-muted mb-4">
-                FeynML was created as an academic and engineering initiative to make machine learning systems easier to understand, diagnose, and improve.
-            </p>
-            <p class="text-muted mb-4">
-                The project was developed by **Arman Kaushik**, a Computer Science undergraduate at Swami Keshvanand Institute of Technology (SKIT), Jaipur. 
-            </p>
-            <p class="text-muted">
-                FeynML combines statistical diagnostics, model observability, root-cause analysis, and automated reporting into a single investigation platform.
-            </p>
-            
-            <div class="mt-5 p-4 bg-secondary rounded-4 border">
-                <h4 class="fw-bold mb-3">Developer</h4>
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <div class="bg-indigo-600 text-white avatar-badge d-flex align-items-center justify-content-center">
-                        <i class="fa-solid fa-code"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold text-primary">Arman Kaushik</div>
-                        <div class="small text-muted">B.Tech Computer Science Engineering</div>
-                        <div class="small text-muted">SKIT Jaipur</div>
-                    </div>
-                </div>
-                
-                <h6 class="fw-bold text-uppercase small text-muted mb-3">Interests</h6>
-                <div class="d-flex flex-wrap gap-2 mb-4">
-                    <span class="badge bg-indigo-50 text-indigo-600 border border-indigo-200">Machine Learning</span>
-                    <span class="badge bg-indigo-50 text-indigo-600 border border-indigo-200">Data Analytics</span>
-                </div>
 
-                <div class="d-flex gap-3 pt-3 border-top">
-                    <a href="https://github.com/B241561" target="_blank" class="btn btn-sm btn-outline-indigo rounded-pill px-3">
-                        <i class="fa-brands fa-github me-2"></i>GitHub
-                    </a>
-                    <a href="https://www.linkedin.com/in/arman-kaushik-29b5b6370/" target="_blank" class="btn btn-sm btn-outline-indigo rounded-pill px-3">
-                        <i class="fa-brands fa-linkedin me-2"></i>LinkedIn
-                    </a>
-                </div>
-            </div>
+<!-- ============================================================
+     ABOUT PAGE — FeynML
+     Sections: Hero · What is FeynML · Stats Strip · Capabilities
+               · Investigation Framework · Tech Stack · Philosophy
+               · Developer · Mission
+     ============================================================ -->
 
-            <div class="mt-5">
-                <h2 class="fw-bold mb-3">Mission</h2>
-                <p class="text-muted">
-                    To make machine learning reliability accessible, explainable, and practical for everyone—from students learning ML concepts to professionals deploying models in production.
-                </p>
-            </div>
+<style>
+/* ── Page-scoped tokens ── */
+.about-page {
+  --cyan:       #38bdf8;
+  --cyan-dim:   rgba(56,189,248,0.12);
+  --cyan-glow:  rgba(14,165,233,0.20);
+  --indigo:     #6366f1;
+  --navy:       rgba(15,23,42,0.75);
+  --border:     rgba(56,189,248,0.12);
+  --text-muted: #94a3b8;
+}
+
+/* ── Hero ── */
+.about-hero {
+  padding: 72px 0 40px;
+}
+.about-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 32px;
+}
+.about-logo-wrap svg {
+  filter: drop-shadow(0 0 18px rgba(14,165,233,0.35));
+}
+.about-logo-label {
+  display: flex;
+  flex-direction: column;
+}
+.about-logo-label span:first-child {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 1px;
+}
+.about-logo-label span:last-child {
+  font-family: monospace;
+  font-size: 0.65rem;
+  color: var(--cyan);
+  letter-spacing: 4px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+.about-eyebrow {
+  font-family: monospace;
+  font-size: 0.7rem;
+  letter-spacing: 4px;
+  color: var(--cyan);
+  opacity: 0.7;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.about-h1 {
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+  margin-bottom: 20px;
+}
+.about-h1 .grad {
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.about-lead {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  line-height: 1.8;
+  max-width: 640px;
+  margin-bottom: 32px;
+}
+
+/* ── Divider ── */
+.about-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,0.2), transparent);
+  margin: 56px 0;
+}
+
+/* ── Stats strip ── */
+.stats-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 64px;
+}
+.stat-cell {
+  background: var(--navy);
+  padding: 28px 20px;
+  text-align: center;
+  transition: background 0.25s;
+}
+.stat-cell:hover { background: rgba(56,189,248,0.06); }
+.stat-num {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--cyan);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.stat-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+
+/* ── Section headers ── */
+.section-eyebrow {
+  font-family: monospace;
+  font-size: 0.68rem;
+  letter-spacing: 3px;
+  color: var(--cyan);
+  opacity: 0.65;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.section-h2 {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 14px;
+  line-height: 1.2;
+}
+.section-sub {
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.7;
+  max-width: 580px;
+}
+
+/* ── Capability cards ── */
+.cap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  margin-top: 40px;
+}
+.cap-card {
+  background: var(--navy);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+.cap-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.cap-card:hover {
+  border-color: rgba(56,189,248,0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.3), 0 0 0 1px rgba(56,189,248,0.08);
+}
+.cap-card:hover::before { opacity: 1; }
+.cap-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: rgba(56,189,248,0.1);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 18px;
+  font-size: 1.25rem;
+  color: var(--cyan);
+}
+.cap-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.92);
+  margin-bottom: 8px;
+}
+.cap-text {
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+.cap-badge {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 100px;
+  background: rgba(56,189,248,0.1);
+  color: var(--cyan);
+  border: 1px solid rgba(56,189,248,0.2);
+}
+
+/* ── Phase timeline ── */
+.phase-track {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+  position: relative;
+  margin-top: 40px;
+}
+.phase-track::before {
+  content: '';
+  position: absolute;
+  top: 28px; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity: 0.25;
+}
+.phase-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 0 8px;
+  cursor: default;
+}
+.phase-hex {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  background: var(--navy);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--cyan);
+  font-family: monospace;
+  letter-spacing: 1px;
+  transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
+  position: relative;
+  z-index: 1;
+}
+.phase-item:hover .phase-hex {
+  background: rgba(56,189,248,0.1);
+  border-color: rgba(56,189,248,0.4);
+  box-shadow: 0 0 20px rgba(14,165,233,0.2);
+}
+.phase-body { text-align: center; }
+.phase-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.88);
+  margin-bottom: 4px;
+}
+.phase-desc {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+@media (max-width: 640px) {
+  .phase-track {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .phase-track::before { display: none; }
+}
+
+/* ── Tech pills ── */
+.tech-pill-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 28px;
+}
+.tech-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--navy);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.82);
+  transition: border-color 0.2s, background 0.2s;
+}
+.tech-pill:hover {
+  border-color: rgba(56,189,248,0.3);
+  background: rgba(56,189,248,0.06);
+}
+.tech-pill i {
+  color: var(--cyan);
+  font-size: 0.9rem;
+}
+
+/* ── Philosophy card ── */
+.philosophy-card {
+  background: linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(12,74,110,0.25) 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 48px;
+  position: relative;
+  overflow: hidden;
+}
+.philosophy-card::before {
+  content: '❝';
+  position: absolute;
+  top: -20px; left: 32px;
+  font-size: 10rem;
+  color: rgba(56,189,248,0.06);
+  line-height: 1;
+  pointer-events: none;
+}
+.philosophy-quote {
+  font-size: 1.4rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.7;
+  font-style: italic;
+  margin-bottom: 20px;
+  position: relative;
+}
+.philosophy-attr {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: var(--cyan);
+  letter-spacing: 2px;
+  opacity: 0.75;
+}
+.philosophy-body {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.8;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Developer card ── */
+.dev-card {
+  background: var(--navy);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px;
+}
+.dev-avatar {
+  width: 72px; height: 72px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #0284c7, #6366f1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem;
+  color: white;
+  flex-shrink: 0;
+}
+.dev-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 2px;
+}
+.dev-role {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.dev-bio {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.75;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.interest-tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.25);
+  color: #818cf8;
+}
+</style>
+
+<div class="about-page">
+  <div class="container" style="max-width: 960px;">
+
+    <!-- ── HERO ─────────────────────────────────────── -->
+    <div class="about-hero animate-up">
+
+      <!-- Logo + wordmark lockup -->
+      <div class="about-logo-wrap">
+        <a href="/about" style="display:block; text-decoration:none; flex-shrink:0;">
+          <svg width="110" viewBox="195 55 290 290"
+               role="img" xmlns="http://www.w3.org/2000/svg"
+               style="filter: drop-shadow(0 0 16px rgba(14,165,233,0.4));">
+            <title>FeynML JARVIS Logo</title>
+            <radialGradient id="fmlBgGlowAbout" cx="50%" cy="48%" r="40%">
+              <stop offset="0%"   stop-color="#0284c7" stop-opacity="0.18"/>
+              <stop offset="100%" stop-color="#060d1a" stop-opacity="0"/>
+            </radialGradient>
+            <rect width="680" height="420" fill="url(#fmlBgGlowAbout)"/>
+            <circle cx="340" cy="200" r="145" fill="none" stroke="#38bdf8" stroke-width="0.5"/>
+            <circle cx="340" cy="200" r="150" fill="none" stroke="#0ea5e9" stroke-width="0.3"/>
+            <circle cx="340" cy="200" r="118" fill="none" stroke="#0ea5e9" stroke-width="0.8" opacity="0.3"/>
+            <circle cx="340" cy="200" r="122" fill="none" stroke="#38bdf8" stroke-width="0.5" opacity="0.2"/>
+            <g stroke="#38bdf8" stroke-width="1.8" opacity="0.6">
+              <line x1="340" y1="79"  x2="340" y2="68"/>
+              <line x1="340" y1="321" x2="340" y2="332"/>
+              <line x1="219" y1="200" x2="208" y2="200"/>
+              <line x1="461" y1="200" x2="472" y2="200"/>
+              <line x1="424" y1="116" x2="432" y2="108"/>
+              <line x1="256" y1="116" x2="248" y2="108"/>
+              <line x1="424" y1="284" x2="432" y2="292"/>
+              <line x1="256" y1="284" x2="248" y2="292"/>
+            </g>
+            <g class="fml-r4">
+              <circle cx="340" cy="200" r="108" fill="none" stroke="#0369a1" stroke-width="1" stroke-dasharray="5 15 3 20 5 10" opacity="0.45"/>
+            </g>
+            <g class="fml-r1">
+              <circle cx="340" cy="200" r="92" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-dasharray="32 9 9 9 55 9 9 9" opacity="0.8"/>
+            </g>
+            <g class="fml-r2">
+              <circle cx="340" cy="200" r="72" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="22 7 7 7 44 7" opacity="0.75"/>
+              <circle cx="340"   cy="128"  r="5" fill="#7dd3fc" opacity="0.95"/>
+              <circle cx="402.4" cy="236"  r="5" fill="#7dd3fc" opacity="0.95"/>
+              <circle cx="277.6" cy="236"  r="5" fill="#7dd3fc" opacity="0.95"/>
+            </g>
+            <g class="fml-r3">
+              <circle cx="340" cy="200" r="52" fill="none" stroke="#0284c7" stroke-width="2" stroke-dasharray="12 5 5 5 24 5" opacity="0.9"/>
+              <circle class="fml-scan" cx="340" cy="148" r="3.5" fill="#bae6fd"/>
+            </g>
+            <g opacity="0.1" stroke="#38bdf8" stroke-width="0.8" fill="none">
+              <polygon points="340,174 366,189 366,219 340,234 314,219 314,189"/>
+              <polygon points="340,154 374,173 374,213 340,232 306,213 306,173"/>
+            </g>
+            <circle cx="340" cy="200" r="34" fill="#082f49" opacity="0.6"/>
+            <circle cx="340" cy="200" r="28" fill="#0c4a6e" opacity="0.75"/>
+            <circle cx="340" cy="200" r="22" fill="#075985" opacity="0.85"/>
+            <circle cx="340" cy="200" r="17" fill="#0284c7" opacity="0.9"/>
+            <circle cx="340" cy="200" r="12" fill="#38bdf8" opacity="0.92"/>
+            <circle cx="340" cy="200" r="7"  fill="#bae6fd" opacity="0.97" class="fml-core"/>
+            <g stroke="#082f49" stroke-width="2" opacity="0.95" stroke-linecap="round">
+              <line x1="340" y1="184" x2="340" y2="195"/>
+              <line x1="340" y1="205" x2="340" y2="216"/>
+              <line x1="324" y1="200" x2="335" y2="200"/>
+              <line x1="345" y1="200" x2="356" y2="200"/>
+              <line x1="329" y1="189" x2="337" y2="197"/>
+              <line x1="343" y1="203" x2="351" y2="211"/>
+              <line x1="351" y1="189" x2="343" y2="197"/>
+              <line x1="337" y1="203" x2="329" y2="211"/>
+            </g>
+          </svg>
+        </a>
+        <div class="about-logo-label">
+          <span>FeynML</span>
+          <span>ML FAILURE ENGINE</span>
         </div>
-        <div class="col-lg-6 animate-up" style="animation-delay: 0.2s;">
-            <div class="bg-indigo-600 rounded-5 p-5 text-white shadow-lg">
-                <h3 class="fw-bold mb-4">The Architecture</h3>
-                <div class="mb-4">
-                    <div class="small fw-bold text-uppercase opacity-50 mb-2">Phase 1: Diagnostic Core</div>
-                    <p class="small opacity-75">Stateless engines for calibration, fairness, and slice performance discovery.</p>
-                </div>
-                <div class="mb-4">
-                    <div class="small fw-bold text-uppercase opacity-50 mb-2">Phase 2: Observability</div>
-                    <p class="small opacity-75">Drift detection monitoring the shift between training and production distributions.</p>
-                </div>
-                <div class="mb-4">
-                    <div class="small fw-bold text-uppercase opacity-50 mb-2">Phase 3: Root Cause</div>
-                    <p class="small opacity-75">Data integrity scanners for target leakage, label noise, and missing data mechanisms.</p>
-                </div>
-                <hr class="opacity-25 my-4">
-                <div class="d-flex align-items-center">
-                    <div class="small fw-bold">Academic Initiative</div>
-                    <div class="ms-auto small opacity-50">SKIT Jaipur</div>
-                </div>
-            </div>
-        </div>
+      </div>
+
+      <p class="about-eyebrow">Open-source · Academic · Research-backed</p>
+      <h1 class="about-h1">
+        The professional standard for<br>
+        <span class="grad">ML failure investigation.</span>
+      </h1>
+      <p class="about-lead">
+        FeynML is a full-stack machine learning diagnostics platform — built from scratch — 
+        that translates the complex failure modes of ML systems into clear, actionable 
+        explanations. Calibration, drift, fairness, leakage, label noise, and causal 
+        analysis, unified under a single investigation engine.
+      </p>
+
+      <div class="d-flex gap-3 flex-wrap">
+        <a href="{{ url_for('index') }}" class="btn btn-indigo btn-lg px-5 rounded-pill">
+          Launch Engine
+        </a>
+        <a href="{{ url_for('features') }}" class="btn btn-outline-indigo btn-lg px-5 rounded-pill">
+          Explore Features
+        </a>
+      </div>
     </div>
-</div>
+
+    <!-- ── STATS STRIP ────────────────────────────── -->
+    <div class="stats-strip animate-up">
+      <div class="stat-cell">
+        <span class="stat-num">6</span>
+        <span class="stat-label">Diagnostic Modules</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-num">500K</span>
+        <span class="stat-label">Rows Tested</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-num">50MB</span>
+        <span class="stat-label">Max Upload</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-num">5</span>
+        <span class="stat-label">Investigation Phases</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-num">CSV / JSON</span>
+        <span class="stat-label">Supported Formats</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-num">PDF</span>
+        <span class="stat-label">Report Export</span>
+      </div>
+    </div>
+
+    <!-- ── WHAT IS FEYNML ─────────────────────────── -->
+    <div class="animate-up">
+      <p class="section-eyebrow">Platform Overview</p>
+      <h2 class="section-h2">What exactly is FeynML?</h2>
+      <div class="row g-4 mt-2">
+        <div class="col-md-6">
+          <p class="section-sub">
+            FeynML is a no-code ML diagnostics platform. You upload a dataset — CSV or JSON — 
+            select a diagnostic mode, and receive a detailed failure report within seconds.
+            No Python scripting, no configuration files, no infrastructure to manage.
+          </p>
+        </div>
+        <div class="col-md-6">
+          <p class="section-sub">
+            Under the hood, every engine module is implemented from first principles using 
+            NumPy, SciPy, and Scikit-Learn — not black-box libraries. This means the 
+            statistical methods are transparent, auditable, and academically cited in code.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-divider"></div>
+
+    <!-- ── CAPABILITIES GRID ──────────────────────── -->
+    <div class="animate-up">
+      <p class="section-eyebrow">Core Capabilities</p>
+      <h2 class="section-h2">What FeynML can investigate</h2>
+      <p class="section-sub">Six production-grade diagnostic engines, each independently testable and research-grounded.</p>
+
+      <div class="cap-grid">
+        <div class="cap-card">
+          <div class="cap-icon"><i class="bi bi-activity"></i></div>
+          <div class="cap-title">Feature Drift Detection</div>
+          <div class="cap-text">Detects distribution shifts between training and production data using KS-tests, PSI scores, and Jensen-Shannon divergence across all feature types.</div>
+          <span class="cap-badge">KS · PSI · JSD</span>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon"><i class="bi bi-graph-up"></i></div>
+          <div class="cap-title">Calibration Audit</div>
+          <div class="cap-text">Measures how well model probability scores match observed frequencies. Computes ECE, MCE, Brier score, and reliability diagrams with actionable severity ratings.</div>
+          <span class="cap-badge">ECE · MCE · Brier</span>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon"><i class="bi bi-shield-check"></i></div>
+          <div class="cap-title">Fairness Audit</div>
+          <div class="cap-text">Assesses model performance across sensitive demographic groups. Flags disparate impact, equalized odds violations, and demographic parity gaps.</div>
+          <span class="cap-badge">SPD · DI · EOD</span>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon"><i class="bi bi-tags"></i></div>
+          <div class="cap-title">Label Noise Detection</div>
+          <div class="cap-text">Surfaces inconsistent, mislabeled, or ambiguous annotations that degrade model learning. Uses confidence-weighted disagreement and cross-validation signals.</div>
+          <span class="cap-badge">Confidence · CV</span>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon"><i class="bi bi-link-45deg"></i></div>
+          <div class="cap-title">Leakage Detection</div>
+          <div class="cap-text">Flags features with suspiciously high predictive power that may indicate target leakage, future-data contamination, or ID-like columns leaking ground truth.</div>
+          <span class="cap-badge">Mutual Info · SHAP</span>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon"><i class="bi bi-question-diamond"></i></div>
+          <div class="cap-title">Missingness Analysis</div>
+          <div class="cap-text">Evaluates missing value patterns for MCAR, MAR, and MNAR signals. Visualizes coverage gaps and identifies features with structurally problematic missingness.</div>
+          <span class="cap-badge">MCAR · MAR · MNAR</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-divider"></div>
+
+    <!-- ── INVESTIGATION FRAMEWORK ────────────────── -->
+    <div class="animate-up">
+      <p class="section-eyebrow">Investigation Framework</p>
+      <h2 class="section-h2">Five phases of ML failure analysis</h2>
+      <p class="section-sub">FeynML follows a structured curriculum: each phase builds on the last, from statistical foundations to causal reasoning.</p>
+
+      <div class="phase-track">
+        <div class="phase-item">
+          <div class="phase-hex">P0</div>
+          <div class="phase-body">
+            <div class="phase-name">Foundations</div>
+            <div class="phase-desc">Probability · Statistics · Linear Algebra · ML Basics</div>
+          </div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-hex">P1</div>
+          <div class="phase-body">
+            <div class="phase-name">Diagnostics</div>
+            <div class="phase-desc">Metrics · Calibration · Fairness Auditing</div>
+          </div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-hex">P2</div>
+          <div class="phase-body">
+            <div class="phase-name">Observability</div>
+            <div class="phase-desc">Drift Detection · Monitoring · Slice Analysis</div>
+          </div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-hex">P3</div>
+          <div class="phase-body">
+            <div class="phase-name">Root Cause</div>
+            <div class="phase-desc">SHAP · LIME · SliceFinder · Failure Attribution</div>
+          </div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-hex">P4</div>
+          <div class="phase-body">
+            <div class="phase-name">Data Debugging</div>
+            <div class="phase-desc">Leakage · Label Noise · Missing Data · Causality</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-divider"></div>
+
+    <!-- ── TECH STACK ─────────────────────────────── -->
+    <div class="animate-up">
+      <p class="section-eyebrow">Built With</p>
+      <h2 class="section-h2">Technology stack</h2>
+      <p class="section-sub">Every dependency is chosen deliberately — no unnecessary abstractions, no hidden frameworks.</p>
+
+      <div class="tech-pill-grid">
+        <div class="tech-pill"><i class="bi bi-gear-fill"></i> Flask</div>
+        <div class="tech-pill"><i class="bi bi-table"></i> Pandas</div>
+        <div class="tech-pill"><i class="bi bi-calculator"></i> NumPy</div>
+        <div class="tech-pill"><i class="bi bi-graph-up-arrow"></i> SciPy</div>
+        <div class="tech-pill"><i class="bi bi-cpu"></i> Scikit-Learn</div>
+        <div class="tech-pill"><i class="bi bi-bar-chart-fill"></i> Plotly</div>
+        <div class="tech-pill"><i class="bi bi-code-slash"></i> Jinja2</div>
+        <div class="tech-pill"><i class="bi bi-database"></i> SQLite</div>
+        <div class="tech-pill"><i class="bi bi-file-pdf"></i> ReportLab</div>
+        <div class="tech-pill"><i class="bi bi-bootstrap"></i> Bootstrap 5</div>
+      </div>
+    </div>
+
+    <div class="about-divider"></div>
+
+    <!-- ── FEYNMAN PHILOSOPHY ─────────────────────── -->
+    <div class="animate-up">
+      <p class="section-eyebrow">Guiding Philosophy</p>
+      <h2 class="section-h2">Why "Feyn"?</h2>
+
+      <div class="philosophy-card">
+        <div class="philosophy-quote">
+          "If you can't explain it simply, you don't understand it well enough."
+        </div>
+        <div class="philosophy-attr">— Richard P. Feynman</div>
+        <div class="philosophy-body">
+          <p style="margin-bottom: 14px;">
+            Richard Feynman's signature method was deceptively simple: to understand any complex 
+            phenomenon, explain it to a beginner. If you can't, you have a gap in your own model 
+            of reality. FeynML applies this exact principle to machine learning systems.
+          </p>
+          <p style="margin-bottom: 14px;">
+            Modern ML failures are often invisible. A drift goes undetected because no one ran 
+            a PSI check. A calibration error persists because the team trusted AUC alone. A 
+            leaky feature ships to production because manual EDA is too slow. FeynML automates 
+            the investigation layer — the part that requires deep statistical understanding — 
+            and surfaces results in plain language anyone can act on.
+          </p>
+          <p style="margin: 0;">
+            The Feynman Technique applied to ML: understand deeply, explain clearly, fix precisely.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-divider"></div>
+
+    <!-- ── DEVELOPER ──────────────────────────────── -->
+    <div class="animate-up">
+      <p class="section-eyebrow">Team</p>
+      <h2 class="section-h2">Who built this?</h2>
+
+      <div class="dev-card">
+        <div class="d-flex align-items-center gap-4 flex-wrap">
+          <div class="dev-avatar">
+            <i class="fa-solid fa-code"></i>
+          </div>
+          <div>
+            <div class="dev-name">Arman Kaushik</div>
+            <div class="dev-role">B.Tech Computer Science Engineering · SKIT Jaipur</div>
+            <div class="d-flex gap-2 mt-3 flex-wrap">
+              <span class="interest-tag">Machine Learning</span>
+              <span class="interest-tag">Statistical Diagnostics</span>
+              <span class="interest-tag">Data Analytics</span>
+              <span class="interest-tag">Full-Stack Dev</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dev-bio">
+          <p style="margin-bottom: 14px;">
+            FeynML is an independent academic project built over multiple phases, starting from 
+            scratch implementations of every statistical algorithm (no black-box libraries) and 
+            progressing to a full production-grade web platform. The goal from day one: build 
+            something that could genuinely help engineers debug ML systems, while also proving 
+            that a CS undergraduate can architect research-grade tooling.
+          </p>
+          <p style="margin-bottom: 20px;">
+            Every module in FeynML — calibration, drift, fairness, leakage, label noise, 
+            missing data — is implemented in <code style="color: var(--cyan); font-size:0.82rem;">scratch/phaseN/</code> 
+            from first principles before being wrapped into the production engine. Academic 
+            citations are embedded in every docstring.
+          </p>
+          <div class="d-flex gap-3 flex-wrap pt-2 border-top" style="border-color: var(--border) !important;">
+            <a href="https://github.com/B241561" target="_blank" class="btn btn-sm btn-outline-indigo rounded-pill px-4">
+              <i class="fa-brands fa-github me-2"></i>GitHub
+            </a>
+            <a href="https://www.linkedin.com/in/arman-kaushik-29b5b6370/" target="_blank" class="btn btn-sm btn-outline-indigo rounded-pill px-4">
+              <i class="fa-brands fa-linkedin me-2"></i>LinkedIn
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-divider"></div>
+
+    <!-- ── MISSION ────────────────────────────────── -->
+    <div class="animate-up" style="padding-bottom: 80px;">
+      <p class="section-eyebrow">Mission</p>
+      <h2 class="section-h2">Why FeynML exists</h2>
+
+      <div class="row g-4 mt-2">
+        <div class="col-md-4">
+          <div class="cap-card h-100">
+            <div class="cap-icon" style="background: rgba(99,102,241,0.1); color: #818cf8;">
+              <i class="bi bi-mortarboard"></i>
+            </div>
+            <div class="cap-title">For students</div>
+            <div class="cap-text">
+              FeynML makes advanced ML diagnostics accessible to students who are learning 
+              what model failure even means. Every result comes with an explanation, not just a number.
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="cap-card h-100">
+            <div class="cap-icon" style="background: rgba(56,189,248,0.1); color: #38bdf8;">
+              <i class="bi bi-wrench-adjustable"></i>
+            </div>
+            <div class="cap-title">For engineers</div>
+            <div class="cap-text">
+              Production ML teams need fast answers: is this drift real? Is this model fair? 
+              FeynML gives them a structured audit trail without writing investigation code from scratch.
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="cap-card h-100">
+            <div class="cap-icon" style="background: rgba(74,222,128,0.1); color: #4ade80;">
+              <i class="bi bi-journal-text"></i>
+            </div>
+            <div class="cap-title">For researchers</div>
+            <div class="cap-text">
+              Every algorithm is implemented from primary literature, fully auditable, and citable. 
+              FeynML is designed to be extended, not just consumed.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mt-5">
+        <a href="{{ url_for('index') }}" class="btn btn-indigo btn-lg px-6 rounded-pill">
+          Start an Investigation →
+        </a>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+</div><!-- /about-page -->
+
 {% endblock %}

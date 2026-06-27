@@ -1,0 +1,122 @@
+{% macro feynml_logo(
+    instance_id='feynml-logo',
+    size='medium',
+    theme='auto',
+    animated=true,
+    show_wordmark=true,
+    hover_effects=true,
+    intro_animation=true,
+    class_name='',
+    aria_label='FeynML logo',
+    title='FeynML JARVIS logo',
+    desc='JARVIS-style holographic arc reactor logo for FeynML'
+) %}
+<div
+    class="feynml-logo feynml-logo--{{ size }} {{ class_name }}"
+    data-feynml-logo
+    data-logo-theme="{{ theme }}"
+    data-animated="{{ 'true' if animated else 'false' }}"
+    data-hover-effects="{{ 'true' if hover_effects else 'false' }}"
+    data-intro="{{ 'true' if intro_animation else 'false' }}"
+>
+    <div class="feynml-logo__mark">
+        <svg
+            class="feynml-logo__svg"
+            viewBox="160 60 360 280"
+            xmlns="http://www.w3.org/2000/svg"
+            role="img"
+            aria-label="{{ aria_label }}"
+            aria-labelledby="{{ instance_id }}-title {{ instance_id }}-desc"
+        >
+            <title id="{{ instance_id }}-title">{{ title }}</title>
+            <desc id="{{ instance_id }}-desc">{{ desc }}</desc>
+
+            <g class="feynml-logo__ambient">
+                <circle cx="340" cy="200" r="124" class="feynml-logo__glow-shell feynml-logo__glow-shell--outer"/>
+                <circle cx="340" cy="200" r="98" class="feynml-logo__glow-shell feynml-logo__glow-shell--inner"/>
+            </g>
+
+            <g class="feynml-logo__frame">
+                <circle cx="340" cy="200" r="110" class="feynml-logo__frame-line feynml-logo__frame-line--outer"/>
+                <circle cx="340" cy="200" r="115" class="feynml-logo__frame-line feynml-logo__frame-line--halo"/>
+            </g>
+
+            <g class="feynml-logo__ticks">
+                <line x1="340" y1="88" x2="340" y2="80"/>
+                <line x1="340" y1="312" x2="340" y2="320"/>
+                <line x1="228" y1="200" x2="220" y2="200"/>
+                <line x1="452" y1="200" x2="460" y2="200"/>
+                <line x1="418" y1="122" x2="424" y2="114"/>
+                <line x1="262" y1="122" x2="256" y2="114"/>
+                <line x1="418" y1="278" x2="424" y2="286"/>
+                <line x1="262" y1="278" x2="256" y2="286"/>
+            </g>
+
+            <g class="feynml-logo__ring feynml-logo__ring--outer" transform="translate(340 200)">
+                <circle cx="0" cy="0" r="88" class="feynml-logo__ring-path feynml-logo__ring-path--outer"/>
+            </g>
+
+            <g class="feynml-logo__ring feynml-logo__ring--mid" transform="translate(340 200)">
+                <circle cx="0" cy="0" r="68" class="feynml-logo__ring-path feynml-logo__ring-path--mid"/>
+                <circle cx="0" cy="-68" r="3" class="feynml-logo__ring-node"/>
+                <circle cx="58.9" cy="57" r="3" class="feynml-logo__ring-node"/>
+                <circle cx="-58.9" cy="57" r="3" class="feynml-logo__ring-node"/>
+            </g>
+
+            <g class="feynml-logo__ring feynml-logo__ring--inner" transform="translate(340 200)">
+                <circle cx="0" cy="0" r="48" class="feynml-logo__ring-path feynml-logo__ring-path--inner"/>
+            </g>
+
+            <g class="feynml-logo__scan-orbit" transform="translate(340 200)">
+                <circle cx="0" cy="-48" r="2.5" class="feynml-logo__scan-dot"/>
+            </g>
+
+            <g class="feynml-logo__hex-grid">
+                <polygon points="340,172 364,186 364,214 340,228 316,214 316,186"/>
+                <polygon points="340,152 372,170 372,206 340,224 308,206 308,170"/>
+            </g>
+
+            <g class="feynml-logo__core">
+                <circle cx="340" cy="200" r="28" class="feynml-logo__core-shell feynml-logo__core-shell--outer"/>
+                <circle cx="340" cy="200" r="22" class="feynml-logo__core-shell feynml-logo__core-shell--mid"/>
+                <circle cx="340" cy="200" r="16" class="feynml-logo__core-shell feynml-logo__core-shell--inner"/>
+                <g class="feynml-logo__core-aura" transform="translate(340 200)">
+                    <circle cx="0" cy="0" r="14" class="feynml-logo__core-orb"/>
+                </g>
+                <g class="feynml-logo__core-spokes">
+                    <line x1="340" y1="186" x2="340" y2="196"/>
+                    <line x1="340" y1="204" x2="340" y2="214"/>
+                    <line x1="326" y1="200" x2="336" y2="200"/>
+                    <line x1="344" y1="200" x2="354" y2="200"/>
+                    <line x1="330" y1="190" x2="337" y2="197"/>
+                    <line x1="343" y1="203" x2="350" y2="210"/>
+                    <line x1="350" y1="190" x2="343" y2="197"/>
+                    <line x1="337" y1="203" x2="330" y2="210"/>
+                </g>
+            </g>
+
+            <g class="feynml-logo__readouts">
+                <line x1="220" y1="185" x2="248" y2="185"/>
+                <line x1="220" y1="190" x2="240" y2="190"/>
+                <line x1="220" y1="210" x2="248" y2="210"/>
+                <line x1="220" y1="215" x2="240" y2="215"/>
+                <line x1="432" y1="185" x2="460" y2="185"/>
+                <line x1="440" y1="190" x2="460" y2="190"/>
+                <line x1="432" y1="210" x2="460" y2="210"/>
+                <line x1="440" y1="215" x2="460" y2="215"/>
+                <text x="216" y="183" class="feynml-logo__readout-text" text-anchor="end">ECE</text>
+                <text x="216" y="213" class="feynml-logo__readout-text" text-anchor="end">PSI</text>
+                <text x="464" y="183" class="feynml-logo__readout-text">AUC</text>
+                <text x="464" y="213" class="feynml-logo__readout-text">KS</text>
+            </g>
+        </svg>
+    </div>
+
+    {% if show_wordmark %}
+    <div class="feynml-logo__wordmark">
+        <span class="feynml-logo__title">FeynML</span>
+        <span class="feynml-logo__subtitle">ML FAILURE ENGINE</span>
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}

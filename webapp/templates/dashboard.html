@@ -1,9 +1,74 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+{# ── Global calibration vars — defined ONCE at top scope ── #}
+{% set ece = data.calibration.get('ece', data.calibration.get('findings', {}).get('ece', 0)) if data.get('calibration') else 0 %}
+{% set cal_sev = data.calibration.get('severity', 'NONE') if data.get('calibration') else 'NONE' %}
+{% set ece_score = data.calibration.get('ece_score', ece) if data.get('calibration') else 0 %}
+
 <div class="container py-4">
+
+    {# ── HEADER — no competing risk text ── #}
     <div class="d-flex justify-content-between align-items-center mb-5 animate-premium">
         <div>
+            <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
+  <svg width="36" height="36"
+       viewBox="195 55 290 290"
+       xmlns="http://www.w3.org/2000/svg"
+       style="flex-shrink:0; filter: drop-shadow(0 0 6px rgba(14,165,233,0.35));">
+    <radialGradient id="db-bg" cx="50%" cy="48%" r="40%">
+      <stop offset="0%"  stop-color="#0284c7" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#060d1a" stop-opacity="0"/>
+    </radialGradient>
+    <rect width="680" height="420" fill="url(#db-bg)"/>
+    <circle cx="340" cy="200" r="145" fill="none" stroke="#38bdf8" stroke-width="0.5"/>
+    <circle cx="340" cy="200" r="118" fill="none" stroke="#0ea5e9" stroke-width="0.8" opacity="0.3"/>
+    <g stroke="#38bdf8" stroke-width="1.8" opacity="0.6">
+      <line x1="340" y1="79"  x2="340" y2="68"/>
+      <line x1="340" y1="321" x2="340" y2="332"/>
+      <line x1="219" y1="200" x2="208" y2="200"/>
+      <line x1="461" y1="200" x2="472" y2="200"/>
+    </g>
+    <g class="fml-r4">
+      <circle cx="340" cy="200" r="108" fill="none" stroke="#0369a1" stroke-width="1"
+        stroke-dasharray="5 15 3 20 5 10" opacity="0.45"/>
+    </g>
+    <g class="fml-r1">
+      <circle cx="340" cy="200" r="92" fill="none" stroke="#0ea5e9" stroke-width="2"
+        stroke-dasharray="32 9 9 9 55 9 9 9" opacity="0.8"/>
+    </g>
+    <g class="fml-r2">
+      <circle cx="340" cy="200" r="72" fill="none" stroke="#38bdf8" stroke-width="1.5"
+        stroke-dasharray="22 7 7 7 44 7" opacity="0.75"/>
+      <circle cx="340"   cy="128" r="5" fill="#7dd3fc" opacity="0.95"/>
+      <circle cx="402.4" cy="236" r="5" fill="#7dd3fc" opacity="0.95"/>
+      <circle cx="277.6" cy="236" r="5" fill="#7dd3fc" opacity="0.95"/>
+    </g>
+    <g class="fml-r3">
+      <circle cx="340" cy="200" r="52" fill="none" stroke="#0284c7" stroke-width="2"
+        stroke-dasharray="12 5 5 5 24 5" opacity="0.9"/>
+      <circle class="fml-scan" cx="340" cy="148" r="3.5" fill="#bae6fd"/>
+    </g>
+    <circle cx="340" cy="200" r="34" fill="#082f49" opacity="0.6"/>
+    <circle cx="340" cy="200" r="28" fill="#0c4a6e" opacity="0.75"/>
+    <circle cx="340" cy="200" r="22" fill="#075985" opacity="0.85"/>
+    <circle cx="340" cy="200" r="17" fill="#0284c7" opacity="0.9"/>
+    <circle cx="340" cy="200" r="12" fill="#38bdf8" opacity="0.92"/>
+    <circle cx="340" cy="200" class="fml-core" r="7" fill="#bae6fd" opacity="0.97"/>
+    <g stroke="#082f49" stroke-width="2" opacity="0.95" stroke-linecap="round">
+      <line x1="340" y1="184" x2="340" y2="195"/>
+      <line x1="340" y1="205" x2="340" y2="216"/>
+      <line x1="324" y1="200" x2="335" y2="200"/>
+      <line x1="345" y1="200" x2="356" y2="200"/>
+      <line x1="329" y1="189" x2="337" y2="197"/>
+      <line x1="343" y1="203" x2="351" y2="211"/>
+      <line x1="351" y1="189" x2="343" y2="197"/>
+      <line x1="337" y1="203" x2="329" y2="211"/>
+    </g>
+  </svg>
+  <span class="fw-bold text-white" style="font-size: 1rem; letter-spacing: 0.5px;">FeynML</span>
+</div>
             <h2 class="fw-bold mb-1">Investigation Dashboard</h2>
             <p class="text-muted mb-0">Audit session: <span class="badge bg-light border">{{ report_id }}</span></p>
         </div>
@@ -24,21 +89,21 @@
                     <span id="current-audience-label">{{ selected_audience | default('Audience') }}</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 bg-card">
-            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="ML Engineer" href="#"><i class="bi bi-cpu me-2 text-indigo-500"></i>ML Engineer</a></li>
-            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Executive" href="#"><i class="bi bi-briefcase me-2 text-indigo-500"></i>Executive</a></li>
-            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Doctor" href="#"><i class="bi bi-heart-pulse me-2 text-indigo-500"></i>Doctor</a></li>
-            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Loan Officer" href="#"><i class="bi bi-bank me-2 text-indigo-500"></i>Loan Officer</a></li>
-            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Student" href="#"><i class="bi bi-mortarboard me-2 text-indigo-500"></i>Student</a></li>
-            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="HR Manager" href="#"><i class="bi bi-people me-2 text-indigo-500"></i>HR Manager</a></li>
-            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Insurance Analyst" href="#"><i class="bi bi-shield me-2 text-indigo-500"></i>Insurance Analyst</a></li>
-            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Legal / Compliance Officer" href="#"><i class="bi bi-balance-scale me-2 text-indigo-500"></i>Legal / Compliance Officer</a></li>
-            <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Researcher" href="#"><i class="bi bi-microscope me-2 text-indigo-500"></i>Researcher</a></li>
-        </ul>
+                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="ML Engineer" href="#"><i class="bi bi-cpu me-2 text-indigo-500"></i>ML Engineer</a></li>
+                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Executive" href="#"><i class="bi bi-briefcase me-2 text-indigo-500"></i>Executive</a></li>
+                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Doctor" href="#"><i class="bi bi-heart-pulse me-2 text-indigo-500"></i>Doctor</a></li>
+                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Loan Officer" href="#"><i class="bi bi-bank me-2 text-indigo-500"></i>Loan Officer</a></li>
+                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Student" href="#"><i class="bi bi-mortarboard me-2 text-indigo-500"></i>Student</a></li>
+                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="HR Manager" href="#"><i class="bi bi-people me-2 text-indigo-500"></i>HR Manager</a></li>
+                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Insurance Analyst" href="#"><i class="bi bi-shield me-2 text-indigo-500"></i>Insurance Analyst</a></li>
+                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Legal / Compliance Officer" href="#"><i class="bi bi-balance-scale me-2 text-indigo-500"></i>Legal / Compliance Officer</a></li>
+                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Researcher" href="#"><i class="bi bi-microscope me-2 text-indigo-500"></i>Researcher</a></li>
+                </ul>
             </div>
         </div>
     </div>
 
-    <!-- Executive Summary -->
+    {# ── SECTION 1: EXECUTIVE SUMMARY — single top-level verdict ── #}
     <section class="mb-5">
         <div class="card">
             <div class="card-header">Executive Summary</div>
@@ -61,7 +126,7 @@
         </div>
     </section>
 
-    <!-- Top Row: KPI Cards -->
+    {# ── SECTION 2: KPI CARDS ── #}
     <div class="row g-4 mb-5 animate-premium" style="animation-delay: 0.1s;">
         <div class="col-md">
             <div class="card kpi-card h-100 p-4">
@@ -75,17 +140,16 @@
                 <div class="metric text-muted">SKIPPED</div>
                 <div class="small text-muted mt-2">No predictions provided</div>
                 {% else %}
-                {% set ece = data.calibration.get('ece', data.calibration.get('findings', {}).get('ece', 0)) %}
-                <div class="metric">{{ (ece * 100) | round(1) }}%</div>
+                <div class="metric">{{ "%.2f"|format(ece * 100) }}%</div>
                 <div class="small text-muted mt-2">Expected Error (ECE)</div>
-                {# ECE status line: <2% Well calibrated, 2-5% Acceptable, >5% Needs attention #}
-                {% set ece_pct = (ece * 100) %}
-                {% if ece_pct < 2 %}
+                {% if cal_sev in ['EXCELLENT', 'NONE'] %}
                     <div class="small text-success mt-1">Well calibrated ✓</div>
-                {% elif ece_pct >= 2 and ece_pct <= 5 %}
+                {% elif cal_sev in ['GOOD', 'LOW'] %}
                     <div class="small text-warning mt-1">Acceptable</div>
+                {% elif cal_sev in ['MODERATE', 'MEDIUM'] %}
+                    <div class="small text-warning mt-1">Needs recalibration</div>
                 {% else %}
-                    <div class="small text-danger mt-1">Needs attention</div>
+                    <div class="small text-danger mt-1">Poorly calibrated</div>
                 {% endif %}
                 {% endif %}
             </div>
@@ -107,7 +171,6 @@
                 {% set num_errors = noise_findings.get('num_errors_detected', 0) %}
                 {% set total_samples = noise_findings.get('total_samples', 0) %}
                 {% set noise_percent = noise * 100 %}
-                
                 {% if noise_percent > 15 %}
                     {% set metric_color = 'text-danger' %}
                 {% elif noise_percent >= 5 %}
@@ -115,7 +178,6 @@
                 {% else %}
                     {% set metric_color = 'text-success' %}
                 {% endif %}
-                
                 <div class="metric {{ metric_color }}">{{ (noise_percent) | round(1) }}%</div>
                 <div class="small text-muted mt-2">Noise Fraction</div>
                 {% if num_errors > 0 %}
@@ -151,9 +213,8 @@
         </div>
     </div>
 
-    <!-- Middle Row: Detail Grid -->
+    {# ── SECTION 3: VISUAL ANALYTICS ── #}
     <div class="row g-4 mb-5">
-        <!-- Visual Analytics Row -->
         <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -180,7 +241,7 @@
                             <h5 class="fw-bold">Reliability curve unavailable</h5>
                             <p class="text-muted small px-4">The auto-generated regression model cannot produce a standard classification reliability curve.</p>
                             <div class="mt-3 p-3 bg-light rounded text-start small">
-                                <div><strong>ECE:</strong> {{ (ece * 100) | round(2) }}%</div>
+                                <div><strong>ECE:</strong> {{ "%.2f"|format(ece * 100) }}%</div>
                                 <div><strong>Source:</strong> {{ data.calibration.prediction_source }}</div>
                                 <div><strong>Severity:</strong> {{ data.calibration.severity }}</div>
                             </div>
@@ -203,8 +264,7 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Phase 2 Card -->
+
         {% if data.get('fairness') and data.fairness.status != 'SKIPPED' %}
         <div class="col-md-6">
             <div class="card h-100">
@@ -247,7 +307,13 @@
                     <div class="row align-items-center">
                         <div class="col-auto">
                             {% set drift_findings = data.get('drift', {}).get('findings', {}) %}
-                            <div class="metric display-6 fw-bold">{% if drift_findings.get('domain_auc') is defined and drift_findings.domain_auc is number %}{{ drift_findings.domain_auc | round(3) }}{% else %}0.0{% endif %}</div>
+                            <div class="metric display-6 fw-bold">
+                                {% if drift_findings.get('domain_auc') is defined and drift_findings.domain_auc is not none and drift_findings.domain_auc is number %}
+                                    {{ drift_findings.domain_auc | round(3) }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </div>
                             <div class="label text-muted small mt-1">Domain AUC</div>
                         </div>
                         <div class="col border-start ms-3">
@@ -264,117 +330,29 @@
         </div>
     </div>
 
-    <!-- Leakage Details Expandable Section -->
-    {% if suspect_list %}
-    <div class="card mb-4 mt-4">
-        <div class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer;" 
-             data-bs-toggle="collapse" data-bs-target="#leakageDetails" aria-expanded="false" aria-controls="leakageDetails">
-            <span class="fw-bold">Leakage Details</span>
-            <i class="bi bi-chevron-down"></i>
+    {# ── SECTION 4: ROOT CAUSE SUMMARY (compact — top 3 only, no evidence text) ── #}
+    {% set root_cause_data = data.get('root_cause', {}) %}
+    {% if root_cause_data and root_cause_data.get('root_causes') %}
+    <div class="card mb-5">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-bold">Root Cause Summary</span>
+            <span class="badge badge-pill badge-{{ 'critical' if root_cause_data.get('metadata', {}).get('risk', {}).get('level', root_cause_data.get('health_status', '')) == 'CRITICAL' else 'high' }}">
+                {{ root_cause_data.get('metadata', {}).get('risk', {}).get('level', root_cause_data.get('health_status', 'Unknown')) }}
+            </span>
         </div>
-        <div class="collapse" id="leakageDetails">
-            <div class="card-body p-4">
-                <div class="table-responsive">
-                    <table class="table table-hover table-sm mb-0">
-                        <thead>
-                            <tr>
-                                <th>Column Name</th>
-                                <th>Leakage Type</th>
-                                <th>Confidence</th>
-                                <th>Reason</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for suspect in suspect_list %}
-                            <tr>
-                                <td class="fw-bold">{{ suspect.feature }}</td>
-                                <td>
-                                    {% set type_map = {
-                                        'target_leakage': {'badge': 'bg-danger', 'label': 'Target Leakage'},
-                                        'temporal_leakage': {'badge': 'bg-warning', 'label': 'Temporal Leakage'},
-                                        'id_leakage': {'badge': 'bg-info', 'label': 'ID Leakage'}
-                                    } %}
-                                    {% set type_info = type_map.get(suspect.type, {'badge': 'bg-secondary', 'label': suspect.type}) %}
-                                    <span class="badge {{ type_info.badge }}">{{ type_info.label }}</span>
-                                </td>
-                                <td>{{ (suspect.score * 100) | round(1) }}%</td>
-                                <td class="text-muted small">
-                                    {% if suspect.type == 'target_leakage' %}
-                                        {{ (suspect.score * 100) | round(0) }}% correlation with target — likely encodes the answer directly
-                                    {% elif suspect.type == 'temporal_leakage' %}
-                                        Uses future information that wouldn't be available at prediction time
-                                    {% else %}
-                                        High leakage score detected
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        <div class="card-body p-3">
+            <div class="d-flex flex-column gap-2">
+                {% for cause in root_cause_data.root_causes[:3] %}
+                <div class="d-flex align-items-center justify-content-between px-2 py-1 rounded" style="background: var(--bg-subtle, rgba(255,255,255,0.03));">
+                    <span class="small fw-semibold">{{ cause.get('cause', 'N/A') }}</span>
+                    <span class="badge-pill badge-{{ 'critical' if cause.get('severity') == 'CRITICAL' else 'high' if cause.get('severity') == 'HIGH' else 'medium' if cause.get('severity') == 'MEDIUM' else 'none' }} ms-3">
+                        {{ cause.get('severity', 'LOW') }}
+                    </span>
                 </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Label Noise Details Expandable Section -->
-    {% set error_details = noise_findings.get('error_details', []) %}
-    {% set per_class = noise_findings.get('per_class_noise', []) %}
-    {% if error_details or per_class %}
-    <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer;" 
-             data-bs-toggle="collapse" data-bs-target="#labelNoiseDetails" aria-expanded="false" aria-controls="labelNoiseDetails">
-            <span class="fw-bold">Label Noise Details</span>
-            <i class="bi bi-chevron-down"></i>
-        </div>
-        <div class="collapse" id="labelNoiseDetails">
-            <div class="card-body p-4">
-                {% if per_class %}
-                    {% set worst_class = per_class | sort(attribute='error_rate', reverse=True) | first %}
-                    <p class="mb-4">
-                        Class {{ worst_class.class_label }} has highest mislabeling rate ({{ (worst_class.error_rate * 100) | round(1) }}%).
-                        Review labeling process for this class.
-                    </p>
-                    
-                    {% if charts.get('label_noise_per_class') %}
-                        <div id="chart-label-noise-per-class" style="width:100%; height:350px;"></div>
-                    {% endif %}
-                {% endif %}
-                
-                {% if error_details %}
-                <h6 class="fw-bold small text-muted text-uppercase mb-3 mt-4">Top 10 Label Quality Issues</h6>
-                <div class="table-responsive">
-                    <table class="table table-hover table-sm mb-0">
-                        <thead>
-                            <tr>
-                                <th>Sample Index</th>
-                                <th>Type</th>
-                                <th>True Label</th>
-                                <th>Predicted Label</th>
-                                <th>Noise Probability</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for err in error_details %}
-                            <tr>
-                                <td>{{ err.sample_index }}</td>
-                                <td>
-                                    {% if err.true_label != err.predicted_label %}
-                                        <span class="badge bg-danger">Mislabeled</span>
-                                    {% else %}
-                                        <span class="badge bg-warning text-dark">Uncertain</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ err.true_label }}</td>
-                                <td>{{ err.predicted_label }}</td>
-                                <td>{{ (err.noise_probability * 100) | round(1) }}%</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="small text-muted mt-2">
-                    <em>Note:</em> Uncertain samples are correctly predicted but have low label confidence. Mislabeled samples have incorrect ground truth labels.
+                {% endfor %}
+                {% if root_cause_data.root_causes | length > 3 %}
+                <div class="small text-muted text-center mt-1">
+                    +{{ root_cause_data.root_causes | length - 3 }} more — see Technical Appendix below
                 </div>
                 {% endif %}
             </div>
@@ -382,8 +360,8 @@
     </div>
     {% endif %}
 
-    <!-- Bottom Action Row -->
-    <div class="card audit-banner p-4 shadow-lg">
+    {# ── SECTION 5: AUDIT REPORT BANNER ── #}
+    <div class="card audit-banner p-4 shadow-lg mb-5">
         <div class="row align-items-center">
             <div class="col">
                 <h4 class="mb-1">Comprehensive Audit Report</h4>
@@ -396,291 +374,341 @@
             </div>
         </div>
     </div>
-</div>
-    <!-- Phase 4 Section -->
-    <section class="phase4-section mt-5">
-        <div class="container">
-            <h3 class="fw-bold mb-3">Phase 4 — Advanced Analysis</h3>
-            <div class="analysis-cards-grid d-flex gap-3">
-                <div class="card p-3">
-                    <h5>Label Noise Analysis</h5>
-                    <p class="small">Detect mislabeled samples and estimate noise.</p>
-                    <a href="{{ url_for('phase4.label_noise') }}" class="btn btn-sm btn-outline-indigo">Open</a>
-                </div>
-                <div class="card p-3">
-                    <h5>Leakage Detection</h5>
-                    <p class="small">Identify target and temporal leakage.</p>
-                    <a href="{{ url_for('phase4.leakage') }}" class="btn btn-sm btn-outline-indigo">Open</a>
-                </div>
-                <div class="card p-3">
-                    <h5>Missing Data</h5>
-                    <p class="small">Analyze missingness mechanisms and patterns.</p>
-                    <a href="{{ url_for('phase4.missing_data') }}" class="btn btn-sm btn-outline-indigo">Open</a>
-                </div>
-                <div class="card p-3">
-                    <h5>Causal Analysis</h5>
-                    <p class="small">Causal graphing and causal effect estimation.</p>
-                    <a href="{{ url_for('phase4.causal') }}" class="btn btn-sm btn-outline-indigo">Open</a>
-                </div>
-            </div>
+
+    {# ── SECTION 6: PHASE 4 TOOLS (compact nav, not full cards) ── #}
+    <section class="mb-5">
+        <h6 class="fw-bold small text-muted text-uppercase mb-3">Phase 4 — Advanced Analysis</h6>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ url_for('phase4.label_noise') }}" class="btn btn-sm btn-outline-indigo"><i class="bi bi-tags me-1"></i>Label Noise</a>
+            <a href="{{ url_for('phase4.leakage') }}" class="btn btn-sm btn-outline-indigo"><i class="bi bi-shield-exclamation me-1"></i>Leakage</a>
+            <a href="{{ url_for('phase4.missing_data') }}" class="btn btn-sm btn-outline-indigo"><i class="bi bi-question-circle me-1"></i>Missing Data</a>
+            <a href="{{ url_for('phase4.causal') }}" class="btn btn-sm btn-outline-indigo"><i class="bi bi-diagram-3 me-1"></i>Causal Analysis</a>
         </div>
     </section>
 
-    <!-- Phase 4: Root Cause Analysis -->
-    <section class="mt-5">
-        <div class="container">
-            <h3 class="fw-bold mb-3">Phase 4: Root Cause Analysis</h3>
-            <div class="card">
-                <div class="card-header">Auto Root Cause Analysis</div>
-                <div class="card-body p-4">
-                    {% set root_cause_data = data.get('root_cause', {}) %}
-                    {% set canonical_status = root_cause_data.get('metadata', {}).get('risk', {}).get('level', root_cause_data.get('health_status', 'Unknown')) %}
-                    {% if root_cause_data %}
-                        <div class="d-flex align-items-center mb-4">
-                            <div class="h3 fw-bold mb-0 me-3">{{ canonical_status }}</div>
-                            <div class="text-muted small">Model Health Status</div>
+    {# ── SECTION 7: TECHNICAL APPENDIX (collapsed by default) ── #}
+    <section class="mb-5">
+        <button class="btn btn-outline-secondary w-100 d-flex justify-content-between align-items-center mb-3"
+                type="button" data-bs-toggle="collapse" data-bs-target="#technicalAppendix"
+                aria-expanded="false" aria-controls="technicalAppendix">
+            <span class="fw-bold"><i class="bi bi-journal-code me-2"></i>Technical Appendix</span>
+            <i class="bi bi-chevron-down"></i>
+        </button>
+
+        <div class="collapse" id="technicalAppendix">
+            <div class="accordion" id="appendixAccordion">
+
+                {# Panel 1: Full Root Cause Table #}
+                {% if root_cause_data and root_cause_data.get('root_causes') %}
+                <div class="accordion-item border-0 mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-semibold" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#appendixRootCause">
+                            <i class="bi bi-search me-2 text-indigo-500"></i>Root Cause Analysis
+                            <span class="badge bg-secondary ms-2">{{ root_cause_data.root_causes | length }}</span>
+                        </button>
+                    </h2>
+                    <div id="appendixRootCause" class="accordion-collapse collapse" data-bs-parent="#appendixAccordion">
+                        <div class="accordion-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm mb-0">
+                                    <thead>
+                                        <tr><th>Cause</th><th>Score</th><th>Severity</th><th>Evidence</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for cause in root_cause_data.root_causes %}
+                                        <tr>
+                                            <td class="fw-bold">{{ cause.get('cause', 'N/A') }}</td>
+                                            <td>{{ cause.get('score', 0) }}</td>
+                                            <td>
+                                                <span class="badge-pill badge-{{ 'critical' if cause.get('severity') == 'CRITICAL' else 'high' if cause.get('severity') == 'HIGH' else 'medium' if cause.get('severity') == 'MEDIUM' else 'none' }}">
+                                                    {{ cause.get('severity', 'LOW') }}
+                                                </span>
+                                            </td>
+                                            <td class="small text-muted">
+                                                {% for evidence in cause.get('evidence', [])[:2] %}
+                                                    {{ evidence }}{% if not loop.last %}; {% endif %}
+                                                {% endfor %}
+                                            </td>
+                                        </tr>
+                                        {% if cause.get('domain_translation') %}
+                                        <tr>
+                                            <td colspan="4" style="font-style:italic; color:#a0aec0; font-size:0.825rem; padding:2px 16px 10px; border-top:none;">
+                                                💬 {{ cause.get('domain_translation') }}
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-
-                        {% if root_cause_data.get('root_causes') %}
-                        <h6 class="fw-bold small text-muted text-uppercase mb-3">Top Root Causes</h6>
-                        <div class="table-responsive mb-4">
-                            <table class="table table-hover table-sm mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Cause</th>
-                                        <th>Score</th>
-                                        <th>Severity</th>
-                                        <th>Evidence</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for cause in root_cause_data.root_causes[:5] %}
-                                    <tr>
-                                        <td class="fw-bold">{{ cause.get('cause', 'N/A') }}</td>
-                                        <td>{{ cause.get('score', 0) }}</td>
-                                        <td>
-                                            <span class="badge-pill badge-{{ 'critical' if cause.get('severity') == 'CRITICAL' else 'high' if cause.get('severity') == 'HIGH' else 'medium' if cause.get('severity') == 'MEDIUM' else 'none' }}">
-                                                {{ cause.get('severity', 'LOW') }}
-                                            </span>
-                                        </td>
-                                        <td class="small text-muted">
-                                            {% for evidence in cause.get('evidence', [])[:2] %}
-                                                {{ evidence }}{% if not loop.last %}; {% endif %}
-                                            {% endfor %}
-                                        </td>
-                                    </tr>
-                                    {% if cause.get('domain_translation') %}
-                                    <tr>
-                                        <td colspan="4" style="
-                                            font-style: italic;
-                                            color: #a0aec0;
-                                            font-size: 0.825rem;
-                                            padding: 2px 16px 10px;
-                                            border-top: none;">
-                                            💬 {{ cause.get('domain_translation') }}
-                                        </td>
-                                    </tr>
-                                    {% endif %}
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        {% endif %}
-
-                        {% if root_cause_data.get('recommended_actions') %}
-                        <h6 class="fw-bold small text-muted text-uppercase mb-3">Recommended Actions</h6>
-                        <ul class="list-group list-group-flush">
-                            {% for action in root_cause_data.recommended_actions %}
-                            <li class="list-group-item">
-                                <i class="bi bi-lightbulb-fill me-2 text-warning"></i>{{ action }}
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        {% endif %}
-                    {% else %}
-                        <p class="text-muted italic">Root cause analysis not available.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <script>
-    // Audience Translation JavaScript
-    document.addEventListener('DOMContentLoaded', function() {
-        const audienceReports = {{ data.get('audience_reports', {}) | tojson | safe }};
-        const aiByAudience = {{ data.get('ai_investigator_by_audience', {}) | tojson | safe }};
-        const rootConfidenceDrivers = {{ data.get('root_cause', {}).get('confidence_drivers', data.get('root_cause', {}).get('metadata', {}).get('confidence_drivers', {})) | tojson | safe }};
-        const selectedAudience = "{{ selected_audience | default('ML Engineer') }}";
-        console.log('[AUDIENCE DEBUG] audienceReports loaded:', audienceReports);
-        console.log('[AUDIENCE DEBUG] Keys in audienceReports:', Object.keys(audienceReports));
-        console.log('[AUDIENCE DEBUG] DOM loaded, checking for elements...');
-        
-        // Check if elements exist
-        console.log('[AUDIENCE DEBUG] audience-executive-summary exists:', !!document.getElementById('audience-executive-summary'));
-        console.log('[AUDIENCE DEBUG] audience-findings exists:', !!document.getElementById('audience-findings'));
-        console.log('[AUDIENCE DEBUG] audience-recommendations exists:', !!document.getElementById('audience-recommendations'));
-        
-        document.querySelectorAll('.audience-option').forEach(option => {
-            console.log('[AUDIENCE DEBUG] Found audience option:', option.getAttribute('data-audience'));
-            option.addEventListener('click', function(e) {
-                e.preventDefault();
-                const audience = this.getAttribute('data-audience');
-                console.log('[AUDIENCE DEBUG] Clicked audience:', audience);
-                // Save audience to session
-                fetch('/set-audience', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        'audience': audience
-                    })
-                }).then(response => response.json())
-                  .then(data => console.log('[AUDIENCE DEBUG] Audience saved to session:', data))
-                  .catch(error => console.error('[AUDIENCE DEBUG] Error saving audience:', error));
-                updateAudienceContent(audience);
-            });
-        });
-
-        function renderConfidenceDrivers(drivers) {
-            const entries = [
-                ['Drift', drivers.drift_evidence],
-                ['Calibration', drivers.calibration_evidence],
-                ['Noise', drivers.noise_evidence],
-                ['Agreement', drivers.agreement],
-                ['Coverage', drivers.coverage],
-                ['Conflicts', drivers.conflicts]
-            ];
-            return entries.map(([label, value]) => `
-                <div class="col-md-4 col-lg-2">
-                    <div class="border rounded p-2 h-100">
-                        <div class="text-muted small text-uppercase">${label}</div>
-                        <div class="fw-bold">${value || 'N/A'}</div>
                     </div>
                 </div>
-            `).join('');
-        }
-        
-        function updateAudienceContent(audience) {
-            console.log('[AUDIENCE DEBUG] updateAudienceContent called with:', audience);
-            document.getElementById('current-audience-label').textContent = audience;
-            const report = audienceReports[audience];
-            const aiReport = aiByAudience[audience] || {};
-            console.log('[AUDIENCE DEBUG] Report object:', report);
-            if (!report) {
-                console.log('[AUDIENCE DEBUG] Report not found for audience:', audience);
-                return;
-            }
-            
-            // Update executive summary
-            const execSummaryEl = document.getElementById('audience-executive-summary');
-            console.log('[AUDIENCE DEBUG] execSummaryEl found:', !!execSummaryEl);
-            if (execSummaryEl && report.executive_summary) {
-                console.log('[AUDIENCE DEBUG] Updating executive summary from:', execSummaryEl.textContent.substring(0, 50));
-                execSummaryEl.textContent = report.executive_summary;
-                console.log('[AUDIENCE DEBUG] Updated executive summary to:', execSummaryEl.textContent.substring(0, 50));
-            } else {
-                console.log('[AUDIENCE DEBUG] Skipping executive summary update - element not found or data missing');
-            }
-            
-            // Update findings
-            const findingsEl = document.getElementById('audience-findings');
-            console.log('[AUDIENCE DEBUG] findingsEl found:', !!findingsEl);
-            if (findingsEl && report.findings) {
-                console.log('[AUDIENCE DEBUG] Updating findings');
-                findingsEl.innerHTML = report.findings.replace(/\n/g, '<br>');
-            } else {
-                console.log('[AUDIENCE DEBUG] Skipping findings update - element not found or data missing');
-            }
-            
-            // Update impact assessment
-            const impactEl = document.getElementById('audience-impact');
-            console.log('[AUDIENCE DEBUG] impactEl found:', !!impactEl);
-            if (impactEl && report.impact_assessment) {
-                console.log('[AUDIENCE DEBUG] Updating impact assessment');
-                impactEl.textContent = report.impact_assessment;
-                // Make sure the element is visible
-                impactEl.parentElement.style.display = 'block';
-            } else if (impactEl) {
-                impactEl.parentElement.style.display = 'none';
-            }
-            
-            // Update confidence explanation
-            const confidenceEl = document.getElementById('audience-confidence');
-            console.log('[AUDIENCE DEBUG] confidenceEl found:', !!confidenceEl);
-            if (confidenceEl && report.confidence_explanation) {
-                console.log('[AUDIENCE DEBUG] Updating confidence explanation');
-                confidenceEl.innerHTML = report.confidence_explanation.replace(/\n/g, '<br>');
-                confidenceEl.parentElement.style.display = 'block';
-            } else if (confidenceEl) {
-                confidenceEl.parentElement.style.display = 'none';
-            }
+                {% endif %}
 
-            // Update confidence drivers
-            const confidenceDriversEl = document.getElementById('audience-confidence-drivers');
-            const confidenceDriversSection = document.getElementById('audience-confidence-drivers-section');
-            const confidenceDrivers = aiReport.confidence_drivers || rootConfidenceDrivers;
-            if (confidenceDriversEl && confidenceDriversSection && confidenceDrivers && Object.keys(confidenceDrivers).length) {
-                console.log('[AUDIENCE DEBUG] Updating confidence drivers');
-                confidenceDriversEl.innerHTML = renderConfidenceDrivers(confidenceDrivers);
-                confidenceDriversSection.style.display = 'block';
-            } else if (confidenceDriversSection) {
-                confidenceDriversSection.style.display = 'none';
-            }
-            
-            // Update recommendations
-            const recommendationsEl = document.getElementById('audience-recommendations');
-            console.log('[AUDIENCE DEBUG] recommendationsEl found:', !!recommendationsEl);
-            if (recommendationsEl && report.recommendations) {
-                console.log('[AUDIENCE DEBUG] Updating recommendations');
-                recommendationsEl.innerHTML = report.recommendations.map(action => 
-                    `<li class="list-group-item"><i class="bi bi-lightbulb-fill me-2 text-warning"></i>${action}</li>`
-                ).join('');
-            } else {
-                console.log('[AUDIENCE DEBUG] Skipping recommendations update - element not found or data missing');
-            }
-            
-            // Update technical notes
-            const technicalEl = document.getElementById('audience-technical');
-            console.log('[AUDIENCE DEBUG] technicalEl found:', !!technicalEl);
-            if (technicalEl && report.technical_notes) {
-                console.log('[AUDIENCE DEBUG] Updating technical notes');
-                technicalEl.innerHTML = report.technical_notes.replace(/\n/g, '<br>');
-                technicalEl.parentElement.style.display = 'block';
-            } else if (technicalEl) {
-                technicalEl.parentElement.style.display = 'none';
-            }
-        }
-        
-        // Initial load: show server-selected audience report
-        if (audienceReports && Object.keys(audienceReports).length > 0) {
-            updateAudienceContent(selectedAudience);
-        }
+                {# Panel 2: Leakage Details #}
+                {% set suspect_list = leakage_findings.get('suspects', []) %}
+                {% if suspect_list %}
+                <div class="accordion-item border-0 mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-semibold" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#appendixLeakage">
+                            <i class="bi bi-shield-exclamation me-2 text-indigo-500"></i>Leakage Details
+                            <span class="badge bg-secondary ms-2">{{ suspect_list | length }}</span>
+                        </button>
+                    </h2>
+                    <div id="appendixLeakage" class="accordion-collapse collapse" data-bs-parent="#appendixAccordion">
+                        <div class="accordion-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm mb-0">
+                                    <thead>
+                                        <tr><th>Column</th><th>Type</th><th>Confidence</th><th>Reason</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for suspect in suspect_list %}
+                                        <tr>
+                                            <td class="fw-bold">{{ suspect.feature }}</td>
+                                            <td>
+                                                {% set type_map = {
+                                                    'target_leakage': {'badge': 'bg-danger', 'label': 'Target Leakage'},
+                                                    'temporal_leakage': {'badge': 'bg-warning', 'label': 'Temporal Leakage'},
+                                                    'id_leakage': {'badge': 'bg-info', 'label': 'ID Leakage'}
+                                                } %}
+                                                {% set type_info = type_map.get(suspect.type, {'badge': 'bg-secondary', 'label': suspect.type}) %}
+                                                <span class="badge {{ type_info.badge }}">{{ type_info.label }}</span>
+                                            </td>
+                                            <td>{{ (suspect.score * 100) | round(1) }}%</td>
+                                            <td class="text-muted small">
+                                                {% if suspect.type == 'target_leakage' %}
+                                                    {{ (suspect.score * 100) | round(0) }}% correlation with target
+                                                {% elif suspect.type == 'temporal_leakage' %}
+                                                    Uses future information unavailable at prediction time
+                                                {% else %}
+                                                    High leakage score detected
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {# Panel 3: Label Noise Details #}
+                {% set error_details = noise_findings.get('error_details', []) %}
+                {% set per_class = noise_findings.get('per_class_noise', []) %}
+                {% if error_details or per_class %}
+                <div class="accordion-item border-0 mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-semibold" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#appendixNoise">
+                            <i class="bi bi-tags me-2 text-indigo-500"></i>Label Noise Details
+                            {% if error_details %}<span class="badge bg-secondary ms-2">{{ error_details | length }} flagged</span>{% endif %}
+                        </button>
+                    </h2>
+                    <div id="appendixNoise" class="accordion-collapse collapse" data-bs-parent="#appendixAccordion">
+                        <div class="accordion-body">
+                            {% if per_class %}
+                                {% set worst_class = per_class | sort(attribute='error_rate', reverse=True) | first %}
+                                <p class="mb-4">Class {{ worst_class.class_label }} has highest mislabeling rate ({{ (worst_class.error_rate * 100) | round(1) }}%). Review labeling process for this class.</p>
+                                {% if charts.get('label_noise_per_class') %}
+                                    <div id="chart-label-noise-per-class" style="width:100%; height:300px;"></div>
+                                {% endif %}
+                            {% endif %}
+                            {% if error_details %}
+                            <h6 class="fw-bold small text-muted text-uppercase mb-3 mt-3">Top 10 Label Quality Issues</h6>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm mb-0">
+                                    <thead>
+                                        <tr><th>Sample Index</th><th>Type</th><th>True Label</th><th>Predicted Label</th><th>Noise Probability</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for err in error_details %}
+                                        <tr>
+                                            <td>{{ err.sample_index }}</td>
+                                            <td>
+                                                {% if err.true_label != err.predicted_label %}
+                                                    <span class="badge bg-danger">Mislabeled</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning text-dark">Uncertain</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ err.true_label }}</td>
+                                            <td>{{ err.predicted_label }}</td>
+                                            <td>{{ (err.noise_probability * 100) | round(1) }}%</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="small text-muted mt-2">
+                                <em>Note:</em> Uncertain samples are correctly predicted but have low label confidence. Mislabeled samples have incorrect ground truth labels.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {# Panel 4: Recommended Actions #}
+                {% if root_cause_data.get('recommended_actions') %}
+                <div class="accordion-item border-0 mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-semibold" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#appendixActions">
+                            <i class="bi bi-lightbulb me-2 text-indigo-500"></i>Recommended Actions
+                            <span class="badge bg-secondary ms-2">{{ root_cause_data.recommended_actions | length }}</span>
+                        </button>
+                    </h2>
+                    <div id="appendixActions" class="accordion-collapse collapse" data-bs-parent="#appendixAccordion">
+                        <div class="accordion-body">
+                            {% for action in root_cause_data.recommended_actions %}
+                            <div class="card mb-3 border-0" style="background: var(--bg-subtle, rgba(255,255,255,0.03));">
+                                <div class="card-body p-3">
+                                    {% if action is mapping %}
+                                        <h6 class="fw-bold mb-1">{{ action.get('title', '') }}</h6>
+                                        {% if action.get('evidence') %}<p class="small text-muted mb-1"><strong>Evidence:</strong> {{ action.evidence }}</p>{% endif %}
+                                        {% if action.get('why') %}<p class="small mb-2">{{ action.why }}</p>{% endif %}
+                                        {% if action.get('steps') %}
+                                        <ol class="small mb-0 ps-3">
+                                            {% for step in action.steps %}
+                                            <li>{{ step }}</li>
+                                            {% endfor %}
+                                        </ol>
+                                        {% endif %}
+                                    {% else %}
+                                        <p class="mb-0 small"><i class="bi bi-lightbulb-fill me-2 text-warning"></i>{{ action }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>{# end accordion #}
+        </div>{# end collapse #}
+    </section>
+
+</div>{# end container #}
+
+{# ── AUDIENCE TRANSLATION JS ── #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const audienceReports = {{ data.get('audience_reports', {}) | tojson | safe }};
+    const aiByAudience = {{ data.get('ai_investigator_by_audience', {}) | tojson | safe }};
+    const rootConfidenceDrivers = {{ data.get('root_cause', {}).get('confidence_drivers', data.get('root_cause', {}).get('metadata', {}).get('confidence_drivers', {})) | tojson | safe }};
+    const selectedAudience = "{{ selected_audience | default('ML Engineer') }}";
+
+    document.querySelectorAll('.audience-option').forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            const audience = this.getAttribute('data-audience');
+            fetch('/set-audience', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ 'audience': audience })
+            });
+            updateAudienceContent(audience);
+        });
     });
-    </script>
+
+    function renderConfidenceDrivers(drivers) {
+        const entries = [
+            ['Drift', drivers.drift_evidence],
+            ['Calibration', drivers.calibration_evidence],
+            ['Noise', drivers.noise_evidence],
+            ['Agreement', drivers.agreement],
+            ['Coverage', drivers.coverage],
+            ['Conflicts', drivers.conflicts]
+        ];
+        return entries.map(([label, value]) => `
+            <div class="col-md-4 col-lg-2">
+                <div class="border rounded p-2 h-100">
+                    <div class="text-muted small text-uppercase">${label}</div>
+                    <div class="fw-bold">${value || 'N/A'}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function updateAudienceContent(audience) {
+        document.getElementById('current-audience-label').textContent = audience;
+        const report = audienceReports[audience];
+        const aiReport = aiByAudience[audience] || {};
+        if (!report) return;
+
+        const execSummaryEl = document.getElementById('audience-executive-summary');
+        if (execSummaryEl && report.executive_summary) execSummaryEl.textContent = report.executive_summary;
+
+        const findingsEl = document.getElementById('audience-findings');
+        if (findingsEl && report.findings) findingsEl.innerHTML = report.findings.replace(/\n/g, '<br>');
+
+        const impactEl = document.getElementById('audience-impact');
+        if (impactEl) {
+            if (report.impact_assessment) { impactEl.textContent = report.impact_assessment; impactEl.parentElement.style.display = 'block'; }
+            else impactEl.parentElement.style.display = 'none';
+        }
+
+        const confidenceEl = document.getElementById('audience-confidence');
+        if (confidenceEl) {
+            if (report.confidence_explanation) { confidenceEl.innerHTML = report.confidence_explanation.replace(/\n/g, '<br>'); confidenceEl.parentElement.style.display = 'block'; }
+            else confidenceEl.parentElement.style.display = 'none';
+        }
+
+        const recommendationsEl = document.getElementById('audience-recommendations');
+        if (recommendationsEl && report.recommendations) {
+            recommendationsEl.innerHTML = report.recommendations.map(action =>
+                `<li class="list-group-item"><i class="bi bi-lightbulb-fill me-2 text-warning"></i>${action}</li>`
+            ).join('');
+        }
+
+        const confidenceDriversEl = document.getElementById('audience-confidence-drivers');
+        const confidenceDriversSection = document.getElementById('audience-confidence-drivers-section');
+        const confidenceDrivers = aiReport.confidence_drivers || rootConfidenceDrivers;
+        if (confidenceDriversEl && confidenceDriversSection && confidenceDrivers && Object.keys(confidenceDrivers).length) {
+            confidenceDriversEl.innerHTML = renderConfidenceDrivers(confidenceDrivers);
+            confidenceDriversSection.style.display = 'block';
+        } else if (confidenceDriversSection) {
+            confidenceDriversSection.style.display = 'none';
+        }
+
+        const technicalEl = document.getElementById('audience-technical');
+        if (technicalEl) {
+            if (report.technical_notes) { technicalEl.innerHTML = report.technical_notes.replace(/\n/g, '<br>'); technicalEl.parentElement.style.display = 'block'; }
+            else technicalEl.parentElement.style.display = 'none';
+        }
+    }
+
+    if (audienceReports && Object.keys(audienceReports).length > 0) updateAudienceContent(selectedAudience);
+
+    {# Chevron rotation on appendix toggle #}
+    const appendixBtn = document.querySelector('[data-bs-target="#technicalAppendix"]');
+    if (appendixBtn) {
+        document.getElementById('technicalAppendix').addEventListener('show.bs.collapse', () => {
+            appendixBtn.querySelector('.bi-chevron-down').style.transform = 'rotate(180deg)';
+        });
+        document.getElementById('technicalAppendix').addEventListener('hide.bs.collapse', () => {
+            appendixBtn.querySelector('.bi-chevron-down').style.transform = 'rotate(0deg)';
+        });
+    }
+});
+</script>
 
 {% if charts %}
 <script>
-    // Initialize Plotly Charts with theme awareness
     const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
     const baseLayout = {
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
-        font: { 
-            color: isDarkMode ? '#ffffff' : '#0f172a',
-            family: "Inter, sans-serif"
-        },
-        xaxis: {
-            gridcolor: isDarkMode ? '#334155' : '#e2e8f0',
-            zerolinecolor: isDarkMode ? '#334155' : '#e2e8f0',
-            tickfont: { color: isDarkMode ? '#94a3b8' : '#64748b' }
-        },
-        yaxis: {
-            gridcolor: isDarkMode ? '#334155' : '#e2e8f0',
-            zerolinecolor: isDarkMode ? '#334155' : '#e2e8f0',
-            tickfont: { color: isDarkMode ? '#94a3b8' : '#64748b' }
-        }
+        font: { color: isDarkMode ? '#ffffff' : '#0f172a', family: "Inter, sans-serif" },
+        xaxis: { gridcolor: isDarkMode ? '#334155' : '#e2e8f0', zerolinecolor: isDarkMode ? '#334155' : '#e2e8f0', tickfont: { color: isDarkMode ? '#94a3b8' : '#64748b' } },
+        yaxis: { gridcolor: isDarkMode ? '#334155' : '#e2e8f0', zerolinecolor: isDarkMode ? '#334155' : '#e2e8f0', tickfont: { color: isDarkMode ? '#94a3b8' : '#64748b' } }
     };
 
     {% if charts.get('calibration') %}
@@ -702,4 +730,63 @@
     {% endif %}
 </script>
 {% endif %}
+
+<style>
+/* Technical Appendix — force dark theme on accordion */
+#technicalAppendix .accordion-item {
+    background: transparent !important;
+    border: 1px solid rgba(255,255,255,0.07) !important;
+    border-radius: 8px;
+}
+
+#technicalAppendix .accordion-button {
+    background: var(--bg-card, #1e293b) !important;
+    color: var(--text-main, #e2e8f0) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+#technicalAppendix .accordion-button:not(.collapsed) {
+    background: var(--bg-card, #1e293b) !important;
+    color: var(--text-main, #e2e8f0) !important;
+}
+
+#technicalAppendix .accordion-button::after {
+    filter: invert(1);
+}
+
+#technicalAppendix .accordion-body {
+    background: var(--bg-card, #1e293b) !important;
+    color: var(--text-main, #e2e8f0) !important;
+}
+
+/* Action cards inside Recommended Actions panel */
+#appendixActions .card {
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.07) !important;
+    color: var(--text-main, #e2e8f0) !important;
+}
+
+/* Tables inside appendix */
+#technicalAppendix .table {
+    color: var(--text-main, #e2e8f0) !important;
+}
+
+#technicalAppendix .table thead th {
+    color: var(--text-muted, #94a3b8) !important;
+    border-bottom-color: rgba(255,255,255,0.1) !important;
+}
+
+#technicalAppendix .table td {
+    border-color: rgba(255,255,255,0.06) !important;
+}
+
+/* Toggle button for appendix */
+[data-bs-target="#technicalAppendix"] {
+    background: var(--bg-card, #1e293b) !important;
+    color: var(--text-main, #e2e8f0) !important;
+    border-color: rgba(255,255,255,0.12) !important;
+}
+</style>
+
 {% endblock %}

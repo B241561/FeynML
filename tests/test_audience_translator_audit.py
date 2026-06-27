@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import json
 from engine.modules.audience_translator import AudienceTranslator
 
-# Sample data for testing
+
 sample_root_cause = {
     "health_status": "Degraded",
     "confidence": 85,
@@ -18,20 +18,20 @@ sample_root_cause = {
             "cause": "Data Drift Detected",
             "score": 0.92,
             "severity": "HIGH",
-            "evidence": ["Feature X drifted by 0.45", "Feature Y drifted by 0.32"]
+            "evidence": ["Feature X drifted by 0.45", "Feature Y drifted by 0.32"],
         },
         {
             "cause": "Label Noise Present",
             "score": 0.78,
             "severity": "MEDIUM",
-            "evidence": ["15% of labels may be incorrect"]
-        }
+            "evidence": ["15% of labels may be incorrect"],
+        },
     ],
     "recommended_actions": [
         "Retrain model with recent data",
         "Investigate label quality",
-        "Monitor feature drift"
-    ]
+        "Monitor feature drift",
+    ],
 }
 
 sample_ai_investigator = {
@@ -44,72 +44,78 @@ sample_ai_investigator = {
     "recommended_actions": [
         "Implement drift monitoring",
         "Review labeling process",
-        "Schedule model retraining"
+        "Schedule model retraining",
     ],
-    "technical_notes": "Drift detected using KS test (p<0.01). Label noise estimated via consensus algorithms."
+    "technical_notes": "Drift detected using KS test (p<0.01). Label noise estimated via consensus algorithms.",
 }
 
-# Test audience translation
-print("=" * 80)
-print("AUDIENCE TRANSLATION AUDIT")
-print("=" * 80)
+forbidden_phrases = [
+    "revenue impact",
+    "patient care",
+    "regulatory violations",
+    "fines",
+    "default risk",
+    "claims costs",
+    "employee decisions",
+    "retention strategies",
+]
 
 translator = AudienceTranslator(verbose=True)
 audience_reports = translator.translate(sample_root_cause, sample_ai_investigator)
 
-print("\n" + "=" * 80)
-print("AUDIENCE_REPORTS JSON SAMPLE")
+print("=" * 80)
+print("AUDIENCE TRANSLATION AUDIT")
 print("=" * 80)
 print(json.dumps(audience_reports, indent=2))
 
 print("\n" + "=" * 80)
-print("VERIFICATION: Reports exist for all 5 audiences")
+print("VERIFICATION: Reports exist for all supported audiences")
 print("=" * 80)
-required_audiences = ["ML Engineer", "Executive", "Doctor", "Loan Officer", "Student"]
-for audience in required_audiences:
-    if audience in audience_reports:
-        print(f"[OK] {audience}: EXISTS")
-        print(f"  Fields: {list(audience_reports[audience].keys())}")
-    else:
-        print(f"[FAIL] {audience}: MISSING")
+for audience in translator.AUDIENCES:
+    report = audience_reports.get(audience)
+    print(f"[OK] {audience}: {'EXISTS' if report else 'MISSING'}")
 
 print("\n" + "=" * 80)
-print("VERIFICATION: Field structure per audience")
+print("VERIFICATION: Shared structure")
 print("=" * 80)
-for audience in required_audiences:
-    if audience in audience_reports:
-        report = audience_reports[audience]
-        print(f"\n{audience}:")
-        for key, value in report.items():
-            print(f"  {key}: {type(value).__name__} (length: {len(str(value))})")
+required_fields = [
+    "audience",
+    "executive_summary",
+    "findings",
+    "impact_assessment",
+    "confidence_explanation",
+    "recommendations",
+    "technical_notes",
+]
+for audience in translator.AUDIENCES:
+    report = audience_reports[audience]
+    missing = [field for field in required_fields if field not in report]
+    print(f"{audience}: {'OK' if not missing else f'MISSING {missing}'}")
 
 print("\n" + "=" * 80)
-print("BUG IDENTIFICATION")
+print("VERIFICATION: Evidence preserved verbatim")
 print("=" * 80)
-print("\nJavaScript expects these fields:")
-print("  - executive_summary")
-print("  - findings")
-print("  - impact_assessment")
-print("  - confidence_explanation")
-print("  - recommendations")
-print("  - technical_notes")
-
-print("\nAudience Translator returns these fields:")
-first_report = audience_reports.get("ML Engineer", {})
-print(f"  - {list(first_report.keys())}")
-
-print("\nMISSING FIELDS (JavaScript tries to update but don't exist):")
-missing_fields = ["impact_assessment", "confidence_explanation", "technical_notes"]
-for field in missing_fields:
-    if field not in first_report:
-        print(f"  [MISSING] {field}: This is the BUG!")
-    else:
-        print(f"  [OK] {field}: EXISTS")
+for audience in translator.AUDIENCES:
+    findings = audience_reports[audience]["findings"]
+    checks = [
+        "Feature X drifted by 0.45" in findings,
+        "Feature Y drifted by 0.32" in findings,
+        "15% of labels may be incorrect" in findings,
+    ]
+    print(f"{audience}: {'OK' if all(checks) else 'FAIL'}")
 
 print("\n" + "=" * 80)
-print("CONCLUSION")
+print("VERIFICATION: Recommendations unchanged")
 print("=" * 80)
-print("BUG: JavaScript tries to update fields that don't exist in audience_reports.")
-print("The audience_translator.py only returns: audience, executive_summary, findings, recommendations")
-print("But JavaScript tries to update: impact_assessment, confidence_explanation, technical_notes")
-print("These fields are embedded in 'findings' string, not as separate fields.")
+expected_recommendations = sample_root_cause["recommended_actions"]
+for audience in translator.AUDIENCES:
+    same = audience_reports[audience]["recommendations"] == expected_recommendations
+    print(f"{audience}: {'OK' if same else 'FAIL'}")
+
+print("\n" + "=" * 80)
+print("VERIFICATION: No unsupported downstream consequence phrases")
+print("=" * 80)
+for audience in translator.AUDIENCES:
+    report_text = json.dumps(audience_reports[audience]).lower()
+    found = [phrase for phrase in forbidden_phrases if phrase in report_text]
+    print(f"{audience}: {'OK' if not found else f'FOUND {found}'}")

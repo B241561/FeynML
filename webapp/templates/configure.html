@@ -1,6 +1,28 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+.cfg-card{background:var(--bg-card,rgba(255,255,255,0.04));border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:13px;transition:border-color .15s}
+.cfg-card:focus-within{border-color:rgba(99,102,241,0.5)}
+.cfg-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px;margin-top:2px}
+.icon-teal{background:rgba(6,182,212,0.12);color:#06b6d4}
+.icon-blue{background:rgba(59,130,246,0.12);color:#60a5fa}
+.icon-purple{background:rgba(139,92,246,0.12);color:#a78bfa}
+.icon-amber{background:rgba(245,158,11,0.12);color:#fbbf24}
+.icon-coral{background:rgba(239,68,68,0.12);color:#f87171}
+.icon-gray{background:rgba(148,163,184,0.1);color:#94a3b8}
+.cfg-body{flex:1;min-width:0}
+.cfg-label{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin:0 0 6px;display:block}
+.cfg-select{width:100%;background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-main,#e2e8f0);font-size:14px;font-weight:500;padding:2px 0 6px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none}
+.cfg-select option{background:#1e293b;color:#e2e8f0}
+.cfg-hint{font-size:11px;color:#475569;margin-top:5px}
+.cfg-pills{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.cfg-pill-label{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);color:#64748b;cursor:pointer;transition:all .15s;user-select:none}
+.cfg-pill-label:hover{border-color:rgba(99,102,241,0.4);color:#a5b4fc}
+.cfg-pill-cb:checked + .cfg-pill-label{background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.5);color:#a5b4fc}
+.cfg-pill-cb{display:none}
+</style>
+
 <div class="container py-5 mt-5">
     <div class="row justify-content-center">
         <div class="col-lg-8 animate-up">
@@ -17,123 +39,153 @@
                 </div>
             </div>
 
-            <div class="card p-5 shadow border-0 rounded-4" style="height: auto; max-height: calc(100vh - 140px); overflow-y: auto;">
-                <form action="{{ url_for('run_analysis') }}" method="POST">
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted text-uppercase">Target Column</label>
-                            <select class="form-select bg-main border-color p-3" name="target_col" required>
-                                <option value="" disabled selected>Select ground truth...</option>
-                                {% for col in columns %}
-                                <option value="{{ col }}">{{ col }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="form-text">The actual outcome or label.</div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted text-uppercase">Prediction Column</label>
-                            <select class="form-select bg-main border-color p-3" name="pred_col" id="pred_col">
-                                <option value="">-- No Prediction Column --</option>
-                                {% for col in columns %}
-                                <option value="{{ col }}">{{ col }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="form-text">Model predictions or probabilities.</div>
-                            
-                            <div class="mt-3 p-3 bg-light rounded-3 border d-flex align-items-center">
-                                <div class="form-check form-switch mb-0">
-                                    <input class="form-check-input" type="checkbox" name="auto_predict" id="auto_predict" value="true">
-                                    <label class="form-check-label small fw-bold text-indigo-600" for="auto_predict">
-                                        Auto Generate Predictions
-                                    </label>
-                                </div>
-                                <i class="bi bi-info-circle ms-auto text-muted" data-bs-toggle="tooltip" title="Trains a baseline RandomForest model to generate out-of-fold predictions for calibration audit."></i>
+            <form action="{{ url_for('run_analysis') }}" method="POST">
+                <div class="row g-3 mb-4">
+
+                    {# ── Target Column ── #}
+                    <div class="col-md-6">
+                        <div class="cfg-card">
+                            <div class="cfg-icon icon-teal"><i class="bi bi-bullseye"></i></div>
+                            <div class="cfg-body">
+                                <label class="cfg-label" for="target_col">Target Column</label>
+                                <select class="cfg-select" name="target_col" id="target_col" required>
+                                    <option value="" disabled selected>Select ground truth…</option>
+                                    {% for col in columns %}
+                                    <option value="{{ col }}">{{ col }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="cfg-hint">The actual outcome or label.</div>
                             </div>
-
-                            <div id="prediction-warning" class="alert alert-warning small mt-2 d-none py-2">
-                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                Prediction column should contain model outputs, not the actual target column.
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted text-uppercase">Sensitive Attribute</label>
-                            <select class="form-select bg-main border-color p-3" name="sensitive_col">
-                                <option value="">None (Skip Fairness)</option>
-                                {% for col in columns %}
-                                <option value="{{ col }}">{{ col }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="form-text">Used for demographic parity audit.</div>
-
-                            <div class="mt-3 p-3 bg-light rounded-3 border d-flex align-items-center">
-                                <div class="form-check form-switch mb-0">
-                                    <input class="form-check-input" type="checkbox" name="auto_detect_sensitive" id="auto_detect_sensitive" value="true">
-                                    <label class="form-check-label small fw-bold text-indigo-600" for="auto_detect_sensitive">
-                                        Auto Detect Sensitive Columns
-                                    </label>
-                                </div>
-                                <i class="bi bi-info-circle ms-auto text-muted" data-bs-toggle="tooltip" title="Automatically detects columns like gender, race, age."></i>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted text-uppercase">Timestamp Column</label>
-                            <select class="form-select bg-main border-color p-3" name="time_col">
-                                <option value="">None (Skip Temporal)</option>
-                                {% for col in columns %}
-                                <option value="{{ col }}">{{ col }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="form-text">Used for drift trend analysis.</div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted text-uppercase">Treatment Column</label>
-                            <select class="form-select bg-main border-color p-3" name="treatment_col">
-                                <option value="">None (Skip Causal)</option>
-                                {% for col in columns %}
-                                <option value="{{ col }}">{{ col }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="form-text">Used for causal effect estimation.</div>
-
-                            <div class="mt-3 p-3 bg-light rounded-3 border d-flex align-items-center">
-                                <div class="form-check form-switch mb-0">
-                                    <input class="form-check-input" type="checkbox" name="auto_detect_treatment" id="auto_detect_treatment" value="true">
-                                    <label class="form-check-label small fw-bold text-indigo-600" for="auto_detect_treatment">
-                                        Auto Detect Treatment Variable
-                                    </label>
-                                </div>
-                                <i class="bi bi-info-circle ms-auto text-muted" data-bs-toggle="tooltip" title="Heuristically identifies likely intervention columns."></i>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted text-uppercase">Reference Dataset</label>
-                            <select class="form-select bg-main border-color p-3" name="reference_dataset">
-                                <option value="">None (Skip Drift Baseline)</option>
-                                {% for col in columns %}
-                                <option value="{{ col }}">{{ col }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="form-text">Optional baseline for distribution drift.</div>
                         </div>
                     </div>
 
-                    <hr class="my-5 opacity-10">
-
-                    <div class="d-flex justify-content-between align-items-center">
-                        <a href="{{ url_for('index') }}" class="btn btn-link text-muted text-decoration-none">
-                            <i class="bi bi-arrow-left me-2"></i> Back
-                        </a>
-                        <button type="submit" class="btn btn-indigo px-5 py-3 rounded-3 fw-bold shadow-sm">
-                            Execute Analysis <i class="bi bi-play-fill ms-2"></i>
-                        </button>
+                    {# ── Prediction Column ── #}
+                    <div class="col-md-6">
+                        <div class="cfg-card">
+                            <div class="cfg-icon icon-blue"><i class="bi bi-cpu"></i></div>
+                            <div class="cfg-body">
+                                <label class="cfg-label" for="pred_col">Prediction Column</label>
+                                <select class="cfg-select" name="pred_col" id="pred_col">
+                                    <option value="">No prediction column</option>
+                                    {% for col in columns %}
+                                    <option value="{{ col }}">{{ col }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="cfg-hint">Model predictions or probabilities.</div>
+                                <div class="cfg-pills">
+                                    <input class="cfg-pill-cb" type="checkbox" name="auto_predict" id="auto_predict" value="true">
+                                    <label class="cfg-pill-label" for="auto_predict"
+                                           data-bs-toggle="tooltip"
+                                           title="Trains a baseline RandomForest model to generate out-of-fold predictions for calibration audit.">
+                                        ⚡ Auto generate
+                                    </label>
+                                </div>
+                                <div id="prediction-warning" class="alert alert-warning small mt-2 d-none py-2">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    Prediction column should not be the target column.
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </form>
-            </div>
+
+                    {# ── Sensitive Attribute ── #}
+                    <div class="col-md-6">
+                        <div class="cfg-card">
+                            <div class="cfg-icon icon-purple"><i class="bi bi-people"></i></div>
+                            <div class="cfg-body">
+                                <label class="cfg-label" for="sensitive_col">Sensitive Attribute</label>
+                                <select class="cfg-select" name="sensitive_col" id="sensitive_col">
+                                    <option value="">None (skip fairness)</option>
+                                    {% for col in columns %}
+                                    <option value="{{ col }}">{{ col }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="cfg-hint">Used for demographic parity audit.</div>
+                                <div class="cfg-pills">
+                                    <input class="cfg-pill-cb" type="checkbox" name="auto_detect_sensitive" id="auto_detect_sensitive" value="true">
+                                    <label class="cfg-pill-label" for="auto_detect_sensitive"
+                                           data-bs-toggle="tooltip"
+                                           title="Automatically detects columns like gender, race, age.">
+                                        🔍 Auto detect
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# ── Timestamp Column ── #}
+                    <div class="col-md-6">
+                        <div class="cfg-card">
+                            <div class="cfg-icon icon-amber"><i class="bi bi-clock"></i></div>
+                            <div class="cfg-body">
+                                <label class="cfg-label" for="time_col">Timestamp Column</label>
+                                <select class="cfg-select" name="time_col" id="time_col">
+                                    <option value="">None (skip temporal)</option>
+                                    {% for col in columns %}
+                                    <option value="{{ col }}">{{ col }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="cfg-hint">Used for drift trend analysis.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# ── Treatment Column ── #}
+                    <div class="col-md-6">
+                        <div class="cfg-card">
+                            <div class="cfg-icon icon-coral"><i class="bi bi-diagram-3"></i></div>
+                            <div class="cfg-body">
+                                <label class="cfg-label" for="treatment_col">Treatment Column</label>
+                                <select class="cfg-select" name="treatment_col" id="treatment_col">
+                                    <option value="">None (skip causal)</option>
+                                    {% for col in columns %}
+                                    <option value="{{ col }}">{{ col }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="cfg-hint">Used for causal effect estimation.</div>
+                                <div class="cfg-pills">
+                                    <input class="cfg-pill-cb" type="checkbox" name="auto_detect_treatment" id="auto_detect_treatment" value="true">
+                                    <label class="cfg-pill-label" for="auto_detect_treatment"
+                                           data-bs-toggle="tooltip"
+                                           title="Heuristically identifies likely intervention columns.">
+                                        🔍 Auto detect
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# ── Reference Dataset ── #}
+                    <div class="col-md-6">
+                        <div class="cfg-card">
+                            <div class="cfg-icon icon-gray"><i class="bi bi-database"></i></div>
+                            <div class="cfg-body">
+                                <label class="cfg-label" for="reference_dataset">Reference Dataset</label>
+                                <select class="cfg-select" name="reference_dataset" id="reference_dataset">
+                                    <option value="">None (skip drift baseline)</option>
+                                    {% for col in columns %}
+                                    <option value="{{ col }}">{{ col }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="cfg-hint">Optional baseline for distribution drift.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <hr class="opacity-10">
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a href="{{ url_for('index') }}" class="btn btn-link text-muted text-decoration-none">
+                        <i class="bi bi-arrow-left me-2"></i> Back
+                    </a>
+                    <button type="submit" class="btn btn-indigo px-5 py-3 rounded-3 fw-bold shadow-sm">
+                        Execute Analysis <i class="bi bi-play-fill ms-2"></i>
+                    </button>
+                </div>
+            </form>
+
         </div>
     </div>
 </div>
@@ -152,8 +204,6 @@
         } else {
             warning.classList.add('d-none');
         }
-        
-        // Toggle autoPredict based on predSelect
         if (predSelect.value) {
             autoPredict.disabled = true;
             autoPredict.checked = false;
@@ -175,11 +225,8 @@
     targetSelect.addEventListener('change', checkConflict);
     predSelect.addEventListener('change', checkConflict);
     autoPredict.addEventListener('change', checkAuto);
-    
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
+
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function(el) { return new bootstrap.Tooltip(el); });
 </script>
 {% endblock %}

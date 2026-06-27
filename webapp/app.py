@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import traceback
 from datetime import datetime, timedelta
 from functools import wraps
@@ -72,6 +73,87 @@ REPORT_FOLDER = os.path.join(BASE_DIR, 'reports')
 LOG_FILE = os.path.join(BASE_DIR, 'logs', 'app.log')
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+def _normalize_recommended_actions(actions):
+    """Convert legacy recommendation blobs into structured action objects."""
+    if not actions:
+        return []
+
+    section_pattern = re.compile(
+        r"(Root Cause|Highest Priority|Evidence|Why it matters|Recommended workflow):\s*",
+        re.IGNORECASE,
+    )
+
+    def _parse_steps(workflow_text):
+        workflow_text = str(workflow_text or "").strip()
+        if not workflow_text:
+            return []
+
+        numbered_steps = re.findall(
+            r"(?:^|\n)\s*\d+\.\s*(.+?)(?=(?:\n\s*\d+\.\s)|$)",
+            workflow_text,
+            flags=re.DOTALL,
+        )
+        if numbered_steps:
+            return [" ".join(step.split()) for step in numbered_steps if step.strip()]
+
+        fallback = " ".join(workflow_text.split())
+        return [fallback] if fallback else []
+
+    normalized = []
+    for action in actions:
+        if isinstance(action, dict):
+            title = str(action.get("title") or "Recommended action").strip()
+            evidence = str(action.get("evidence") or "").strip()
+            why = str(action.get("why") or "").strip()
+            steps = action.get("steps") or []
+            if isinstance(steps, str):
+                steps = _parse_steps(steps)
+            elif isinstance(steps, list):
+                steps = [str(step).strip() for step in steps if str(step).strip()]
+            normalized.append({
+                "title": title or "Recommended action",
+                "evidence": evidence,
+                "why": why,
+                "steps": steps,
+            })
+            continue
+
+        text = str(action or "").strip()
+        if not text:
+            continue
+
+        matches = list(section_pattern.finditer(text))
+        sections = {}
+        if matches:
+            for idx, match in enumerate(matches):
+                start = match.end()
+                end = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
+                label = match.group(1).strip().lower()
+                sections[label] = text[start:end].strip()
+
+        root_cause = sections.get("root cause", "")
+        highest_priority = sections.get("highest priority", "")
+        title = root_cause or "Recommended action"
+        if highest_priority:
+            title = f"{title} (Highest priority: {highest_priority})"
+
+        evidence = sections.get("evidence", "")
+        why = sections.get("why it matters", "")
+        steps = _parse_steps(sections.get("recommended workflow", ""))
+
+        if not matches:
+            why = " ".join(text.split())
+
+        normalized.append({
+            "title": title,
+            "evidence": evidence,
+            "why": why,
+            "steps": steps,
+        })
+
+    return normalized
 app.config['REPORT_FOLDER'] = REPORT_FOLDER
 
 # Ensure directories exist
@@ -1273,6 +1355,11 @@ def view_dashboard(report_id):
     data.setdefault('ai_investigator', {'risk_level': 'UNKNOWN', 'executive_summary': '', 'investigation_findings': '', 'impact_assessment': '', 'confidence_explanation': '', 'recommended_actions': [], 'technical_notes': ''})
     data.setdefault('audience_reports', {})
 
+    if isinstance(data.get('root_cause'), dict):
+        data['root_cause']['recommended_actions'] = _normalize_recommended_actions(
+            data['root_cause'].get('recommended_actions', [])
+        )
+
     filename = session.get('filename', report.filename if report else 'Unknown')
     severities = [
         data.get('calibration', {}).get('severity', 'NONE'),
@@ -2399,57 +2486,166 @@ def export_pdf(report_id):
     suspicious_samples = []
     
     try:
-        # Calibration: Prediction Distribution
+        import plotly.graph_objects as go
+        import plotly.io as pio
+
+        PRINT_LAYOUT = dict(
+            paper_bgcolor='#ffffff',
+            plot_bgcolor='#ffffff',
+            font=dict(color='#111111', family='Inter, Arial, sans-serif', size=11),
+            margin=dict(l=48, r=24, t=48, b=48),
+            xaxis=dict(gridcolor='#e2e8f0', linecolor='#cbd5e1', tickfont=dict(size=10)),
+            yaxis=dict(gridcolor='#e2e8f0', linecolor='#cbd5e1', tickfont=dict(size=10)),
+        )
+
+        def make_layout(title, xtitle='', ytitle='', **kwargs):
+            l = dict(**PRINT_LAYOUT)
+            l['title'] = dict(text=title, font=dict(size=13, color='#0f172a'), x=0)
+            if xtitle: l['xaxis'] = dict(**l['xaxis'], title=dict(text=xtitle, font=dict(size=11)))
+            if ytitle: l['yaxis'] = dict(**l['yaxis'], title=dict(text=ytitle, font=dict(size=11)))
+            l.update(kwargs)
+            return l
+
+        # ── Calibration: Prediction Distribution ──
         if data.get('calibration', {}).get('prediction_distribution'):
-            import plotly.graph_objects as go
             pred_dist_data = data['calibration']['prediction_distribution']
             charts['prediction_dist'] = go.Figure(
-                data=[go.Histogram(x=pred_dist_data)],
-                layout={'title': 'Prediction Distribution', 'xaxis_title': 'Predicted Probability', 'yaxis_title': 'Frequency'}
+                data=[go.Histogram(
+                    x=pred_dist_data,
+                    marker_color='#6366f1',
+                    opacity=0.85,
+                    name='Score Distribution'
+                )],
+                layout=make_layout(
+                    'Prediction Score Distribution',
+                    xtitle='Predicted Probability',
+                    ytitle='Sample Count'
+                )
             ).to_json()
-        
-        # Calibration: Residuals
+
+        # ── Calibration: Residuals ──
         if data.get('calibration', {}).get('residuals'):
-            import plotly.graph_objects as go
             residuals = data['calibration']['residuals']
             charts['residuals'] = go.Figure(
-                data=[go.Scatter(y=residuals, mode='markers')],
-                layout={'title': 'Residuals', 'yaxis_title': 'Residual Value'}
+                data=[go.Scatter(
+                    y=residuals,
+                    mode='markers',
+                    marker=dict(color='#f59e0b', size=4, opacity=0.6),
+                    name='Residual'
+                )],
+                layout=make_layout(
+                    'Calibration Residuals',
+                    xtitle='Sample Index',
+                    ytitle='Residual Value (Predicted − Actual)'
+                )
             ).to_json()
-        
-        # Drift: PSI Heatmap
+
+        # ── Drift: PSI Bar Chart ──
         if data.get('drift', {}).get('findings', {}).get('psi_scores'):
-            import plotly.graph_objects as go
             psi_scores = data['drift']['findings']['psi_scores']
             features = list(psi_scores.keys())
-            psi_vals = list(psi_scores.values())
+            psi_vals  = list(psi_scores.values())
+            colors = ['#ef4444' if v > 0.25 else '#f59e0b' if v > 0.1 else '#22c55e'
+                      for v in psi_vals]
             charts['psi_heatmap'] = go.Figure(
-                data=[go.Bar(x=features, y=psi_vals)],
-                layout={'title': 'PSI Scores by Feature', 'xaxis_title': 'Feature', 'yaxis_title': 'PSI'}
+                data=[go.Bar(
+                    x=features, y=psi_vals,
+                    marker_color=colors,
+                    name='PSI',
+                    text=[f'{v:.3f}' for v in psi_vals],
+                    textposition='outside'
+                )],
+                layout=make_layout(
+                    'Population Stability Index (PSI) — Feature Drift Severity',
+                    xtitle='Feature',
+                    ytitle='PSI Score',
+                    shapes=[
+                        dict(type='line', y0=0.1, y1=0.1, x0=0, x1=1,
+                             xref='paper', line=dict(color='#f59e0b', dash='dash', width=1)),
+                        dict(type='line', y0=0.25, y1=0.25, x0=0, x1=1,
+                             xref='paper', line=dict(color='#ef4444', dash='dash', width=1))
+                    ],
+                    annotations=[
+                        dict(x=1, y=0.1, xref='paper', text='Warn (0.1)',
+                             showarrow=False, font=dict(size=9, color='#f59e0b'), xanchor='right'),
+                        dict(x=1, y=0.25, xref='paper', text='Critical (0.25)',
+                             showarrow=False, font=dict(size=9, color='#ef4444'), xanchor='right')
+                    ]
+                )
             ).to_json()
-        
-        # Noise: Noise Score Distribution
+
+        # ── Drift: KS Ranked ──
+        per_feature = data.get('drift', {}).get('findings', {}).get('per_feature', [])
+        if per_feature:
+            sorted_feats = sorted(
+                [f for f in per_feature if isinstance(f, dict) and f.get('ks_stat') is not None],
+                key=lambda x: x.get('ks_stat', 0), reverse=True
+            )[:20]
+            if sorted_feats:
+                feat_names = [f['feature'] for f in sorted_feats]
+                ks_vals    = [f.get('ks_stat', 0) for f in sorted_feats]
+                ks_colors  = ['#ef4444' if f.get('status') == 'DRIFT'
+                               else '#f59e0b' if f.get('status') == 'WARN'
+                               else '#22c55e' for f in sorted_feats]
+                charts['ks_ranked'] = go.Figure(
+                    data=[go.Bar(
+                        x=ks_vals, y=feat_names,
+                        orientation='h',
+                        marker_color=ks_colors,
+                        name='KS Statistic',
+                        text=[f'{v:.3f}' for v in ks_vals],
+                        textposition='outside'
+                    )],
+                    layout=make_layout(
+                        'KS Statistic Ranking — Top Drifted Features',
+                        xtitle='KS Statistic (higher = more drift)',
+                        ytitle='Feature'
+                    )
+                ).to_json()
+
+        # ── Label Noise: Score Distribution ──
         if data.get('label_noise', {}).get('findings', {}).get('noise_scores'):
-            import plotly.graph_objects as go
             noise_scores = data['label_noise']['findings']['noise_scores']
             charts['noise_score_dist'] = go.Figure(
-                data=[go.Histogram(x=noise_scores, nbinsx=30)],
-                layout={'title': 'Noise Score Distribution', 'xaxis_title': 'Noise Score', 'yaxis_title': 'Count'}
+                data=[go.Histogram(
+                    x=noise_scores,
+                    nbinsx=30,
+                    marker_color='#8b5cf6',
+                    opacity=0.85,
+                    name='Noise Score'
+                )],
+                layout=make_layout(
+                    'Label Noise Score Distribution',
+                    xtitle='Noise Score (0 = clean, 1 = likely mislabeled)',
+                    ytitle='Number of Samples'
+                )
             ).to_json()
-        
-        # Leakage: Leakage Scores
+
+        # ── Leakage: Score Bar Chart ──
         if data.get('leakage', {}).get('findings', {}).get('leakage_scores'):
-            import plotly.graph_objects as go
             leakage_scores = data['leakage']['findings']['leakage_scores']
             if isinstance(leakage_scores, dict):
-                features = list(leakage_scores.keys())[:20]
-                scores = list(leakage_scores.values())[:20]
+                sorted_lk = sorted(leakage_scores.items(), key=lambda x: x[1], reverse=True)[:20]
+                lk_feats  = [x[0] for x in sorted_lk]
+                lk_vals   = [x[1] for x in sorted_lk]
                 charts['leakage_scores'] = go.Figure(
-                    data=[go.Bar(x=features, y=scores)],
-                    layout={'title': 'Top Leakage Scores', 'xaxis_title': 'Feature', 'yaxis_title': 'Leakage Score'}
+                    data=[go.Bar(
+                        x=lk_feats, y=lk_vals,
+                        marker_color='#ef4444',
+                        opacity=0.85,
+                        name='Leakage Score',
+                        text=[f'{v:.3f}' for v in lk_vals],
+                        textposition='outside'
+                    )],
+                    layout=make_layout(
+                        'Feature Leakage Score Ranking',
+                        xtitle='Feature',
+                        ytitle='Leakage Score (higher = higher risk)'
+                    )
                 ).to_json()
+
     except Exception as e:
-        print(f"Error generating charts for export: {str(e)}")
+        print(f"[PDF Export] Chart generation error: {str(e)}")
     
     # Extract suspicious samples from label_noise findings
     if data.get('label_noise', {}).get('findings', {}).get('noisy_instances'):

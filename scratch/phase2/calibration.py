@@ -136,11 +136,31 @@ def brier_score(y_true, y_prob):
       Brier = Reliability - Resolution + Uncertainty
       (Reliability = calibration error contribution)
       (Resolution  = how much predictions spread around base rate)
+    
+    Parameters
+    ----------
+    y_true : list[int] or list[float] — binary labels (0/1) or probabilities
+    y_prob : list[float] — predicted probabilities for class 1
+    
+    Returns
+    -------
+    float or None — Brier score, or None if y_prob is unavailable/invalid
     """
     n = len(y_true)
-    if n == 0:
-        return 0.0
-    total = sum((p - y) ** 2 for p, y in zip(y_prob, y_true))
+    if n == 0 or y_prob is None or len(y_prob) == 0:
+        return None
+    
+    # Ensure y_prob contains valid float probabilities (not class labels)
+    # Check if values look like class labels (only 0 and 1) instead of probabilities
+    unique_probs = set(y_prob)
+    if len(unique_probs) <= 2 and all(p in [0.0, 1.0, 0, 1] for p in unique_probs):
+        # y_prob appears to be class labels, not probabilities
+        return None
+    
+    # Clamp probabilities to [0, 1] to avoid numerical issues
+    y_prob_clamped = [max(0.0, min(1.0, float(p))) for p in y_prob]
+    
+    total = sum((p - y) ** 2 for p, y in zip(y_prob_clamped, y_true))
     return total / n
 
 
@@ -148,12 +168,14 @@ def brier_skill_score(y_true, y_prob):
     """
     BSS = 1 - BS / BS_clim   where BS_clim uses the marginal base rate.
     Range: (-∞, 1].  >0 means better than climatology.
+    
+    Returns None if Brier score cannot be computed.
     """
     base_rate = sum(y_true) / max(len(y_true), 1)
     bs_clim   = brier_score(y_true, [base_rate] * len(y_true))
     bs_model  = brier_score(y_true, y_prob)
-    if bs_clim == 0:
-        return 0.0
+    if bs_clim is None or bs_model is None or bs_clim == 0:
+        return None
     return 1.0 - bs_model / bs_clim
 
 
@@ -466,10 +488,10 @@ def calibration_summary(y_true, y_prob, n_bins=10, label="model"):
 
     # Severity classification — align with FeynML platform standard
     # Platform standard:
-    # ECE < 0.05       -> NONE
-    # 0.05 <= ECE <0.10 -> LOW
-    # 0.10 <= ECE <0.20 -> HIGH
-    # ECE >= 0.20       -> CRITICAL
+    # ECE < 0.05       -> NONE (EXCELLENT)
+    # 0.05 <= ECE <0.10 -> LOW (GOOD)
+    # 0.10 <= ECE <0.20 -> MEDIUM (MODERATE)
+    # ECE >= 0.20       -> HIGH (POOR)
     if ece < 0.05:
         severity = "EXCELLENT"
     elif ece < 0.10:
@@ -486,18 +508,29 @@ def calibration_summary(y_true, y_prob, n_bins=10, label="model"):
         "POOR":      "ECE >=20% — calibration is poor; recalibration recommended.",
     }
 
-    return {
+    result = {
         "label":    label,
         "n":        len(y_true),
         "n_bins":   n_bins,
-        "ece":      round(ece, 6),
+        "ece":      round(ece, 4),  # Store with 4 decimal places for display precision
         "mce":      round(mce, 6),
-        "brier":    round(bs, 6),
-        "bss":      round(bss, 6),
         "severity": severity,
         "curve":    curve,
         "interpretation": interpretation_map.get(severity, ""),
     }
+    
+    # Only include brier/bss if they were computed successfully
+    if bs is not None:
+        result["brier"] = round(bs, 6)
+    else:
+        result["brier"] = None
+    
+    if bss is not None:
+        result["bss"] = round(bss, 6)
+    else:
+        result["bss"] = None
+    
+    return result
 
 
 # ─────────────────────────────────────────────────────────────────────────────

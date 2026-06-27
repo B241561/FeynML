@@ -9,6 +9,7 @@ import sys
 import os
 import unittest
 from unittest.mock import patch
+import importlib.util
 
 _ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _ENG = os.path.join(_ROOT, "engine", "modules")
@@ -18,6 +19,7 @@ for p in [_ROOT, _ENG, _P3]:
         sys.path.insert(0, p)
 
 import drift_engine as de_mod
+from drift_detection import domain_classifier_drift
 from drift_engine import (
     DriftEngine,
     DriftGateError,
@@ -56,7 +58,7 @@ class TestNormalizationHelpers(unittest.TestCase):
     def test_domain_auc_keys(self):
         self.assertAlmostEqual(_domain_auc({"domain_auc": 0.82}), 0.82)
         self.assertAlmostEqual(_domain_auc({"auc": 0.71}), 0.71)
-        self.assertEqual(_domain_auc({"error": "no sklearn"}), 0.5)
+        self.assertIsNone(_domain_auc({"error": "no sklearn"}))
 
 
 class TestFeatureColumn(unittest.TestCase):
@@ -128,6 +130,21 @@ class TestDriftEngineRun(unittest.TestCase):
             r = engine.run(self.cur_stable)
         self.assertEqual(r["findings"]["domain_auc"], 0.88)
         self.assertEqual(r["severity"], "CRITICAL")
+
+
+class TestDomainClassifierDrift(unittest.TestCase):
+
+    @unittest.skipUnless(importlib.util.find_spec("sklearn") is not None, "scikit-learn not installed")
+    def test_auc_below_half_is_mirrored(self):
+        ref = [[0.0], [0.2], [0.4], [0.6], [0.8]] * 12
+        cur = [[2.0], [2.2], [2.4], [2.6], [2.8]] * 12
+
+        with patch("sklearn.model_selection.cross_val_score", return_value=[0.12, 0.18, 0.21]):
+            result = domain_classifier_drift(ref, cur, feature_names=["x"])
+
+        self.assertIsNone(result.get("error"))
+        self.assertAlmostEqual(result["domain_auc"], 0.83, places=2)
+        self.assertTrue(result["shift_detected"])
 
     def test_ks_shift_detected_flags_drift(self):
         engine = DriftEngine(verbose=False)

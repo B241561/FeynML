@@ -220,6 +220,23 @@ class AutoRootCauseEngine:
         
         # Generate recommendations
         recommendations = self._generate_recommendations(scored_causes, evidence.get("leakage", []))
+
+        # Build structured confidence drivers using existing evidence only.
+        confidence_drivers = self._build_confidence_drivers(
+            evidence=evidence,
+            scored_causes=scored_causes,
+            drift_report=drift_report,
+            slice_report=slice_report,
+            calibration_report=calibration_report,
+            data_quality_report=data_quality_report,
+            leakage_report=leakage_report,
+            label_noise_report=label_noise_report,
+            fairness_report=fairness_report,
+        )
+        confidence_scores = self._calculate_confidence_scores_v2(
+            confidence_drivers=confidence_drivers,
+            legacy_confidence=confidence,
+        )
         
         # Build Investigation object
         investigation = Investigation(
@@ -231,7 +248,14 @@ class AutoRootCauseEngine:
                 "evidence_summary": self._summarize_evidence(evidence),
                 "excluded_features": list(self._excluded_features),
                 "audit_log": self._audit_log,
-                "canonical_drift_count": evidence.get('canonical_drift_count', 0)
+                "canonical_drift_count": evidence.get('canonical_drift_count', 0),
+                "confidence_drivers": confidence_drivers,
+                "confidence_scores": {
+                    "confidence_score_v2": confidence_scores["confidence_score_v2"],
+                    "confidence_score_legacy": confidence_scores["confidence_score_legacy"],
+                },
+                "confidence_formula_v2": confidence_scores["confidence_formula_v2"],
+                "confidence_explanation_v2": confidence_scores["confidence_explanation_v2"],
             }
         )
         
@@ -274,6 +298,11 @@ class AutoRootCauseEngine:
             self._last_claim_validation = {"valid": False, "issues": ["validation_error"]}
 
         result = investigation.to_dict()
+        result["confidence_drivers"] = confidence_drivers
+        result["confidence_score_v2"] = confidence_scores["confidence_score_v2"]
+        result["confidence_score_legacy"] = confidence_scores["confidence_score_legacy"]
+        result["confidence_formula_v2"] = confidence_scores["confidence_formula_v2"]
+        result["confidence_explanation_v2"] = confidence_scores["confidence_explanation_v2"]
         # Build a concise human-readable "why" explanation using available evidence
         try:
             why_lines = []
@@ -500,12 +529,13 @@ class AutoRootCauseEngine:
         try:
             if calibration_report and isinstance(calibration_report, dict):
                 ece = calibration_report.get("ece", 0)
-                brier = calibration_report.get("brier_score", 0)
+                brier = calibration_report.get("brier_score")
+                brier_display = "N/A" if brier is None else f"{brier:.4f}"
                 if ece > 0.05:
                     evidence["calibration"].append({
                         "ece": ece,
                         "brier_score": brier,
-                        "evidence": f"ECE={ece:.4f}, Brier={brier:.4f}"
+                        "evidence": f"ECE={ece:.4f}, Brier={brier_display}"
                     })
         except Exception as e:
             self._log(f"Warning: Error processing calibration report: {e}")
@@ -629,6 +659,287 @@ class AutoRootCauseEngine:
                     self._audit_log.append(f"[Conflict Resolution] {feature} removed from drift (leakage takes priority)")
         
         return evidence
+
+    def _extract_calibration_ece(self, calibration_report: Optional[Dict]) -> Optional[float]:
+        """Extract ECE from a calibration report if available."""
+        try:
+            if not calibration_report or not isinstance(calibration_report, dict):
+                return None
+            findings = calibration_report.get("findings")
+            search_spaces = []
+            if isinstance(findings, dict):
+                search_spaces.append(findings)
+            search_spaces.append(calibration_report)
+            for source in search_spaces:
+                for key in ("ece", "best_ece", "raw_ece"):
+                    val = source.get(key)
+                    if val is not None:
+                        return float(val)
+        except Exception:
+            return None
+        return None
+
+    def _extract_label_noise_fraction(self, label_noise_report: Optional[Dict]) -> Optional[float]:
+        """Extract estimated label noise fraction/rate if available."""
+        try:
+            if not label_noise_report or not isinstance(label_noise_report, dict):
+                return None
+            findings = label_noise_report.get("findings") or label_noise_report
+            if not isinstance(findings, dict):
+                return None
+            val = findings.get("estimated_noise_fraction")
+            if val is None:
+                val = findings.get("estimated_noise_rate")
+            if val is None:
+                return None
+            if isinstance(val, str):
+                cleaned = val.strip().replace("%", "")
+                val = float(cleaned)
+                return val / 100.0 if val > 1 else val
+            val = float(val)
+            return val / 100.0 if val > 1 else val
+        except Exception:
+            return None
+
+    def _build_confidence_drivers(
+        self,
+        evidence: Dict,
+        scored_causes: List[Dict],
+        drift_report: Optional[Dict] = None,
+        slice_report: Optional[Dict] = None,
+        calibration_report: Optional[Dict] = None,
+        data_quality_report: Optional[Dict] = None,
+        leakage_report: Optional[Dict] = None,
+        label_noise_report: Optional[Dict] = None,
+        fairness_report: Optional[Dict] = None,
+    ) -> Dict[str, str]:
+        """
+        Build structured confidence drivers without changing the existing confidence formula.
+
+        All driver levels are derived from existing engine outputs and scored root causes.
+        """
+        feature_drift_causes = [c for c in scored_causes if c.get("category") == "feature_drift"]
+        calibration_causes = [c for c in scored_causes if c.get("category") == "calibration"]
+        leakage_causes = [c for c in scored_causes if c.get("category") == "target_leakage"]
+
+        drift_items = list(evidence.get("feature_drift", []) or [])
+        warned_items = list(evidence.get("feature_warn", []) or [])
+        n_drift = evidence.get("canonical_drift_count", len(drift_items))
+        max_psi = max((float(item.get("psi", 0) or 0) for item in drift_items), default=0.0)
+        max_ks = max((float(item.get("ks_stat", 0) or 0) for item in drift_items), default=0.0)
+
+        if n_drift >= 3 or max_psi >= 0.50 or max_ks >= 0.30:
+            drift_level = "STRONG"
+        elif n_drift >= 1 or warned_items or max_psi >= 0.20 or max_ks >= 0.20:
+            drift_level = "MODERATE"
+        elif drift_report and isinstance(drift_report, dict):
+            drift_level = "LOW"
+        else:
+            drift_level = "NONE"
+
+        ece = self._extract_calibration_ece(calibration_report)
+        if ece is not None and ece >= 0.15:
+            calibration_level = "STRONG"
+        elif ece is not None and ece >= 0.05:
+            calibration_level = "MODERATE"
+        elif ece is not None:
+            calibration_level = "LOW"
+        else:
+            calibration_level = "NONE"
+
+        noise_fraction = self._extract_label_noise_fraction(label_noise_report)
+        noise_severity = ""
+        try:
+            noise_severity = str((label_noise_report or {}).get("severity", "")).upper()
+        except Exception:
+            noise_severity = ""
+        if (noise_fraction is not None and noise_fraction >= 0.25) or noise_severity in {"HIGH", "CRITICAL"}:
+            noise_level = "STRONG"
+        elif (noise_fraction is not None and noise_fraction >= 0.10) or noise_severity == "MEDIUM":
+            noise_level = "MODERATE"
+        elif noise_fraction is not None or noise_severity in {"LOW", "WARN", "WARNING"}:
+            noise_level = "LOW"
+        else:
+            noise_level = "NONE"
+
+        agreement_checks = 0
+        agreement_hits = 0
+        if drift_level != "NONE":
+            agreement_checks += 1
+            if feature_drift_causes:
+                agreement_hits += 1
+        if calibration_level != "NONE":
+            agreement_checks += 1
+            if calibration_causes:
+                agreement_hits += 1
+        if evidence.get("leakage"):
+            agreement_checks += 1
+            if leakage_causes:
+                agreement_hits += 1
+        top_category = scored_causes[0].get("category") if scored_causes else None
+        if top_category:
+            agreement_checks += 1
+            if (
+                (top_category == "feature_drift" and drift_level in {"STRONG", "MODERATE"})
+                or (top_category == "calibration" and calibration_level in {"STRONG", "MODERATE"})
+                or (top_category == "target_leakage" and bool(evidence.get("leakage")))
+            ):
+                agreement_hits += 1
+
+        if agreement_checks == 0:
+            agreement_level = "LOW"
+        else:
+            agreement_ratio = agreement_hits / agreement_checks
+            if agreement_ratio >= 0.85:
+                agreement_level = "HIGH"
+            elif agreement_ratio >= 0.50:
+                agreement_level = "MODERATE"
+            else:
+                agreement_level = "LOW"
+
+        coverage_signals = 0
+        for report in (
+            drift_report,
+            slice_report,
+            calibration_report,
+            label_noise_report,
+            data_quality_report,
+            leakage_report,
+            fairness_report,
+        ):
+            if isinstance(report, dict) and (report.get("findings") is not None or report.get("severity") is not None):
+                coverage_signals += 1
+        if coverage_signals >= 5:
+            coverage_level = "HIGH"
+        elif coverage_signals >= 3:
+            coverage_level = "MODERATE"
+        elif coverage_signals >= 1:
+            coverage_level = "LOW"
+        else:
+            coverage_level = "NONE"
+
+        conflict_points = 0
+        drift_features = {item.get("feature") for item in drift_items if isinstance(item, dict) and item.get("feature")}
+        leakage_features = {item.get("feature") for item in (evidence.get("leakage", []) or []) if isinstance(item, dict) and item.get("feature")}
+        if drift_features & leakage_features:
+            conflict_points += 1
+        if drift_level in {"STRONG", "MODERATE"} and not feature_drift_causes:
+            conflict_points += 1
+        if calibration_level in {"STRONG", "MODERATE"} and not calibration_causes:
+            conflict_points += 1
+        if evidence.get("leakage") and not leakage_causes:
+            conflict_points += 1
+
+        if conflict_points == 0:
+            conflicts_level = "NONE"
+        elif conflict_points == 1:
+            conflicts_level = "LOW"
+        elif conflict_points == 2:
+            conflicts_level = "MODERATE"
+        else:
+            conflicts_level = "HIGH"
+
+        return {
+            "drift_evidence": self._normalize_confidence_driver_level(drift_level),
+            "calibration_evidence": self._normalize_confidence_driver_level(calibration_level),
+            "noise_evidence": self._normalize_confidence_driver_level(noise_level),
+            "agreement": self._normalize_confidence_driver_level(agreement_level),
+            "coverage": self._normalize_confidence_driver_level(coverage_level),
+            "conflicts": self._normalize_confidence_driver_level(conflicts_level),
+        }
+    
+    def _normalize_confidence_driver_level(self, level: Optional[str]) -> str:
+        """
+        Normalize confidence driver levels to the supported 2.0 vocabulary.
+        """
+        normalized = str(level or "NONE").strip().upper()
+        aliases = {
+            "WEAK": "LOW",
+            "MEDIUM": "MODERATE",
+        }
+        normalized = aliases.get(normalized, normalized)
+        allowed = {"NONE", "LOW", "MODERATE", "HIGH", "STRONG"}
+        return normalized if normalized in allowed else "NONE"
+
+    def _calculate_confidence_scores_v2(
+        self,
+        confidence_drivers: Optional[Dict[str, str]],
+        legacy_confidence: int,
+    ) -> Dict[str, Any]:
+        """
+        Calculate Confidence Formula 2.0 from structured confidence drivers while
+        preserving the legacy confidence score for backward compatibility.
+        """
+        positive_mapping = {
+            "NONE": 0,
+            "LOW": 5,
+            "MODERATE": 10,
+            "HIGH": 15,
+            "STRONG": 20,
+        }
+        conflict_mapping = {
+            "NONE": 0,
+            "LOW": -5,
+            "MODERATE": -10,
+            "HIGH": -20,
+            "STRONG": -20,
+        }
+        display_names = {
+            "drift_evidence": "Drift Evidence",
+            "calibration_evidence": "Calibration",
+            "noise_evidence": "Noise",
+            "agreement": "Agreement",
+            "coverage": "Coverage",
+            "conflicts": "Conflicts",
+        }
+        formula = "confidence_score_v2 = max(50, min(95, round(50 + (raw_total / 100.0) * 50)))"
+
+        normalized_drivers = {
+            key: self._normalize_confidence_driver_level(value)
+            for key, value in (confidence_drivers or {}).items()
+        }
+        for key in display_names:
+            normalized_drivers.setdefault(key, "NONE")
+
+        breakdown = {}
+        raw_total = 0
+        for key in ("drift_evidence", "calibration_evidence", "noise_evidence", "agreement", "coverage"):
+            level = normalized_drivers.get(key, "NONE")
+            points = positive_mapping.get(level, 0)
+            breakdown[key] = {
+                "label": display_names[key],
+                "level": level,
+                "points": points,
+            }
+            raw_total += points
+
+        conflict_level = normalized_drivers.get("conflicts", "NONE")
+        conflict_points = conflict_mapping.get(conflict_level, 0)
+        breakdown["conflicts"] = {
+            "label": display_names["conflicts"],
+            "level": conflict_level,
+            "points": conflict_points,
+        }
+        raw_total += conflict_points
+
+        normalized_score = 50 + (raw_total / 100.0) * 50
+        bounded_score = max(50, min(95, int(round(normalized_score))))
+
+        return {
+            "confidence_score_v2": bounded_score,
+            "confidence_score_legacy": int(legacy_confidence),
+            "confidence_formula_v2": formula,
+            "confidence_explanation_v2": {
+                "version": "2.0",
+                "drivers": normalized_drivers,
+                "breakdown": breakdown,
+                "raw_total": raw_total,
+                "normalized_score_before_bounds": round(normalized_score, 2),
+                "bounded_range": {"min": 50, "max": 95},
+                "confidence_score_v2": bounded_score,
+                "confidence_score_legacy": int(legacy_confidence),
+            },
+        }
     
     def _detect_importance_drift(self, training_importance: Dict, production_importance: Dict,
                                 threshold: float = 0.10) -> List[Dict]:
@@ -1057,7 +1368,13 @@ class AutoRootCauseEngine:
         recommendations = []
 
         if not scored_causes:
-            return ["No critical issues detected. Continue monitoring model performance."]
+            return [
+                "Diagnostic sweep completed without flagging actionable anomalies. "
+                "All monitored signals — calibration, drift, label integrity, leakage, "
+                "and slice performance — returned within expected bounds. "
+                "Maintain scheduled monitoring cadence and re-run investigation "
+                "after the next production batch."
+            ]
 
         # Group causes by category for consolidation
         causes_by_category = defaultdict(list)
@@ -1086,7 +1403,8 @@ class AutoRootCauseEngine:
                 f"Root Cause:\n{n} features show significant drift\n\n"
                 f"Highest Priority:\n{top_feature} (score={top_score})\n\n"
                 f"Evidence:\n{evidence_text}\n\n"
-                f"Why it matters:\nMultiple production features have drifted from the training distribution, increasing model instability and prediction risk.\n\n"
+                f"Why it matters:\nDistributional shift between training and production data means the model is scoring inputs it was not built to handle. "
+                f"Predictions for affected segments may be unreliable until the model is retrained on representative production samples.\n\n"
                 f"Recommended workflow:\n"
                 f"1. Investigate highest-priority feature first.\n"
                 f"2. Compare train vs production distributions.\n"
@@ -1105,7 +1423,9 @@ class AutoRootCauseEngine:
             rec = (
                 f"Root Cause:\nCalibration degradation\n\n"
                 f"Evidence:\n{evidence_str}\n\n"
-                f"Why it matters:\nModel probability estimates are misaligned with actual outcomes, reducing decision-making reliability.\n\n"
+                f"Why it matters:\nA miscalibrated model produces confidence scores that do not reflect true outcome probabilities. "
+                f"Threshold-based decisions — approvals, alerts, risk tiers — built on these scores may be systematically wrong "
+                f"until calibration is restored.\n\n"
                 f"Recommended workflow:\n"
                 f"1. Apply post-hoc calibration (Platt scaling or isotonic regression).\n"
                 f"2. Validate calibration on held-out data.\n"
@@ -1124,7 +1444,9 @@ class AutoRootCauseEngine:
             rec = (
                 f"Root Cause:\nTarget leakage detected in {n} feature(s)\n\n"
                 f"Evidence:\n{evidence_str}\n\n"
-                f"Why it matters:\nTarget leakage causes inflated training performance and fails in production.\n\n"
+                f"Why it matters:\nTarget leakage allows the model to learn from information that is unavailable at prediction time. "
+                f"All reported performance metrics are invalid until leakage is removed and the model is retrained. "
+                f"This is the highest-priority finding in this investigation.\n\n"
                 f"Recommended workflow:\n"
                 f"1. Remove leakage sources from features.\n"
                 f"2. Retrain model without leaked features.\n"
@@ -1142,7 +1464,9 @@ class AutoRootCauseEngine:
             rec = (
                 f"Root Cause:\nMissing value increases detected in {n} feature(s)\n\n"
                 f"Evidence:\n{evidence_str}\n\n"
-                f"Why it matters:\nMissing value patterns have changed, potentially biasing model predictions.\n\n"
+                f"Why it matters:\nShifts in missing value patterns indicate upstream data pipeline changes. "
+                f"Imputation logic trained on original missingness patterns will produce incorrect fill values "
+                f"for the new pattern, silently corrupting inputs before they reach the model.\n\n"
                 f"Recommended workflow:\n"
                 f"1. Investigate upstream data pipelines.\n"
                 f"2. Implement consistent imputation strategy.\n"
@@ -1160,7 +1484,9 @@ class AutoRootCauseEngine:
             rec = (
                 f"Root Cause:\nOutlier growth detected across {n} feature(s)\n\n"
                 f"Evidence:\n{evidence_str}\n\n"
-                f"Why it matters:\nOutlier growth indicates data quality issues affecting model robustness.\n\n"
+                f"Why it matters:\nIncreased outlier rates suggest the production population has shifted or "
+                f"data ingestion quality has degraded. Tree-based models may extrapolate incorrectly; "
+                f"linear models may have their coefficients distorted by extreme values.\n\n"
                 f"Recommended workflow:\n"
                 f"1. Review data ingestion quality.\n"
                 f"2. Strengthen anomaly detection.\n"
@@ -1180,7 +1506,9 @@ class AutoRootCauseEngine:
             rec = (
                 f"Root Cause:\nModel behavior shifted across {n} important feature(s)\n\n"
                 f"Evidence:\n{evidence_str}\n\n"
-                f"Why it matters:\nFeature importance shifts indicate concept drift or changing data relationships.\n\n"
+                f"Why it matters:\nThe model's decision logic has changed — features that drove predictions during training "
+                f"are now contributing differently. This is a signal that the relationship between inputs and the target "
+                f"has shifted in production, even if raw accuracy appears unchanged.\n\n"
                 f"Recommended workflow:\n"
                 f"1. Investigate concept drift in target relationship.\n"
                 f"2. Review feature engineering pipeline.\n"
@@ -1200,7 +1528,9 @@ class AutoRootCauseEngine:
                 rec = (
                     f"Root Cause:\n{cause_text}\n\n"
                     f"Evidence:\n{evidence_str}\n\n"
-                    f"Why it matters:\nModel performance has degraded for specific data segments.\n\n"
+                    f"Why it matters:\nSegment-level degradation is often invisible in aggregate metrics — "
+                    f"overall accuracy can remain stable while a specific subgroup experiences significantly "
+                    f"higher error rates. This creates silent reliability risk for the affected population.\n\n"
                     f"Recommended workflow:\n"
                     f"1. Investigate affected segments.\n"
                     f"2. Consider targeted data collection.\n"
@@ -1219,8 +1549,13 @@ class AutoRootCauseEngine:
                 rec = (
                     f"Root Cause:\n{cause_text}\n\n"
                     f"Evidence:\n{evidence_str}\n\n"
-                    f"Why it matters:\nThis issue may impact model performance or reliability.\n\n"
-                    f"Recommended workflow:\nReview root cause analysis for specific remediation steps."
+                    f"Why it matters:\nThis diagnostic signal has been flagged because it deviates from "
+                    f"expected behavior in the current production window. Left unaddressed, it may "
+                    f"compound other findings and increase overall model risk.\n\n"
+                    f"Recommended workflow:\n"
+                    f"1. Review the evidence item above in context of the full investigation.\n"
+                    f"2. Cross-reference with drift and calibration findings.\n"
+                    f"3. Validate on the most recent production batch before drawing conclusions."
                 )
                 recommendations.append(self._truncate_to_word_limit(rec, 120))
 
@@ -1270,7 +1605,11 @@ class AutoRootCauseEngine:
             summary_parts.append(f"{n_outliers} features with outlier increase")
         
         if not summary_parts:
-            return "No significant issues detected."
+            return (
+                "All diagnostic modules returned within expected bounds. "
+                "No drift, calibration shift, leakage, or data quality anomalies detected "
+                "in the current investigation window."
+            )
         
         return ". ".join(summary_parts) + "."
     
@@ -1284,12 +1623,12 @@ class AutoRootCauseEngine:
         from collections import defaultdict
 
         lines = [
-            "INVESTIGATION SUMMARY",
+            "FEYNML DIAGNOSTIC SUMMARY",
             "",
-            f"Model Health: {result['health_status']}",
-            f"Confidence: {result['confidence']}%",
+            f"Health Classification: {result['health_status']}",
+            f"Diagnostic Confidence: {result['confidence']}%",
             "",
-            "Evidence:"
+            "Detected Signals:"
         ]
 
         for evidence in result.get("evidence_summary", "").split(". "):
@@ -1298,9 +1637,9 @@ class AutoRootCauseEngine:
 
         lines.append("")
         # Backwards-compatible heading expected by legacy tests
-        lines.append("Most Likely Causes:")
+        lines.append("Root Cause Ranking:")
         lines.append("")
-        lines.append("Primary concerns:")
+        lines.append("Highest-priority findings:")
 
         # Group root causes by category
         causes = result.get('root_causes', []) or []
@@ -1331,7 +1670,7 @@ class AutoRootCauseEngine:
                     listed += 1
 
         lines.append("")
-        lines.append("Recommended Actions:")
+        lines.append("Investigation-Backed Recommendations:")
 
         # Deduplicated recommendations already provided in recommended_actions
         for action in result.get("recommended_actions", []):

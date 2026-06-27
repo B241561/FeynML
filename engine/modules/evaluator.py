@@ -150,9 +150,18 @@ class Evaluator:
         if y_prob is not None:
             report["roc_auc"]    = _roc_auc(y_true, y_prob)
             report["pr_auc"]     = _pr_auc(y_true, y_prob)
-            report["brier_score"] = round(
-                sum((y_prob[i] - y_true[i]) ** 2 for i in range(n)) / n, 6
-            )
+            
+            # Calculate Brier Score with validation
+            # Ensure y_prob contains valid probabilities (not class labels)
+            unique_probs = set(y_prob)
+            if len(unique_probs) > 2 or not all(p in [0.0, 1.0, 0, 1] for p in unique_probs):
+                # y_prob appears to be valid probabilities
+                y_prob_clamped = [max(0.0, min(1.0, float(p))) for p in y_prob]
+                brier = sum((y_prob_clamped[i] - y_true[i]) ** 2 for i in range(n)) / n
+                report["brier_score"] = round(brier, 6)
+            else:
+                # y_prob appears to be class labels, not probabilities
+                report["brier_score"] = None
 
         report["grade"] = self._grade_classifier(report)
         self._history.append(report)

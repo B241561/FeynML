@@ -448,34 +448,94 @@ def domain_classifier_drift(X_reference, X_current, feature_names=None):
     
     Also extracts which features most distinguish train from test.
     These features are likely the ones that shifted.
+    
+    Returns None if sample size is insufficient or sklearn unavailable.
     """
+    # Minimum combined sample size check - need enough data for meaningful classification
+    min_combined_samples = 50
+    combined_sample_size = len(X_reference) + len(X_current)
+    if combined_sample_size < min_combined_samples:
+        return {
+            "domain_auc": None,
+            "error": f"Insufficient data for domain classifier. Need at least {min_combined_samples} combined samples (got {combined_sample_size})."
+        }
+    
     try:
         from sklearn.ensemble import RandomForestClassifier
+        from sklearn.linear_model import LogisticRegression
         from sklearn.model_selection import cross_val_score
+        from sklearn.preprocessing import StandardScaler
+        import pandas as pd
         import numpy as np
 
-        X_ref_np = np.array(X_reference)
-        X_cur_np = np.array(X_current)
+        X_ref_np = np.array(pd.DataFrame(X_reference).select_dtypes(include=np.number))
+        X_cur_np = np.array(pd.DataFrame(X_current).select_dtypes(include=np.number))
+
+        if X_ref_np.shape[1] == 0 or X_cur_np.shape[1] == 0:
+            return {
+                "domain_auc": None,
+                "error": "No numeric features available"
+            }
 
         X_combined = np.vstack([X_ref_np, X_cur_np])
         y_combined = np.array([0]*len(X_reference) + [1]*len(X_current))
 
-        clf = RandomForestClassifier(n_estimators=50, random_state=42)
-        auc_scores = cross_val_score(clf, X_combined, y_combined,
-                                     cv=3, scoring="roc_auc")
+        # Scale features for better classifier performance
+        scaler = StandardScaler()
+        X_combined_scaled = scaler.fit_transform(X_combined)
+
+        # Use LogisticRegression for more stable AUC estimation with smaller datasets
+        # Falls back to RandomForest if needed
+        try:
+            clf = LogisticRegression(max_iter=1000, random_state=42, n_jobs=-1)
+            auc_scores = cross_val_score(clf, X_combined_scaled, y_combined,
+                                         cv=min(5, min(len(X_reference), len(X_current))), 
+                                         scoring="roc_auc")
+        except Exception:
+            # Fallback to RandomForest if LogisticRegression fails
+            clf = RandomForestClassifier(n_estimators=50, random_state=42, n_jobs=-1)
+            auc_scores = cross_val_score(clf, X_combined_scaled, y_combined,
+                                         cv=min(5, min(len(X_reference), len(X_current))),
+                                         scoring="roc_auc")
+        
         mean_auc = float(np.mean(auc_scores))
 
+        # Mirror the score if labels/probability orientation is flipped.
+        # AUC < 0.5 means the classifier is separating the domains, but the
+        # positive class direction is reversed. Report the meaningful distance
+        # from random instead of a misleading near-zero value.
+        if 0.0 <= mean_auc < 0.5:
+            mean_auc = 1.0 - mean_auc
+        
+        # Validate AUC is in reasonable range
+        if not (0.5 <= mean_auc <= 1.0):
+            return {
+                "domain_auc": None,
+                "error": f"Domain classifier returned invalid AUC={mean_auc:.4f}. Check data quality."
+            }
+
         # Feature importances from domain classifier
-        clf.fit(X_combined, y_combined)
-        importances = clf.feature_importances_
+        clf.fit(X_combined_scaled, y_combined)
+        importances = clf.feature_importances_ if hasattr(clf, 'feature_importances_') else None
+        
+        if importances is None and hasattr(clf, 'coef_'):
+            # For LogisticRegression, use absolute coefficient values as importance
+            importances = np.abs(clf.coef_[0])
 
         if feature_names is None:
             feature_names = [f"f{i}" for i in range(X_combined.shape[1])]
 
-        feat_importance = sorted(
-            zip(feature_names, importances.tolist()),
-            key=lambda t: t[1], reverse=True
-        )
+        if importances is not None:
+            feat_importance = sorted(
+                zip(feature_names, importances.tolist()),
+                key=lambda t: t[1], reverse=True
+            )
+            top_shifted = [
+                {"feature": f, "importance": round(imp, 4)}
+                for f, imp in feat_importance[:5]
+            ]
+        else:
+            top_shifted = []
 
         shift_level = (
             "CRITICAL" if mean_auc > 0.80 else
@@ -487,10 +547,7 @@ def domain_classifier_drift(X_reference, X_current, feature_names=None):
             "domain_auc":      round(mean_auc, 4),
             "shift_level":     shift_level,
             "shift_detected":  mean_auc > 0.65,
-            "top_shifted_features": [
-                {"feature": f, "importance": round(imp, 4)}
-                for f, imp in feat_importance[:5]
-            ],
+            "top_shifted_features": top_shifted,
             "interpretation": (
                 f"AUC={mean_auc:.3f}: "
                 "No multivariate shift detected." if mean_auc < 0.65 else
@@ -499,7 +556,15 @@ def domain_classifier_drift(X_reference, X_current, feature_names=None):
             ),
         }
     except ImportError:
-        return {"error": "sklearn required for domain classifier"}
+        return {
+            "domain_auc": None,
+            "error": "sklearn required for domain classifier"
+        }
+    except Exception as e:
+        return {
+            "domain_auc": None,
+            "error": f"Domain classifier failed: {str(e)}"
+        }
 
 
 # ─────────────────────────────────────────────────────────────────────────────

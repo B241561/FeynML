@@ -3,17 +3,109 @@
 {% block extra_css %}
 <style>
 @media print {
-    .sidebar, .navbar, .btn, .dropdown-menu, .d-print-none { display: none !important; }
-    body { background: #fff !important; color: #000 !important; }
-    .card, .footer, .main-content { box-shadow: none !important; border: 1px solid #eee !important; }
-    .page-break { page-break-after: always; }
-    
-    /* Ensure charts have enough space and background is white for printing */
-    [id^="chart-"] {
-        background: white !important;
-        page-break-inside: avoid;
-        margin-bottom: 20px;
-    }
+  /* ── Hide interactive chrome ── */
+  .sidebar, .navbar, .btn, .dropdown-menu,
+  .d-print-none, .audience-option { display: none !important; }
+
+  /* ── Page setup ── */
+  @page { size: A4; margin: 18mm 14mm; }
+  body   { background: #fff !important; color: #000 !important; font-size: 11px !important; }
+
+  /* ── Cards ── */
+  .card  {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 16px !important;
+  }
+  .card-header {
+    background: #f0f4f8 !important;
+    color: #000 !important;
+    font-weight: 700;
+    border-bottom: 1px solid #ccc !important;
+  }
+
+  /* ── Section page breaks — each Phase starts on a fresh page ── */
+  .card.mb-5:nth-of-type(n+2) { break-before: page; }
+  h5.fw-bold.text-uppercase    { break-before: page; margin-top: 0 !important; }
+
+  /* ── Tables ── */
+  table  {
+    width: 100% !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    font-size: 10px !important;
+  }
+  thead  { display: table-header-group; }  /* repeat header on every page */
+  tr     { page-break-inside: avoid; break-inside: avoid; }
+
+  /* ── Charts — prevent mid-chart page breaks ── */
+  [id^="chart-"] {
+    background: #fff !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    min-height: 280px;
+    max-height: 340px;
+    margin-bottom: 12px;
+  }
+
+  /* ── Chart caption labels ── */
+  [id^="chart-"]::before {
+    display: block;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  #chart-prediction-dist::before  { content: "Figure: Prediction Score Distribution"; }
+  #chart-residuals::before         { content: "Figure: Residual Error Plot"; }
+  #chart-psi-heatmap::before       { content: "Figure: PSI Scores by Feature"; }
+  #chart-ks-ranked::before         { content: "Figure: KS Statistic — Feature Ranking"; }
+  #chart-noise-score-dist::before  { content: "Figure: Label Noise Score Distribution"; }
+  #chart-leakage-scores::before    { content: "Figure: Feature Leakage Score Ranking"; }
+  #chart-correlation-heatmap-full::before { content: "Figure: Feature Correlation Matrix"; }
+
+  /* ── Dark bg sections → white for print ── */
+  .bg-dark, [style*="background-color: #1a1a2a"] {
+    background: #f8f9fa !important;
+    color: #000 !important;
+    border: 1px solid #ddd !important;
+  }
+
+  /* ── Row pairs: label noise + leakage — keep on same page ── */
+  .row.g-4.mb-4 {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* ── Exec summary box ── */
+  .exec-summary {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* ── Recommendations ── */
+  .card.border-indigo-500 { break-before: page; }
+
+  /* ── Badge colors for print ── */
+  .badge-pill { border: 1px solid #999 !important; }
+}
+
+.report-brand-lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.report-cover-print {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 </style>
 {% endblock %}
@@ -24,6 +116,40 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-end mb-5 d-print-none animate-up">
                 <div>
+                    <div class="report-brand-lockup">
+<svg width="120" viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg"
+     style="filter:drop-shadow(0 0 8px rgba(14,165,233,0.3));">
+  <radialGradient id="rpt-bg" cx="50%" cy="48%" r="40%">
+    <stop offset="0%" stop-color="#0284c7" stop-opacity="0.12"/>
+    <stop offset="100%" stop-color="#060d1a" stop-opacity="0"/>
+  </radialGradient>
+  <rect width="680" height="420" fill="url(#rpt-bg)"/>
+  <circle cx="340" cy="200" r="118" fill="none" stroke="#0ea5e9" stroke-width="0.5" opacity="0.2"/>
+  <g class="fml-r1"><circle cx="340" cy="200" r="92" fill="none" stroke="#0ea5e9" stroke-width="1.8" stroke-dasharray="32 9 9 9 55 9 9 9" opacity="0.72"/></g>
+  <g class="fml-r2">
+    <circle cx="340" cy="200" r="72" fill="none" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="22 7 7 7 44 7" opacity="0.65"/>
+    <circle cx="340" cy="128" r="4" fill="#7dd3fc" opacity="0.9"/>
+    <circle cx="402.4" cy="236" r="4" fill="#7dd3fc" opacity="0.9"/>
+    <circle cx="277.6" cy="236" r="4" fill="#7dd3fc" opacity="0.9"/>
+  </g>
+  <g class="fml-r3"><circle cx="340" cy="200" r="52" fill="none" stroke="#0284c7" stroke-width="1.8" stroke-dasharray="12 5 5 5 24 5" opacity="0.85"/><circle class="fml-scan" cx="340" cy="148" r="3" fill="#bae6fd"/></g>
+  <circle cx="340" cy="200" r="28" fill="#0c4a6e" opacity="0.65"/>
+  <circle cx="340" cy="200" r="17" fill="#0284c7" opacity="0.82"/>
+  <circle cx="340" cy="200" r="12" fill="#38bdf8" opacity="0.88"/>
+  <circle cx="340" cy="200" class="fml-core" fill="#bae6fd" opacity="0.97"/>
+  <g stroke="#082f49" stroke-width="1.8" opacity="0.95" stroke-linecap="round">
+    <line x1="340" y1="184" x2="340" y2="195"/><line x1="340" y1="205" x2="340" y2="216"/>
+    <line x1="324" y1="200" x2="335" y2="200"/><line x1="345" y1="200" x2="356" y2="200"/>
+    <line x1="329" y1="189" x2="337" y2="197"/><line x1="343" y1="203" x2="351" y2="211"/>
+    <line x1="351" y1="189" x2="343" y2="197"/><line x1="337" y1="203" x2="329" y2="211"/>
+  </g>
+  <line x1="274" y1="312" x2="406" y2="312" stroke="#0ea5e9" stroke-width="0.5" opacity="0.3"/>
+  <text x="340" y="338" font-family="Inter,sans-serif" font-size="34" font-weight="800"
+    fill="#ffffff" text-anchor="middle" letter-spacing="5">FeynML</text>
+  <text x="340" y="360" font-family="monospace" font-size="10" fill="#38bdf8"
+    text-anchor="middle" letter-spacing="6" opacity="0.75">ML FAILURE ENGINE</text>
+</svg>
+                    </div>
                     <h1 class="fw-bold mb-1">Full Investigation Report</h1>
                     <p class="text-muted mb-0">Analysis ID: {{ report_id }}</p>
                 </div>
@@ -55,6 +181,25 @@
 
         <!-- PDF-only Header (Visible only when printing) -->
         <div class="d-none d-print-block mb-5">
+            <div class="report-cover-print">
+<svg width="100" viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="340" cy="200" r="92" fill="none" stroke="#0ea5e9" stroke-width="1.8" stroke-dasharray="32 9 9 9 55 9 9 9" opacity="0.72"/>
+  <circle cx="340" cy="200" r="72" fill="none" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="22 7 7 7 44 7" opacity="0.65"/>
+  <circle cx="340" cy="200" r="52" fill="none" stroke="#0284c7" stroke-width="1.8" stroke-dasharray="12 5 5 5 24 5" opacity="0.85"/>
+  <circle cx="340" cy="200" r="28" fill="#0c4a6e" opacity="0.65"/>
+  <circle cx="340" cy="200" r="17" fill="#0284c7" opacity="0.82"/>
+  <circle cx="340" cy="200" r="12" fill="#38bdf8" opacity="0.88"/>
+  <circle cx="340" cy="200" fill="#bae6fd" opacity="0.97" r="7"/>
+  <g stroke="#082f49" stroke-width="1.8" opacity="0.95" stroke-linecap="round">
+    <line x1="340" y1="184" x2="340" y2="195"/><line x1="340" y1="205" x2="340" y2="216"/>
+    <line x1="324" y1="200" x2="335" y2="200"/><line x1="345" y1="200" x2="356" y2="200"/>
+  </g>
+  <text x="340" y="338" font-family="Inter,sans-serif" font-size="34" font-weight="800"
+    fill="#000" text-anchor="middle" letter-spacing="5">FeynML</text>
+  <text x="340" y="360" font-family="monospace" font-size="10" fill="#0284c7"
+    text-anchor="middle" letter-spacing="6" opacity="0.8">ML FAILURE ENGINE</text>
+</svg>
+            </div>
             <h1 class="fw-bold">ML Failure Investigation Report</h1>
             <p>Generated for Session ID: {{ report_id }} | Status: {{ risk_level }} Risk</p>
             <hr>
@@ -282,7 +427,7 @@
                         {% set leakage_findings = data.get('leakage', {}).get('findings', {}) %}
                         {% if leakage_findings.get('num_suspects') is defined %}
                             <div class="d-flex align-items-center mb-4">
-                                <div class="h2 fw-bold mb-0 me-3 text-{{ 'critical' if leakage_findings.num_suspects > 0 else 'success' }}">{{ leakage_findings.num_suspects }}</div>
+                                <div class="h2 fw-bold mb-0 me-3 text-{{ 'critical' if leakage_findings.get('num_suspects', 0) > 0 else 'success' }}">{{ leakage_findings.get('num_suspects', 0) }}</div>
                                 <div class="text-muted small">Columns identified as potential leakage sources.</div>
                             </div>
 
@@ -412,6 +557,8 @@
                     <div class="card-body p-4">
                         <div id="audience-content">
                             {% set ai_investigator_data = data.get('ai_investigator', {}) %}
+                            {% set root_confidence_drivers = data.get('root_cause', {}).get('confidence_drivers', data.get('root_cause', {}).get('metadata', {}).get('confidence_drivers', {})) %}
+                            {% set confidence_driver_data = ai_investigator_data.get('confidence_drivers', root_confidence_drivers) %}
                             {% set audience_reports = data.get('audience_reports', {}) %}
                             {% if ai_investigator_data %}
                                 <div class="row align-items-center mb-4">
@@ -445,6 +592,50 @@
                                 <h6 class="fw-bold small text-muted text-uppercase mb-3">Confidence Explanation</h6>
                                 <div class="bg-dark p-3 rounded mb-4" style="background-color: #1a1a2a !important;" id="audience-confidence">
                                     {{ ai_investigator_data.get('confidence_explanation') | replace('\n', '<br>') | safe }}
+                                </div>
+                                {% endif %}
+
+                                {% if confidence_driver_data %}
+                                <div class="mb-4" id="audience-confidence-drivers-section">
+                                    <h6 class="fw-bold small text-muted text-uppercase mb-3">Confidence Drivers</h6>
+                                    <div class="row g-2" id="audience-confidence-drivers">
+                                        <div class="col-md-4 col-lg-2">
+                                            <div class="border rounded p-2 h-100">
+                                                <div class="text-muted small text-uppercase">Drift</div>
+                                                <div class="fw-bold">{{ confidence_driver_data.get('drift_evidence', 'N/A') }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 col-lg-2">
+                                            <div class="border rounded p-2 h-100">
+                                                <div class="text-muted small text-uppercase">Calibration</div>
+                                                <div class="fw-bold">{{ confidence_driver_data.get('calibration_evidence', 'N/A') }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 col-lg-2">
+                                            <div class="border rounded p-2 h-100">
+                                                <div class="text-muted small text-uppercase">Noise</div>
+                                                <div class="fw-bold">{{ confidence_driver_data.get('noise_evidence', 'N/A') }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 col-lg-2">
+                                            <div class="border rounded p-2 h-100">
+                                                <div class="text-muted small text-uppercase">Agreement</div>
+                                                <div class="fw-bold">{{ confidence_driver_data.get('agreement', 'N/A') }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 col-lg-2">
+                                            <div class="border rounded p-2 h-100">
+                                                <div class="text-muted small text-uppercase">Coverage</div>
+                                                <div class="fw-bold">{{ confidence_driver_data.get('coverage', 'N/A') }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 col-lg-2">
+                                            <div class="border rounded p-2 h-100">
+                                                <div class="text-muted small text-uppercase">Conflicts</div>
+                                                <div class="fw-bold">{{ confidence_driver_data.get('conflicts', 'N/A') }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 {% endif %}
 
@@ -655,6 +846,8 @@
     // Audience Translation JavaScript
     document.addEventListener('DOMContentLoaded', function() {
         const audienceReports = {{ data.get('audience_reports', {}) | tojson | safe }};
+        const aiByAudience = {{ data.get('ai_investigator_by_audience', {}) | tojson | safe }};
+        const rootConfidenceDrivers = {{ data.get('root_cause', {}).get('confidence_drivers', data.get('root_cause', {}).get('metadata', {}).get('confidence_drivers', {})) | tojson | safe }};
         console.log('[AUDIENCE DEBUG] audienceReports loaded:', audienceReports);
         console.log('[AUDIENCE DEBUG] Keys in audienceReports:', Object.keys(audienceReports));
         console.log('[AUDIENCE DEBUG] DOM loaded, checking for elements...');
@@ -673,10 +866,30 @@
                 updateAudienceContent(audience);
             });
         });
+
+        function renderConfidenceDrivers(drivers) {
+            const entries = [
+                ['Drift', drivers.drift_evidence],
+                ['Calibration', drivers.calibration_evidence],
+                ['Noise', drivers.noise_evidence],
+                ['Agreement', drivers.agreement],
+                ['Coverage', drivers.coverage],
+                ['Conflicts', drivers.conflicts]
+            ];
+            return entries.map(([label, value]) => `
+                <div class="col-md-4 col-lg-2">
+                    <div class="border rounded p-2 h-100">
+                        <div class="text-muted small text-uppercase">${label}</div>
+                        <div class="fw-bold">${value || 'N/A'}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
         
         function updateAudienceContent(audience) {
             console.log('[AUDIENCE DEBUG] updateAudienceContent called with:', audience);
             const report = audienceReports[audience];
+            const aiReport = aiByAudience[audience] || {};
             console.log('[AUDIENCE DEBUG] Report object:', report);
             if (!report) {
                 console.log('[AUDIENCE DEBUG] Report not found for audience:', audience);
@@ -724,6 +937,18 @@
                 confidenceEl.parentElement.style.display = 'block';
             } else if (confidenceEl) {
                 confidenceEl.parentElement.style.display = 'none';
+            }
+
+            // Update confidence drivers
+            const confidenceDriversEl = document.getElementById('audience-confidence-drivers');
+            const confidenceDriversSection = document.getElementById('audience-confidence-drivers-section');
+            const confidenceDrivers = aiReport.confidence_drivers || rootConfidenceDrivers;
+            if (confidenceDriversEl && confidenceDriversSection && confidenceDrivers && Object.keys(confidenceDrivers).length) {
+                console.log('[AUDIENCE DEBUG] Updating confidence drivers');
+                confidenceDriversEl.innerHTML = renderConfidenceDrivers(confidenceDrivers);
+                confidenceDriversSection.style.display = 'block';
+            } else if (confidenceDriversSection) {
+                confidenceDriversSection.style.display = 'none';
             }
             
             // Update recommendations
