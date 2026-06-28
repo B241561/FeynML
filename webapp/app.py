@@ -1369,7 +1369,17 @@ def view_dashboard(report_id):
         return redirect(url_for('phase4.view_report', report_id=report_id))
 
     data.setdefault('calibration', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
-    data.setdefault('fairness', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
+    data.setdefault('fairness', {
+        'status':   'INSUFFICIENT_DATA',
+        'severity': 'NONE',
+        'findings': {
+            'disparity_ratio': None,
+            'max_disparity':   None,
+            'groups':          [],
+            'violations':      [],
+            'note':            'Fairness analysis requires y_true and y_pred — not available in current report format.'
+        }
+    })
     data.setdefault('drift', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
     data.setdefault('label_noise', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
     data.setdefault('leakage', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
@@ -1409,7 +1419,13 @@ def view_dashboard(report_id):
     # If audience_reports is empty but ai_investigator_by_audience exists,
     # mirror it into audience_reports so the JS switcher works
     if not data.get('audience_reports') and data.get('ai_investigator_by_audience'):
-        data['audience_reports'] = data['ai_investigator_by_audience']
+        # Normalize keys: strip extra whitespace, preserve original too
+        raw_aud = data['ai_investigator_by_audience']
+        normalized = {}
+        for k, v in raw_aud.items():
+            normalized[k] = v
+            normalized[k.strip()] = v  # whitespace-safe copy
+        data['audience_reports'] = normalized
     data.setdefault('audience_reports', {})
 
     if isinstance(data.get('root_cause'), dict):
@@ -1454,11 +1470,24 @@ def view_dashboard(report_id):
     confidences = []
     accuracies = []
     if 'findings' in cal_data:
-        confidences = cal_data['findings'].get('confidences', [])
-        accuracies = cal_data['findings'].get('accuracies', [])
+        findings_block = cal_data['findings']
+        # Try direct keys first, then nested curve fallback
+        confidences = (
+            findings_block.get('confidences') or
+            findings_block.get('curve', {}).get('mean_predicted') or
+            cal_data.get('curve', {}).get('mean_predicted', [])
+        )
+        accuracies = (
+            findings_block.get('accuracies') or
+            findings_block.get('curve', {}).get('fraction_pos') or
+            cal_data.get('curve', {}).get('fraction_pos', [])
+        )
     elif 'curve' in cal_data:
         confidences = cal_data['curve'].get('mean_predicted', [])
-        accuracies = cal_data['curve'].get('fraction_pos', [])
+        accuracies  = cal_data['curve'].get('fraction_pos',   [])
+    else:
+        confidences = []
+        accuracies  = []
 
     if confidences and accuracies:
         fig_cal = go.Figure()
@@ -1649,7 +1678,17 @@ def view_report(report_id):
         data = json.load(f)
 
     data.setdefault('calibration', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
-    data.setdefault('fairness', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
+    data.setdefault('fairness', {
+        'status':   'INSUFFICIENT_DATA',
+        'severity': 'NONE',
+        'findings': {
+            'disparity_ratio': None,
+            'max_disparity':   None,
+            'groups':          [],
+            'violations':      [],
+            'note':            'Fairness analysis requires y_true and y_pred — not available in current report format.'
+        }
+    })
     data.setdefault('drift', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
     data.setdefault('label_noise', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
     data.setdefault('leakage', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
@@ -1698,11 +1737,24 @@ def view_report(report_id):
         confidences = []
         accuracies = []
         if 'findings' in cal_data:
-            confidences = cal_data['findings'].get('confidences', [])
-            accuracies = cal_data['findings'].get('accuracies', [])
+            findings_block = cal_data['findings']
+            # Try direct keys first, then nested curve fallback
+            confidences = (
+                findings_block.get('confidences') or
+                findings_block.get('curve', {}).get('mean_predicted') or
+                cal_data.get('curve', {}).get('mean_predicted', [])
+            )
+            accuracies = (
+                findings_block.get('accuracies') or
+                findings_block.get('curve', {}).get('fraction_pos') or
+                cal_data.get('curve', {}).get('fraction_pos', [])
+            )
         elif 'curve' in cal_data:
             confidences = cal_data['curve'].get('mean_predicted', [])
-            accuracies = cal_data['curve'].get('fraction_pos', [])
+            accuracies  = cal_data['curve'].get('fraction_pos',   [])
+        else:
+            confidences = []
+            accuracies  = []
         
         # Prediction Distribution - histogram
         if confidences:
@@ -1930,8 +1982,10 @@ def view_report(report_id):
         
         # Missing Data chart (existing)
         miss_findings = data.get('missing_data', {}).get('findings', {})
-        if miss_findings and 'missing_rates' in miss_findings:
-            m_rates = miss_findings['missing_rates']
+        if miss_findings and ('missingness_rates' in miss_findings
+                              or 'missing_rates' in miss_findings):
+            m_rates = (miss_findings.get('missingness_rates')
+                       or miss_findings.get('missing_rates', {}))
             features = list(m_rates.keys())
             rates = [v * 100 for v in m_rates.values()]
             fig_miss = go.Figure(go.Bar(x=features, y=rates, marker_color='#64748b'))

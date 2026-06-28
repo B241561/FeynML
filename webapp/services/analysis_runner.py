@@ -829,7 +829,7 @@ class AnalysisRunner:
 
             root_status, root_payload = self._run_with_timeout(
                 "AutoRootCauseEngine",
-                60,
+                120,
                 _run_root_cause,
                 {
                     "status": "SKIPPED",
@@ -860,7 +860,7 @@ class AnalysisRunner:
             except Exception:
                 pass
 
-            if root_status == "ok":
+            if root_status in ("ok", "timeout", "error"):
                 self.log("ENGINE_COMPLETED: AutoRootCauseEngine analysis complete.")
             
             # --- AI Investigator Analysis ---
@@ -946,25 +946,19 @@ class AnalysisRunner:
                 ]
 
                 ai_by_audience = {}
-                # Generate primary audience first (fastest path)
-                primary_audience = audience  # already normalized above
                 try:
-                    primary_report = ai_investigator.analyze(investigation, primary_audience)
-                    ai_by_audience[primary_audience] = primary_report
-                    print(f"[AIInvestigator DEBUG] Primary audience '{primary_audience}' done. "
-                          f"Summary length: {len(primary_report.get('executive_summary',''))}",
-                          flush=True)
+                    primary_report = ai_investigator.analyze(investigation, audience)
+                    ai_by_audience[audience] = primary_report
                 except Exception as e:
-                    self.log(f"WARNING: Primary audience analysis failed: {e}")
-                    ai_by_audience[primary_audience] = {}
-                # Generate remaining audiences
-                remaining = [a for a in audiences if a != primary_audience]
-                for aud in remaining:
+                    self.log(f"WARNING: Primary audience failed: {e}")
+                    ai_by_audience[audience] = {}
+
+                for aud in [a for a in audiences if a != audience]:
                     try:
                         ai_by_audience[aud] = ai_investigator.analyze(investigation, aud)
                     except Exception as aud_e:
-                        self.log(f"WARNING: AIInvestigator audience '{aud}' failed: {aud_e}")
-                        ai_by_audience[aud] = ai_by_audience.get(primary_audience, {})
+                        self.log(f"WARNING: AIInvestigator '{aud}' failed: {aud_e}")
+                        ai_by_audience[aud] = ai_by_audience.get(audience, {})
 
                 if rc_risk and isinstance(rc_risk, dict):
                     unified_level = rc_risk.get('level')
