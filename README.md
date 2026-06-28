@@ -372,6 +372,7 @@ Interactive Plotly-powered visual analytics for deeper investigation.
 
 ## 🎥 Demo Video
 
+A short walkthrough of FeynML v2.0 covering the investigation workflow, dashboard, AI report generation, audience translation, visual explorer, and chat assistant.
 
 https://github.com/B241561/FeynML/issues/1#issue-4762254703
 
