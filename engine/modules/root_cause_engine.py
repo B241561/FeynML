@@ -603,7 +603,12 @@ class AutoRootCauseEngine:
                         for suspect in suspects:
                             if isinstance(suspect, dict):
                                 feature_name = suspect.get("feature", "unknown")
-                                leakage_confidence = suspect.get("leakage_confidence", 0)
+                                leakage_confidence = (
+                                    suspect.get("leakage_confidence")
+                                    or suspect.get("score")
+                                    or suspect.get("confidence")
+                                    or 0
+                                )
                                 
                                 # Skip identifier columns
                                 if self._is_identifier_column(feature_name):

@@ -158,19 +158,41 @@
 }
 .hero-check i { color: #4ade80; font-size: 0.9rem; }
 
-/* Screenshot container */
-.hero-screen-wrap {
+/* 3D canvas wrapper */
+.hero-3d-wrap {
   position: relative;
   width: 100%;
   max-width: 520px;
 }
-.hero-screen-img {
-  width: 100%;
+
+/* The canvas inherits the same visual frame as the old screenshot */
+#feynml-3d-canvas {
   display: block;
+  width: 100%;
   border-radius: 14px;
   border: 1px solid rgba(56,189,248,0.22);
-  box-shadow: 0 0 80px rgba(14,165,233,0.18), 0 24px 64px rgba(0,0,0,0.5);
+  box-shadow:
+    0 0 80px rgba(14,165,233,0.18),
+    0 24px 64px rgba(0,0,0,0.5);
 }
+
+/* Ambient glow behind the canvas */
+.hero-3d-glow {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 65%; height: 65%;
+  background: radial-gradient(ellipse, rgba(56,189,248,0.15) 0%, transparent 70%);
+  pointer-events: none;
+  animation: glowPulse3d 3.5s ease infinite;
+  z-index: 0;
+}
+@keyframes glowPulse3d {
+  0%,100% { opacity: 1;   transform: translate(-50%,-50%) scale(1); }
+  50%      { opacity: 0.5; transform: translate(-50%,-50%) scale(1.3); }
+}
+
+/* Floating info badges over the canvas */
 .hero-badge-float {
   position: absolute;
   background: rgba(10,18,35,0.92);
@@ -182,8 +204,27 @@
   color: #94a3b8;
   line-height: 1.6;
   backdrop-filter: blur(8px);
+  z-index: 10;
 }
 .hero-badge-float strong { font-size: 13px; font-weight: 700; }
+
+/* HUD readout rows in the bottom-left badge */
+.hud-metrics {
+  display: flex;
+  gap: 14px;
+}
+.hud-metric-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #38bdf8;
+  opacity: 0.7;
+  text-transform: uppercase;
+}
+.hud-metric-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: #7dd3fc;
+}
 
 /* ── JARVIS LOGO STRIP ───────────────────────────────────────── */
 .logo-strip {
@@ -681,24 +722,52 @@
         </div>
       </div>
 
-      <!-- RIGHT — screenshot -->
+      <!-- RIGHT — 3D hero -->
       <div class="col-12 col-lg-6 d-flex justify-content-center">
-        <div class="hero-screen-wrap">
-          <img
-            src="{{ url_for('static', filename='images/hero_screenshot.avif') }}"
-            alt="FeynML dashboard — drift detection and model diagnostics"
-            class="hero-screen-img"
-          />
-          <!-- Drift badge -->
-          <div class="hero-badge-float" style="top:14px; left:14px;">
+        <div class="hero-3d-wrap">
+
+          <!-- ambient glow -->
+          <div class="hero-3d-glow"></div>
+
+          <!-- 3D canvas -->
+          <canvas id="feynml-3d-canvas"></canvas>
+
+          <!-- Drift badge (top-left) -->
+          <div class="hero-badge-float" style="top:14px; left:14px; z-index:10;">
             Drift Detected<br>
             <strong style="color:#fb923c;">8 Features</strong>
           </div>
-          <!-- Audit badge -->
-          <div class="hero-badge-float" style="bottom:14px; right:14px;">
+
+          <!-- Audit score badge (bottom-right) -->
+          <div class="hero-badge-float" style="bottom:14px; right:14px; z-index:10;">
             Audit Score<br>
             <strong style="color:#4ade80; font-size:16px;">98.4%</strong>
           </div>
+
+          <!-- Live HUD metrics (bottom-left) -->
+          <div class="hero-badge-float" style="bottom:14px; left:14px; z-index:10;">
+            <div class="hud-metrics">
+              <div>
+                <div class="hud-metric-label">ECE</div>
+                <div class="hud-metric-val" id="hud-ece">0.024</div>
+              </div>
+              <div>
+                <div class="hud-metric-label">AUC</div>
+                <div class="hud-metric-val" id="hud-auc">0.981</div>
+              </div>
+              <div>
+                <div class="hud-metric-label">PSI</div>
+                <div class="hud-metric-val" style="color:#4ade80;">STABLE</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KS stat badge (top-right) -->
+          <div class="hero-badge-float" style="top:14px; right:14px; z-index:10;">
+            <div class="hud-metric-label">KS STAT</div>
+            <div class="hud-metric-val" id="hud-ks">Δ 0.041</div>
+          </div>
+
         </div>
       </div>
 
@@ -1654,5 +1723,252 @@
     </div>
   </div>
 </div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── Vertex Shader ──────────────────────────────────────────── */
+  var VS = /* glsl */`
+    varying vec3 vN;
+    varying vec3 vWP;
+    void main(){
+      vec4 w = modelMatrix * vec4(position,1.0);
+      vWP = w.xyz;
+      vN  = normalize(normalMatrix * normal);
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+    }
+  `;
+
+  /* ── Fragment Shader (Fresnel + Specular + Diffuse) ─────────── */
+  var FS = /* glsl */`
+    uniform float uT;
+    uniform vec3  uL1, uL2, uL3;
+    varying vec3  vN, vWP;
+
+    void main(){
+      vec3 N = normalize(vN);
+      vec3 V = normalize(cameraPosition - vWP);
+
+      /* Fresnel — bright edge halo */
+      float F = pow(1.0 - max(dot(N,V), 0.0), 2.8);
+
+      /* Animated colour shift: cyan ↔ indigo */
+      vec3 cCyan   = vec3(0.22, 0.74, 0.97);
+      vec3 cIndigo = vec3(0.39, 0.40, 0.95);
+      vec3 cWhite  = vec3(0.95, 0.97, 1.00);
+      float t = sin(uT*0.45 + vWP.y*1.8 + vWP.x*0.9)*0.5 + 0.5;
+      vec3 base = mix(cCyan, cIndigo, t);
+
+      /* 3 virtual lights orbiting in world space */
+      vec3 L1 = normalize(uL1 - vWP);
+      vec3 L2 = normalize(uL2 - vWP);
+      vec3 L3 = normalize(uL3 - vWP);
+
+      /* Phong specular highlights */
+      float s1 = pow(max(dot(reflect(-L1,N),V),0.0),110.0);
+      float s2 = pow(max(dot(reflect(-L2,N),V),0.0), 70.0);
+      float s3 = pow(max(dot(reflect(-L3,N),V),0.0),150.0);
+      vec3 spec = cCyan*s1*3.5 + cIndigo*s2*2.8 + cWhite*s3*4.5;
+
+      /* Soft diffuse */
+      float d1 = max(dot(N,L1),0.0)*0.32;
+      float d2 = max(dot(N,L2),0.0)*0.18;
+      vec3 diff = base*(d1+d2+0.06);
+
+      /* Rim glow */
+      vec3 rim = cCyan*F*1.6;
+
+      /* Pulse shimmer along the knot body */
+      float shimmer = pow(sin(uT*1.2 + vWP.y*4.0)*0.5+0.5, 6.0)*0.15;
+      vec3 color = diff + spec + rim + cWhite*shimmer;
+
+      gl_FragColor = vec4(color, 0.87 + F*0.13);
+    }
+  `;
+
+  /* ── Init Three.js ──────────────────────────────────────────── */
+  var canvas    = document.getElementById('feynml-3d-canvas');
+  if (!canvas) return;
+  var wrapper   = canvas.parentElement;
+
+  var W = wrapper.clientWidth  || 520;
+  var H = Math.round(Math.min(W * 0.80, 440));
+
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(W, H);
+  renderer.setClearColor(0x000000, 0);
+
+  var scene  = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(55, W / H, 0.1, 100);
+  camera.position.z = 3.8;
+
+  var U = {
+    uT:  { value: 0 },
+    uL1: { value: new THREE.Vector3( 3,  2,  3) },
+    uL2: { value: new THREE.Vector3(-3, -2,  2) },
+    uL3: { value: new THREE.Vector3( 0,  3, -2) }
+  };
+
+  var knotGeo = new THREE.TorusKnotGeometry(1, 0.32, 240, 36, 2, 3);
+  var knotMat = new THREE.ShaderMaterial({
+    vertexShader:   VS,
+    fragmentShader: FS,
+    uniforms:        U,
+    transparent:     true,
+    depthWrite:      false
+  });
+  var knot = new THREE.Mesh(knotGeo, knotMat);
+  scene.add(knot);
+
+  var wireGeo = new THREE.TorusKnotGeometry(1.015, 0.335, 60, 10, 2, 3);
+  var wireMat = new THREE.MeshBasicMaterial({
+    color: 0x38bdf8, wireframe: true,
+    transparent: true, opacity: 0.045
+  });
+  var wire = new THREE.Mesh(wireGeo, wireMat);
+  scene.add(wire);
+
+  function mkRing(r, col, op, rx, ry, rz) {
+    ry = ry || 0; rz = rz || 0;
+    var g = new THREE.TorusGeometry(r, 0.016, 16, 128);
+    var m = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: op });
+    var mesh = new THREE.Mesh(g, m);
+    mesh.rotation.set(rx, ry, rz);
+    return mesh;
+  }
+  var ring1 = mkRing(1.75, 0x38bdf8, 0.35,  Math.PI/3);
+  var ring2 = mkRing(2.10, 0x6366f1, 0.20, -Math.PI/5,  Math.PI/4);
+  var ring3 = mkRing(2.45, 0x0ea5e9, 0.12,  Math.PI/7,  0, Math.PI/6);
+  scene.add(ring1, ring2, ring3);
+
+  var arcPts = [];
+  for (var i = 0; i <= 28; i++) {
+    var a = (i / 28) * Math.PI * 0.7;
+    arcPts.push(new THREE.Vector3(Math.cos(a)*1.75, Math.sin(a)*1.75, 0));
+  }
+  var arcGeo = new THREE.BufferGeometry().setFromPoints(arcPts);
+  var arcMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.85 });
+  var arc = new THREE.Line(arcGeo, arcMat);
+  arc.rotation.x = Math.PI / 3;
+  scene.add(arc);
+
+  var arcPts2 = [];
+  for (var j = 0; j <= 16; j++) {
+    var b = (j / 16) * Math.PI * 0.45;
+    arcPts2.push(new THREE.Vector3(Math.cos(b)*2.1, Math.sin(b)*2.1, 0));
+  }
+  var arcGeo2 = new THREE.BufferGeometry().setFromPoints(arcPts2);
+  var arcMat2 = new THREE.LineBasicMaterial({ color: 0x6366f1, transparent: true, opacity: 0.55 });
+  var arc2 = new THREE.Line(arcGeo2, arcMat2);
+  arc2.rotation.x = -Math.PI / 5;
+  arc2.rotation.y =  Math.PI / 4;
+  scene.add(arc2);
+
+  function mkCloud(n, rMin, rMax, col, sz, op) {
+    var pos = new Float32Array(n * 3);
+    for (var k = 0; k < n; k++) {
+      var r  = rMin + Math.random() * (rMax - rMin);
+      var th = Math.random() * Math.PI * 2;
+      var ph = Math.acos(2 * Math.random() - 1);
+      pos[k*3]   = r * Math.sin(ph) * Math.cos(th);
+      pos[k*3+1] = r * Math.sin(ph) * Math.sin(th);
+      pos[k*3+2] = r * Math.cos(ph);
+    }
+    var g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    var m = new THREE.PointsMaterial({ color: col, size: sz, transparent: true, opacity: op, sizeAttenuation: true });
+    var pts = new THREE.Points(g, m);
+    return { pts: pts, geo: g, mat: m };
+  }
+  var c1 = mkCloud(240, 1.90, 3.50, 0x38bdf8, 0.030, 0.55);
+  var c2 = mkCloud(100, 2.60, 4.20, 0x6366f1, 0.024, 0.35);
+  scene.add(c1.pts, c2.pts);
+
+  var clock = new THREE.Clock();
+  var raf;
+
+  function animate() {
+    raf = requestAnimationFrame(animate);
+    var t = clock.getElapsedTime();
+
+    U.uT.value = t;
+    U.uL1.value.set(
+      Math.cos(t * 0.80) * 3.8,
+      Math.sin(t * 0.60) * 2.8,
+      Math.sin(t * 0.80) * 3.8
+    );
+    U.uL2.value.set(
+      Math.cos(t * 0.50 + 2.09) * 3.2,
+      Math.sin(t * 0.90 + 1.05) * 2.2,
+      Math.sin(t * 0.50 + 2.09) * 3.2
+    );
+    U.uL3.value.set(
+      Math.cos(t * 0.32 + 4.19) * 4.2,
+      Math.sin(t * 0.70 + 2.10) * 3.2,
+      Math.sin(t * 0.32 + 4.19) * 4.2
+    );
+
+    knot.rotation.x += 0.0028;
+    knot.rotation.y += 0.0058;
+    knot.rotation.z += 0.0010;
+    knot.position.y  = Math.sin(t * 0.48) * 0.10;
+
+    wire.rotation.copy(knot.rotation);
+    wire.position.copy(knot.position);
+
+    ring1.rotation.z += 0.0062;
+    ring2.rotation.y += 0.0042;
+    ring3.rotation.x += 0.0022;
+    ring1.material.opacity = 0.22 + Math.sin(t * 0.90) * 0.14;
+    ring2.material.opacity = 0.12 + Math.sin(t * 0.70 + 1.0) * 0.08;
+    ring3.material.opacity = 0.08 + Math.sin(t * 0.55 + 2.0) * 0.05;
+
+    arc.rotation.z   = t * 1.20;
+    arc2.rotation.z  = -t * 0.85;
+    arcMat.opacity   = 0.55 + Math.sin(t * 1.8) * 0.30;
+    arcMat2.opacity  = 0.30 + Math.sin(t * 1.4 + 1.0) * 0.20;
+
+    c1.pts.rotation.y +=  0.0015;
+    c1.pts.rotation.x +=  0.0007;
+    c2.pts.rotation.y -= 0.0010;
+    c2.pts.rotation.z +=  0.0005;
+    c1.mat.opacity = 0.40 + Math.sin(t * 0.80) * 0.14;
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  function onResize() {
+    var newW = wrapper.clientWidth;
+    var newH = Math.round(Math.min(newW * 0.80, 440));
+    renderer.setSize(newW, newH);
+    camera.aspect = newW / newH;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', onResize);
+
+  var hudEce = document.getElementById('hud-ece');
+  var hudAuc = document.getElementById('hud-auc');
+  var hudKs  = document.getElementById('hud-ks');
+
+  setInterval(function () {
+    if (hudEce) hudEce.textContent = (Math.random() * 0.04 + 0.010).toFixed(3);
+    if (hudAuc) hudAuc.textContent = (Math.random() * 0.018 + 0.972).toFixed(3);
+    if (hudKs)  hudKs.textContent  = 'Δ ' + (Math.random() * 0.055 + 0.020).toFixed(3);
+  }, 1800);
+
+  if (window.__feynml3dCleanup) window.__feynml3dCleanup();
+  window.__feynml3dCleanup = function () {
+    cancelAnimationFrame(raf);
+    window.removeEventListener('resize', onResize);
+    renderer.dispose();
+    [knotGeo, wireGeo, arcGeo, arcGeo2, c1.geo, c2.geo].forEach(function(g){ g.dispose(); });
+    [knotMat, wireMat, arcMat, arcMat2, c1.mat, c2.mat].forEach(function(m){ m.dispose(); });
+  };
+
+}());
+</script>
 
 {% endblock %}

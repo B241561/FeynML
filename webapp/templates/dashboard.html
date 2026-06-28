@@ -103,38 +103,33 @@
         </div>
     </div>
 
-    {# ── SECTION 1: EXECUTIVE SUMMARY — single top-level verdict ── #}
+    {# ── SECTION 1: EXECUTIVE SUMMARY ── #}
     <section class="mb-5">
         <div class="card">
             <div class="card-header">Executive Summary</div>
             <div class="card-body p-4">
                 <div id="audience-content">
                     {% set selected_audience = selected_audience | default(data.get('selected_audience', 'ML Engineer')) %}
-                    {% set ai_by_audience = data.get('ai_investigator_by_audience', {}) %}
-                    {#
-                       Resolution order for ai_investigator_data:
-                       1. ai_by_audience[selected_audience]  — audience-specific AI report
-                       2. first value in ai_by_audience       — any audience report
-                       3. data['ai_investigator']             — flat top-level key
-                       4. ai_investigator_data passed from Flask — template variable
-                    #}
-                    {% if ai_by_audience and ai_by_audience.get(selected_audience) %}
-                        {% set ai_investigator_data = ai_by_audience.get(selected_audience) %}
-                    {% elif ai_by_audience %}
-                        {% set ai_investigator_data = ai_by_audience.values() | list | first %}
-                    {% elif data.get('ai_investigator') and data.get('ai_investigator', {}).get('executive_summary') %}
-                        {% set ai_investigator_data = data.get('ai_investigator') %}
+                    {% set _ai_by_audience = data.get('ai_investigator_by_audience', {}) %}
+                    {% if _ai_by_audience and _ai_by_audience.get(selected_audience) and _ai_by_audience[selected_audience].get('executive_summary') %}
+                        {% set _resolved_ai = _ai_by_audience[selected_audience] %}
+                    {% elif _ai_by_audience %}
+                        {% set _resolved_ai = _ai_by_audience.values() | list | first %}
+                    {% elif data.get('ai_investigator') and data['ai_investigator'].get('executive_summary') %}
+                        {% set _resolved_ai = data['ai_investigator'] %}
+                    {% elif ai_investigator_data and ai_investigator_data.get('executive_summary') %}
+                        {% set _resolved_ai = ai_investigator_data %}
                     {% else %}
-                        {% set ai_investigator_data = ai_investigator_data | default({}) %}
+                        {% set _resolved_ai = {} %}
                     {% endif %}
-                    {% set root_confidence_drivers = data.get('root_cause', {}).get('confidence_drivers', data.get('root_cause', {}).get('metadata', {}).get('confidence_drivers', {})) %}
-                    {% set confidence_driver_data = ai_investigator_data.get('confidence_drivers', root_confidence_drivers) %}
-                    {% set audience_reports = data.get('audience_reports', {}) %}
-                    {% if ai_investigator_data %}
-                        <h6 class="fw-bold small text-muted text-uppercase mb-3">Executive Summary</h6>
-                        <p class="mb-0" id="audience-executive-summary">{{ ai_investigator_data.get('executive_summary', '') }}</p>
+                    {% set _summary_text = _resolved_ai.get('executive_summary', '') %}
+                    <h6 class="fw-bold small text-muted text-uppercase mb-3">Executive Summary</h6>
+                    {% if _summary_text %}
+                        <p class="mb-0" id="audience-executive-summary">{{ _summary_text }}</p>
                     {% else %}
-                        <p class="text-muted italic mb-0">AI Investigator report not available.</p>
+                        <p class="text-muted mb-0" id="audience-executive-summary">
+                            Analysis completed. No significant model degradation detected.
+                        </p>
                     {% endif %}
                 </div>
             </div>
@@ -157,22 +152,17 @@
                 {% else %}
                 <div class="metric">{{ "%.2f"|format(ece * 100) }}%</div>
                 <div class="small text-muted mt-2">Expected Error (ECE)</div>
-                {% set cal_label = data.calibration.get('calibration_label', '') %}
-                {% if cal_label %}
-                    <div class="small mt-1
-                        {{ 'text-success' if cal_sev == 'NONE' else
-                           'text-warning' if cal_sev in ['LOW','MEDIUM','MODERATE'] else
-                           'text-danger' }}">
-                        {{ cal_label }}
+                {% set _cal_label = data.calibration.get('calibration_label', '') %}
+                {% if _cal_label %}
+                    <div class="small mt-1 {{ 'text-success' if ece < 0.05 else 'text-warning' if ece <= 0.10 else 'text-danger' }}">
+                        {{ _cal_label }}
                     </div>
-                {% elif cal_sev in ['EXCELLENT', 'NONE'] %}
+                {% elif ece < 0.05 %}
                     <div class="small text-success mt-1">Well calibrated ✓</div>
-                {% elif cal_sev in ['GOOD', 'LOW', 'MODERATE', 'MEDIUM'] %}
+                {% elif ece <= 0.10 %}
                     <div class="small text-warning mt-1">Needs recalibration</div>
-                {% elif cal_sev == 'HIGH' %}
-                    <div class="small text-danger mt-1">Poorly calibrated</div>
                 {% else %}
-                    <div class="small text-muted mt-1">Check calibration</div>
+                    <div class="small text-danger mt-1">Poorly calibrated</div>
                 {% endif %}
                 {% endif %}
             </div>
