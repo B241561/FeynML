@@ -701,7 +701,7 @@ class AnalysisRunner:
 
             slice_status, slice_payload = self._run_with_timeout(
                 "SlicerEngine",
-                60,
+                30,
                 _run_slicer,
                 {
                     "status": "SKIPPED",
@@ -829,7 +829,7 @@ class AnalysisRunner:
 
             root_status, root_payload = self._run_with_timeout(
                 "AutoRootCauseEngine",
-                120,
+                90,
                 _run_root_cause,
                 {
                     "status": "SKIPPED",
@@ -987,7 +987,7 @@ class AnalysisRunner:
 
             ai_status, ai_payload = self._run_with_timeout(
                 "AIInvestigator",
-                180,
+                300,
                 _run_ai_investigator,
                 {
                     "selected_audience": getattr(self, 'audience', 'ML Engineer'),

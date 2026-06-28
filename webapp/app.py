@@ -1369,17 +1369,38 @@ def view_dashboard(report_id):
         return redirect(url_for('phase4.view_report', report_id=report_id))
 
     data.setdefault('calibration', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
-    data.setdefault('fairness', {
-        'status':   'INSUFFICIENT_DATA',
-        'severity': 'NONE',
-        'findings': {
-            'disparity_ratio': None,
-            'max_disparity':   None,
-            'groups':          [],
-            'violations':      [],
-            'note':            'Fairness analysis requires y_true and y_pred — not available in current report format.'
+    _raw_fairness = data.get('fairness', {})
+    if _raw_fairness and 'per_axis' in _raw_fairness:
+        _per_axis = _raw_fairness.get('per_axis', {})
+        _dp_gaps = []
+        _groups = []
+        for _axis, _axis_data in _per_axis.items():
+            _groups.append(_axis)
+            _dp = _axis_data.get('demographic_parity', {})
+            _dp_gaps.append(_dp.get('max_difference', 0.0))
+        _max_disparity = max(_dp_gaps) if _dp_gaps else 0.0
+        data['fairness'] = {
+            'status':   _raw_fairness.get('severity', 'LOW'),
+            'severity': _raw_fairness.get('severity', 'LOW'),
+            'findings': {
+                'disparity_ratio': round(_max_disparity, 3),
+                'max_disparity':   round(_max_disparity, 3),
+                'groups':          _groups,
+                'violations':      _raw_fairness.get('violations', []),
+                'per_axis':        _per_axis,
+            }
         }
-    })
+    else:
+        data.setdefault('fairness', {
+            'status':   'INSUFFICIENT_DATA',
+            'severity': 'NONE',
+            'findings': {
+                'disparity_ratio': None,
+                'max_disparity':   None,
+                'groups':          [],
+                'violations':      [],
+            }
+        })
     data.setdefault('drift', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
     data.setdefault('label_noise', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
     data.setdefault('leakage', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
@@ -1678,17 +1699,38 @@ def view_report(report_id):
         data = json.load(f)
 
     data.setdefault('calibration', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
-    data.setdefault('fairness', {
-        'status':   'INSUFFICIENT_DATA',
-        'severity': 'NONE',
-        'findings': {
-            'disparity_ratio': None,
-            'max_disparity':   None,
-            'groups':          [],
-            'violations':      [],
-            'note':            'Fairness analysis requires y_true and y_pred — not available in current report format.'
+    _raw_fairness = data.get('fairness', {})
+    if _raw_fairness and 'per_axis' in _raw_fairness:
+        _per_axis = _raw_fairness.get('per_axis', {})
+        _dp_gaps = []
+        _groups = []
+        for _axis, _axis_data in _per_axis.items():
+            _groups.append(_axis)
+            _dp = _axis_data.get('demographic_parity', {})
+            _dp_gaps.append(_dp.get('max_difference', 0.0))
+        _max_disparity = max(_dp_gaps) if _dp_gaps else 0.0
+        data['fairness'] = {
+            'status':   _raw_fairness.get('severity', 'LOW'),
+            'severity': _raw_fairness.get('severity', 'LOW'),
+            'findings': {
+                'disparity_ratio': round(_max_disparity, 3),
+                'max_disparity':   round(_max_disparity, 3),
+                'groups':          _groups,
+                'violations':      _raw_fairness.get('violations', []),
+                'per_axis':        _per_axis,
+            }
         }
-    })
+    else:
+        data.setdefault('fairness', {
+            'status':   'INSUFFICIENT_DATA',
+            'severity': 'NONE',
+            'findings': {
+                'disparity_ratio': None,
+                'max_disparity':   None,
+                'groups':          [],
+                'violations':      [],
+            }
+        })
     data.setdefault('drift', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
     data.setdefault('label_noise', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
     data.setdefault('leakage', {'status': 'SKIPPED', 'severity': 'NONE', 'findings': {}})
