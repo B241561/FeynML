@@ -111,29 +111,79 @@ Machine learning models in production inevitably degrade over time due to data d
 ## 📁 Repository Structure
 
 ```text
-.
-├── engine/                      # Core ML Diagnostic Logic
-│   ├── modules/                 # Specialized Engines
-│   │   ├── drift_engine.py      # Distribution drift detection
-│   │   ├── calibration_engine.py # Model calibration analysis
-│   │   ├── leakage_engine.py    # Target leakage detection
-│   │   ├── root_cause_engine.py # Root cause identification
-│   │   ├── ai_investigator.py   # Narrative synthesis
-│   │   └── audience_translator.py # Domain-specific translation
-│   ├── base_module.py           # Abstract base for all engines
-│   └── investigation.py         # Investigation data structures
-├── webapp/                      # Flask Presentation Layer
-│   ├── static/                  # CSS, JavaScript, assets
-│   ├── templates/               # HTML templates
-│   │   ├── dashboard.html       # Main dashboard
-│   │   └── report.html          # Investigation reports
-│   ├── services/                # Orchestration layer
-│   │   └── analysis_runner.py   # Parallel analysis execution
-│   └── app.py                   # Application entry point
-├── tests/                       # Unit and integration tests
-├── scratch/                     # Pure statistical implementations
-├── requirements.txt             # Project dependencies
-└── README.md                    # This file
+FeynML/
+│
+├── engine/                    # Core ML investigation engine
+│   ├── modules/
+│   ├── prompts/
+│   ├── utils/
+│   └── ...
+│
+├── webapp/                    # Flask application
+│   ├── routes/
+│   ├── services/
+│   ├── templates/
+│   ├── static/
+│   ├── reports/
+│   └── ...
+│
+├── tests/                     # Unit & integration tests
+│
+├── reports/
+│   ├── generated/
+│   ├── exports/
+│   └── samples/
+│
+├── docs/
+│   ├── screenshots/
+│   ├── architecture/
+│   ├── api/
+│   ├── PROJECT_AUDIT.md
+│   ├── PORTFOLIO_GUIDE.md
+│   ├── SETUP_GUIDE.md
+│   └── ...
+│
+├── scripts/                   # Utility scripts
+│   ├── run_local.py
+│   ├── run_phase0.py
+│   ├── run_phase2.py
+│   ├── init_admin.py
+│   ├── trigger_analysis.py
+│   ├── compare_layouts.py
+│   ├── comprehensive_validation.py
+│   └── ...
+│
+├── tools/                     # Verification / inspection utilities
+│   ├── verify_*.py
+│   ├── inspect_*.py
+│   ├── check_*.py
+│   └── ...
+│
+├── scratch/                   # Temporary experiments
+│   ├── temp_*.py
+│   ├── tmp_*.py
+│   └── ...
+│
+├── artifacts/                 # Generated outputs (recommended next)
+│   ├── logs/
+│   ├── audits/
+│   ├── pytest/
+│   └── validation/
+│
+├── migrations/
+├── instance/
+│
+├── manage.py
+├── pipeline.py
+├── conftest.py
+├── pytest.ini
+├── requirements.txt
+├── runtime.txt
+├── Procfile
+├── README.md
+├── LICENSE
+├── .gitignore
+└── .env.example  
 ```
 
 ---
@@ -274,16 +324,49 @@ Widespread distributional drift detected across 4 features, indicating significa
 
 ## 🎨 Screenshots
 
-*(Note: Screenshots would be added here showing the dashboard interface, analysis results, and report generation)*
+## 🏠 Landing Page
 
-### Dashboard View
-![Dashboard](screenshots/dashboard.png)
+The public landing page introducing FeynML and its investigation workflow.
 
-### Drift Analysis
-![Drift Analysis](screenshots/drift_analysis.png)
+<img width="1913" height="973" alt="image" src="https://github.com/user-attachments/assets/aca021b4-34ad-47d4-94e8-7c46ba28cc0c" />
 
-### Investigation Report
-![Investigation Report](screenshots/investigation_report.png)
+## 📂 Dataset Upload
+
+Upload a CSV or JSON dataset to begin a new investigation.
+
+<img width="1917" height="978" alt="image" src="https://github.com/user-attachments/assets/0e1fb289-62ef-4cd9-b93f-ab81af895b5b" />
+
+Configure the investigation by selecting target columns and analysis options.
+
+<img width="1915" height="1027" alt="image" src="https://github.com/user-attachments/assets/6a710f8a-0112-46ee-8e49-94eea49231ed" />
+
+# 📊 Investigation Dashboard
+
+A unified dashboard showing model health, risk indicators, drift analysis, fairness metrics, calibration quality, and diagnostic insights.
+
+<img width="1918" height="920" alt="image" src="https://github.com/user-attachments/assets/a099330c-1ffa-4c70-ba21-7cded8445ff3" />
+
+## 🤖 AI Investigation Report
+
+Automatically generated executive summary and detailed root cause analysis.
+
+<img width="1918" height="925" alt="image" src="https://github.com/user-attachments/assets/27b855c4-f1f3-4e85-a5c8-ec19bd225bb8" />
+
+<img width="1918" height="922" alt="image" src="https://github.com/user-attachments/assets/15792a86-3a24-4acc-8f07-ef72287abab1" />
+
+## 📈 Visual Explorer
+
+Interactive Plotly-powered visual analytics for deeper investigation.
+
+<img width="1918" height="913" alt="image" src="https://github.com/user-attachments/assets/67264492-fc43-405c-ae47-39ff9ffb789d" />
+
+
+## 📈 Visual Explorer
+
+Interactive Plotly-powered visual analytics for deeper investigation.
+
+<img width="1918" height="920" alt="image" src="https://github.com/user-attachments/assets/7a6dec40-af93-42e0-a7f7-e26095ee69b9" />
+
 
 ---
 
