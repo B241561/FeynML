@@ -157,14 +157,22 @@
                 {% else %}
                 <div class="metric">{{ "%.2f"|format(ece * 100) }}%</div>
                 <div class="small text-muted mt-2">Expected Error (ECE)</div>
-                {% if cal_sev in ['EXCELLENT', 'NONE'] %}
+                {% set cal_label = data.calibration.get('calibration_label', '') %}
+                {% if cal_label %}
+                    <div class="small mt-1
+                        {{ 'text-success' if cal_sev == 'NONE' else
+                           'text-warning' if cal_sev in ['LOW','MEDIUM','MODERATE'] else
+                           'text-danger' }}">
+                        {{ cal_label }}
+                    </div>
+                {% elif cal_sev in ['EXCELLENT', 'NONE'] %}
                     <div class="small text-success mt-1">Well calibrated ✓</div>
-                {% elif cal_sev in ['GOOD', 'LOW'] %}
-                    <div class="small text-warning mt-1">Acceptable</div>
-                {% elif cal_sev in ['MODERATE', 'MEDIUM'] %}
+                {% elif cal_sev in ['GOOD', 'LOW', 'MODERATE', 'MEDIUM'] %}
                     <div class="small text-warning mt-1">Needs recalibration</div>
-                {% else %}
+                {% elif cal_sev == 'HIGH' %}
                     <div class="small text-danger mt-1">Poorly calibrated</div>
+                {% else %}
+                    <div class="small text-muted mt-1">Check calibration</div>
                 {% endif %}
                 {% endif %}
             </div>

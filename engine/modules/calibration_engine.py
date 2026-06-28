@@ -91,10 +91,13 @@ class CalibrationEngine:
 
             if ece_value < 0.05:
                 result["severity"] = "NONE"
+                result["calibration_label"] = "Well calibrated"
             elif ece_value <= 0.10:
                 result["severity"] = "MEDIUM"
+                result["calibration_label"] = "Needs recalibration"
             else:
                 result["severity"] = "HIGH"
+                result["calibration_label"] = "Poorly calibrated"
             
         import sys
         print(f"[ECE DEBUG] ece_value={ece_value}, type={type(ece_value)}, severity={result.get('severity')}", flush=True, file=sys.stderr)

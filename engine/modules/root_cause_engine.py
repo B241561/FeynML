@@ -454,7 +454,11 @@ class AutoRootCauseEngine:
             "importance_drift": [],
             "leakage": []
         }
-        
+
+        # FIX: initialise per_feature here so canonical_drift_count computation
+        # below is always safe, even if the drift try-block is skipped or raises.
+        per_feature = []
+
         # Process drift report with error handling
         try:
             if drift_report and isinstance(drift_report, dict):
@@ -500,7 +504,17 @@ class AutoRootCauseEngine:
                                     })
         except Exception as e:
             self._log(f"Warning: Error processing drift report: {e}")
-        
+
+        # FIX: compute canonical_drift_count here, immediately after the drift
+        # try-block, where per_feature is guaranteed to be defined.
+        try:
+            evidence["canonical_drift_count"] = sum(
+                1 for f in per_feature
+                if isinstance(f, dict) and f.get("status") == "DRIFT"
+            )
+        except Exception:
+            evidence["canonical_drift_count"] = 0
+
         # Process slice report with error handling
         try:
             if slice_report and isinstance(slice_report, dict):
@@ -607,12 +621,9 @@ class AutoRootCauseEngine:
                                     "category": "target_leakage"
                                 })
                                 self._audit_log.append(f"[Leakage Detected] {feature_name} (Confidence: {leakage_confidence:.3f})")
-            # After processing per_feature, compute canonical drift count
-            try:
-                canonical_drift_count = sum(1 for f in per_feature if isinstance(f, dict) and f.get("status") == "DRIFT")
-                evidence["canonical_drift_count"] = canonical_drift_count
-            except Exception:
-                evidence["canonical_drift_count"] = 0
+            # FIX: canonical_drift_count is now computed after the drift block above.
+            # The old computation that lived here (and referenced per_feature from
+            # the outer drift scope) has been removed to eliminate the scope bug.
         except Exception as e:
             self._log(f"Warning: Error processing leakage report: {e}")
         

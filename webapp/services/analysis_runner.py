@@ -873,6 +873,12 @@ class AnalysisRunner:
 
             def _run_ai_investigator():
                 from engine.modules.investigation import Investigation
+                # DEBUG: verify root_cause data coming in
+                root_cause_dict = self.results.get('root_cause', {})
+                print(f"[AIInvestigator DEBUG] root_causes count: "
+                      f"{len(root_cause_dict.get('root_causes', []))}", flush=True)
+                print(f"[AIInvestigator DEBUG] health_status: "
+                      f"{root_cause_dict.get('health_status', 'MISSING')}", flush=True)
 
                 ai_investigator = AIInvestigator(use_llm=False, verbose=False)
                 audience_key = getattr(self, 'audience', 'ml_engineer')
@@ -940,14 +946,25 @@ class AnalysisRunner:
                 ]
 
                 ai_by_audience = {}
-                for aud in audiences:
+                # Generate primary audience first (fastest path)
+                primary_audience = audience  # already normalized above
+                try:
+                    primary_report = ai_investigator.analyze(investigation, primary_audience)
+                    ai_by_audience[primary_audience] = primary_report
+                    print(f"[AIInvestigator DEBUG] Primary audience '{primary_audience}' done. "
+                          f"Summary length: {len(primary_report.get('executive_summary',''))}",
+                          flush=True)
+                except Exception as e:
+                    self.log(f"WARNING: Primary audience analysis failed: {e}")
+                    ai_by_audience[primary_audience] = {}
+                # Generate remaining audiences
+                remaining = [a for a in audiences if a != primary_audience]
+                for aud in remaining:
                     try:
                         ai_by_audience[aud] = ai_investigator.analyze(investigation, aud)
                     except Exception as aud_e:
-                        print(f"[AI Investigator ERROR] {type(aud_e).__name__}: {aud_e}")
-                        traceback.print_exc()
                         self.log(f"WARNING: AIInvestigator audience '{aud}' failed: {aud_e}")
-                        ai_by_audience[aud] = ai_investigator.analyze(investigation, "ML Engineer")
+                        ai_by_audience[aud] = ai_by_audience.get(primary_audience, {})
 
                 if rc_risk and isinstance(rc_risk, dict):
                     unified_level = rc_risk.get('level')
@@ -965,11 +982,18 @@ class AnalysisRunner:
                         top['risk_level'] = rc_risk.get('level')
                         payload['ai_investigator'] = top
 
+                # DEBUG: verify summary was generated
+                ml_report = ai_by_audience.get("ML Engineer", {})
+                print(f"[AIInvestigator DEBUG] ML Engineer executive_summary length: "
+                      f"{len(ml_report.get('executive_summary', ''))}", flush=True)
+                print(f"[AIInvestigator DEBUG] executive_summary preview: "
+                      f"{repr(ml_report.get('executive_summary', ''))[:200]}", flush=True)
+
                 return payload
 
             ai_status, ai_payload = self._run_with_timeout(
                 "AIInvestigator",
-                90,
+                180,
                 _run_ai_investigator,
                 {
                     "selected_audience": getattr(self, 'audience', 'ML Engineer'),
