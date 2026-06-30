@@ -150,7 +150,7 @@ body.dark-mode #downloadPngBtn:hover {
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4" style="background-color: #0f172a; min-height: 100vh;">
+<div class="container-fluid py-4 visual-explorer-shell" style="background-color: #0f172a; min-height: 100vh;">
     <!-- Hidden Report ID for JS -->
     <input type="hidden" id="report-id-hidden" value="{{ report_id }}">
     
@@ -278,7 +278,7 @@ body.dark-mode #downloadPngBtn:hover {
                     <button type="button" onclick="chartZoomOut()" title="Zoom Out" class="tb-btn">🔍−</button>
                     <button type="button" onclick="chartPan()" title="Pan / Move" class="tb-btn" id="btn-pan">✋</button>
                     <button type="button" onclick="chartReset()" title="Reset View" class="tb-btn">⟳</button>
-                    <div style="width:1px; height:24px; background:#2d3748; margin:0 0.25rem;"></div>
+                    <div class="toolbar-divider"></div>
                     <button type="button" onclick="chartDownload()" title="Download PNG" class="tb-btn">⬇ PNG</button>
                 </div>
                 <div class="card-body p-4">
@@ -337,9 +337,7 @@ body.dark-mode #downloadPngBtn:hover {
         Build, explore, and export custom charts from your dataset.
       </p>
 
-      <div style="display:grid; 
-                  grid-template-columns: repeat(3,1fr); 
-                  gap:1rem;">
+      <div class="guide-grid" style="display:grid; grid-template-columns: repeat(3,1fr); gap:1rem;">
 
         <div class="guide-card">
           <span class="guide-icon">📐</span>
@@ -542,20 +540,20 @@ function updateFilterUI() {
     }
     
     container.innerHTML = filters.map((filter, idx) => `
-        <div class="mb-2 d-flex gap-2 align-items-end">
+        <div class="mb-2 d-flex gap-2 align-items-end filter-row">
             <select class="form-select form-select-sm bg-main border-subtle rounded flex-grow-1" 
                     onchange="updateFilter(${idx}, 'column', this.value)">
                 <option value="">Column</option>
                 ${columns.map(col => `<option value="${col}" ${filter.column === col ? 'selected' : ''}>${col}</option>`).join('')}
             </select>
-            <select class="form-select form-select-sm bg-main border-subtle rounded" style="width:80px;"
+            <select class="form-select form-select-sm bg-main border-subtle rounded filter-compact-field"
                     onchange="updateFilter(${idx}, 'operator', this.value)">
                 <option value=">" ${filter.operator === '>' ? 'selected' : ''}>&gt;</option>
                 <option value="<" ${filter.operator === '<' ? 'selected' : ''}>&lt;</option>
                 <option value="==" ${filter.operator === '==' ? 'selected' : ''}>=</option>
             </select>
-            <input type="text" class="form-control form-control-sm bg-main border-subtle rounded" 
-                   style="width:80px;" placeholder="Value"
+            <input type="text" class="form-control form-control-sm bg-main border-subtle rounded filter-compact-field" 
+                   placeholder="Value"
                    value="${filter.value}" 
                    onchange="updateFilter(${idx}, 'value', this.value)">
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFilter(${idx})">
@@ -977,10 +975,31 @@ if (!histogramTypes.includes(defaultChartType)) {
     color: #94a3b8 !important;
 }
 
+.visual-explorer-shell {
+    overflow-x: hidden;
+}
+
+.toolbar-divider {
+    width: 0.0625rem;
+    height: 1.5rem;
+    background: #2d3748;
+    margin: 0 0.25rem;
+    flex-shrink: 0;
+}
+
+.filter-row {
+    flex-wrap: wrap;
+}
+
+.filter-compact-field {
+    flex: 0 0 5rem;
+    max-width: 5rem;
+}
+
 #chartContainer {
     position: relative;
     width: 100%;
-    height: 700px;
+    height: clamp(24rem, 65vh, 43.75rem);
     overflow: hidden;
     background: transparent;
 }
@@ -1082,9 +1101,22 @@ if (!histogramTypes.includes(defaultChartType)) {
   color: #93c5fd;
 }
 
-@media (max-width: 768px) {
-  .guide-section > div {
-    grid-template-columns: 1fr !important;
+@media (max-width: 767.98px) {
+  .guide-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  #chartContainer {
+    height: 30rem;
+  }
+  .chart-plot {
+    min-height: 26rem;
+  }
+  .filter-row > .flex-grow-1 {
+    min-width: 100%;
+  }
+  .filter-compact-field {
+    flex: 1 1 calc(50% - 0.25rem);
+    max-width: none;
   }
 }
 
@@ -1182,6 +1214,29 @@ html[data-theme="light"] .form-control.bg-main {
 @media (max-width: 992px) {
   #chart-toolbar {
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 479.98px) {
+  .guide-grid {
+    grid-template-columns: 1fr !important;
+  }
+  #chart-toolbar {
+    padding: 0.75rem !important;
+    gap: 0.4rem !important;
+  }
+  .tb-btn {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+  #chartContainer {
+    height: 24rem;
+  }
+  .chart-plot {
+    min-height: 20rem;
+  }
+  .filter-compact-field {
+    flex: 1 1 100%;
   }
 }
 

@@ -95,8 +95,9 @@
     aria-modal="true"
     class="bg-card shadow-lg border border-navy-700 rounded-4 d-none"
     style="
-      position: fixed; bottom: 94px; right: 20px;
-      width: 380px; height: 520px;
+      position: fixed; bottom: clamp(1rem, 5vw, 5.875rem); right: clamp(0.75rem, 4vw, 1.25rem);
+      width: min(23.75rem, calc(100vw - 1.5rem)); max-width: calc(100vw - 1.5rem);
+      height: min(32.5rem, calc(100vh - 8rem)); max-height: calc(100vh - 8rem);
       z-index: 1050;
       display: flex; flex-direction: column;
       overflow: hidden;
@@ -107,7 +108,7 @@
     <!-- Header -->
     <div class="p-3 bg-navy-800 border-bottom border-navy-700 d-flex align-items-center justify-content-between">
       <div class="d-flex align-items-center gap-2">
-        <div class="position-relative" style="width:36px; height:36px; flex-shrink:0;">
+        <div class="position-relative" style="width:2.25rem; height:2.25rem; flex-shrink:0;">
           <svg
             width="36" height="36"
             viewBox="195 55 290 290"
@@ -183,12 +184,12 @@
           <!-- Online indicator dot -->
           <span
             class="position-absolute bottom-0 end-0 bg-success border border-dark rounded-circle"
-            style="width:9px; height:9px;"
+            style="width:0.5625rem; height:0.5625rem;"
             aria-hidden="true"></span>
         </div>
         <div>
           <h6 class="mb-0 fw-bold text-white">Feyn</h6>
-          <small class="text-muted" style="font-size:10px;">AI Investigation Assistant</small>
+          <small class="text-muted" style="font-size:0.625rem;">AI Investigation Assistant</small>
         </div>
       </div>
 
@@ -223,7 +224,7 @@
 
     <!-- Typing Indicator -->
     <div id="feyn-typing-indicator" class="px-3 py-2 d-none" aria-hidden="true">
-      <div class="bg-navy-700 rounded-4 px-3 py-2 d-inline-flex align-items-center gap-1" style="max-width:60px;">
+      <div class="bg-navy-700 rounded-4 px-3 py-2 d-inline-flex align-items-center gap-1" style="max-width:3.75rem;">
         <span class="typing-dot"></span>
         <span class="typing-dot"></span>
         <span class="typing-dot"></span>
@@ -246,7 +247,7 @@
           type="button"
           class="btn btn-indigo rounded-circle p-0 d-flex align-items-center justify-content-center"
           aria-label="Send message"
-          style="width:40px; height:40px; flex-shrink:0;">
+          style="width:2.5rem; height:2.5rem; flex-shrink:0;">
           <i class="bi bi-send-fill" aria-hidden="true"></i>
         </button>
       </div>
@@ -357,6 +358,32 @@
 /* ── Scrollbar ── */
 #feyn-chat-messages::-webkit-scrollbar       { width: 4px; }
 #feyn-chat-messages::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+@media (max-width: 767.98px) {
+  #feyn-chat-panel {
+    width: min(23.75rem, calc(100vw - 1.25rem)) !important;
+    max-width: calc(100vw - 1.25rem) !important;
+    height: min(32.5rem, calc(100vh - 7rem)) !important;
+    max-height: calc(100vh - 7rem) !important;
+    right: 0.625rem !important;
+    bottom: 5.5rem !important;
+  }
+}
+
+@media (max-width: 479.98px) {
+  #feyn-chat-panel {
+    width: calc(100vw - 1rem) !important;
+    max-width: calc(100vw - 1rem) !important;
+    height: min(70vh, 30rem) !important;
+    max-height: min(70vh, 30rem) !important;
+    right: 0.5rem !important;
+    bottom: 5rem !important;
+  }
+  .feyn-msg {
+    max-width: 92%;
+    font-size: 0.8125rem;
+  }
+}
 
 /* ── Respect reduced-motion preference ── */
 @media (prefers-reduced-motion: reduce) {

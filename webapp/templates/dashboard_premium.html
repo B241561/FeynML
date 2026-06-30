@@ -168,12 +168,12 @@
 
 {% block content %}
 <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-5 animate-premium">
+    <div class="d-flex justify-content-between align-items-center mb-5 animate-premium mobile-header-stack">
         <div>
             <h2 class="fw-bold mb-1">Investigation Dashboard</h2>
             <p class="text-muted mb-0">Audit session: <span class="badge bg-light border">{{ report_id }}</span></p>
         </div>
-        <div class="d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center gap-3 mobile-actions">
             <div class="dropdown">
                 <button class="btn btn-outline-indigo dropdown-toggle rounded-pill" type="button" data-bs-toggle="dropdown">
                     <i class="bi bi-download me-2"></i>Export
@@ -371,7 +371,7 @@
     {% set severity_order = {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3, 'NONE': 4} %}
     {% set sorted_kpis = kpi_metrics | sort(attribute='severity') | list %}
     
-    <div class="row g-4 mb-5 animate-premium" style="animation-delay: 0.1s;">
+    <div class="row g-4 mb-5 animate-premium kpi-grid-mobile" style="animation-delay: 0.1s;">
         {% for kpi in sorted_kpis %}
         {% set is_priority = loop.index <= 2 and kpi.severity in ['CRITICAL', 'HIGH', 'MEDIUM'] %}
         {% set priority_class = 'critical' if kpi.severity == 'CRITICAL' else 'high' if kpi.severity == 'HIGH' else 'medium' if kpi.severity == 'MEDIUM' else '' %}

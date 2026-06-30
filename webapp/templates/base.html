@@ -40,7 +40,7 @@
 <body class="{{ body_class or '' }}">
     <div class="d-flex flex-column min-vh-100">
         <!-- Top Navigation (SaaS Style) -->
-        <nav class="navbar navbar-expand-lg sticky-top d-print-none">
+        <nav class="navbar navbar-expand-md sticky-top d-print-none">
             <div class="container-fluid px-4">
 <a href="/" class="navbar-brand d-flex align-items-center gap-2 text-decoration-none"
    style="gap:10px;">
@@ -102,7 +102,7 @@
   ">FeynML</span>
 
 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
@@ -120,7 +120,7 @@
                             <a class="nav-link {{ 'active' if request.endpoint == 'contact' }}" href="{{ url_for('contact') }}">Contact</a>
                         </li>
                     </ul>
-                    <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center gap-3 navbar-actions">
                         <div class="d-flex align-items-center gap-3 me-2">
                             <a href="https://github.com/B241561" target="_blank" class="text-muted fs-5 hover-indigo"><i class="fa-brands fa-github"></i></a>
                             <a href="https://www.linkedin.com/in/arman-kaushik-29b5b6370/" target="_blank" class="text-muted fs-5 hover-indigo"><i class="fa-brands fa-linkedin"></i></a>
@@ -369,6 +369,21 @@
             toggle.addEventListener('click', function() {
                 const collapsed = body.classList.toggle('sidebar-collapsed');
                 localStorage.setItem(storageKey, collapsed);
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.main-content table').forEach(table => {
+                if (table.closest('.table-responsive')) {
+                    return;
+                }
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'table-responsive';
+                wrapper.style.overflowX = 'auto';
+                wrapper.style.webkitOverflowScrolling = 'touch';
+                table.parentNode.insertBefore(wrapper, table);
+                wrapper.appendChild(table);
             });
         });
 
