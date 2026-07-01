@@ -226,6 +226,74 @@
   color: #7dd3fc;
 }
 
+/* ── RESPONSIVE HERO SECTION ─────────────────────────────────── */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 60px 16px 0;
+    min-height: auto;
+  }
+  .hero-card {
+    padding: 32px 24px;
+  }
+  .hero-h1 {
+    font-size: 1.5rem;
+  }
+  .hero-lead {
+    font-size: 0.95rem;
+    max-width: 100%;
+  }
+  .hero-checks {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .hero-3d-wrap {
+    max-width: 100%;
+    margin-top: 32px;
+  }
+  .hero-badge-float {
+    font-size: 9px;
+    padding: 5px 10px;
+  }
+  .hero-badge-float strong {
+    font-size: 11px;
+  }
+  .hud-metrics {
+    gap: 10px;
+  }
+  .hud-metric-label {
+    font-size: 7px;
+  }
+  .hud-metric-val {
+    font-size: 11px;
+  }
+  .d-flex.gap-3 {
+    flex-direction: column;
+    width: 100%;
+  }
+  .d-flex.gap-3 .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-h1 {
+    font-size: 1.25rem;
+  }
+  .hero-lead {
+    font-size: 0.85rem;
+  }
+  .hero-card {
+    padding: 24px 16px;
+  }
+  .hero-badge-float {
+    font-size: 8px;
+    padding: 4px 8px;
+  }
+  .hud-metrics {
+    gap: 8px;
+  }
+}
+
 /* ── JARVIS LOGO STRIP ───────────────────────────────────────── */
 .logo-strip {
   width: 100%;
@@ -1792,11 +1860,15 @@
   if (!canvas) return;
   var wrapper   = canvas.parentElement;
 
+  /* Mobile detection for performance optimization */
+  var isMobile = window.innerWidth < 768;
+
   var W = wrapper.clientWidth  || 520;
   var H = Math.round(Math.min(W * 0.80, 440));
 
   var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  /* Cap pixel ratio at 1 on mobile for performance */
+  renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
   renderer.setSize(W, H);
   renderer.setClearColor(0x000000, 0);
 
@@ -1811,7 +1883,10 @@
     uL3: { value: new THREE.Vector3( 0,  3, -2) }
   };
 
-  var knotGeo = new THREE.TorusKnotGeometry(1, 0.32, 240, 36, 2, 3);
+  /* Reduce geometry complexity on mobile */
+  var knotSegments = isMobile ? 120 : 240;
+  var knotRadialSegments = isMobile ? 24 : 36;
+  var knotGeo = new THREE.TorusKnotGeometry(1, 0.32, knotSegments, knotRadialSegments, 2, 3);
   var knotMat = new THREE.ShaderMaterial({
     vertexShader:   VS,
     fragmentShader: FS,
@@ -1822,7 +1897,7 @@
   var knot = new THREE.Mesh(knotGeo, knotMat);
   scene.add(knot);
 
-  var wireGeo = new THREE.TorusKnotGeometry(1.015, 0.335, 60, 10, 2, 3);
+  var wireGeo = new THREE.TorusKnotGeometry(1.015, 0.335, isMobile ? 40 : 60, isMobile ? 8 : 10, 2, 3);
   var wireMat = new THREE.MeshBasicMaterial({
     color: 0x38bdf8, wireframe: true,
     transparent: true, opacity: 0.045
@@ -1832,7 +1907,8 @@
 
   function mkRing(r, col, op, rx, ry, rz) {
     ry = ry || 0; rz = rz || 0;
-    var g = new THREE.TorusGeometry(r, 0.016, 16, 128);
+    var ringSegments = isMobile ? 64 : 128;
+    var g = new THREE.TorusGeometry(r, 0.016, 16, ringSegments);
     var m = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: op });
     var mesh = new THREE.Mesh(g, m);
     mesh.rotation.set(rx, ry, rz);
@@ -1882,8 +1958,9 @@
     var pts = new THREE.Points(g, m);
     return { pts: pts, geo: g, mat: m };
   }
-  var c1 = mkCloud(240, 1.90, 3.50, 0x38bdf8, 0.030, 0.55);
-  var c2 = mkCloud(100, 2.60, 4.20, 0x6366f1, 0.024, 0.35);
+  /* Reduce particle count on mobile */
+  var c1 = mkCloud(isMobile ? 120 : 240, 1.90, 3.50, 0x38bdf8, 0.030, 0.55);
+  var c2 = mkCloud(isMobile ? 50 : 100, 2.60, 4.20, 0x6366f1, 0.024, 0.35);
   scene.add(c1.pts, c2.pts);
 
   var clock = new THREE.Clock();

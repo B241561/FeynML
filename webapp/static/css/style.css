@@ -1619,3 +1619,222 @@ body.dark-mode .contact-email-note a,
 [data-theme="dark"] .contact-email-note a {
     color: #60a5fa;
 }
+
+/* ---------------------------------------------------------------
+   RESPONSIVE BREAKPOINTS
+   --------------------------------------------------------------- */
+
+/* Desktop: 1025px+ (base styles already handle this) */
+
+/* Tablet: 769px–1024px */
+@media (max-width: 1024px) {
+    /* Fluid containers */
+    .container, .container-fluid {
+        max-width: 100%;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    /* Typography scale */
+    h1 { font-size: 1.75rem; }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.25rem; }
+    body { font-size: 0.95rem; }
+
+    /* KPI cards - 2 columns */
+    .kpi-grid,
+    .stats-grid,
+    .metric-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    /* Tables */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Buttons stack on tablet */
+    .btn-group-vertical .btn {
+        width: 100%;
+    }
+}
+
+/* Mobile: 481px–768px */
+@media (max-width: 768px) {
+    /* Typography scale */
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.3rem; }
+    h3 { font-size: 1.15rem; }
+    h4 { font-size: 1rem; }
+    body { font-size: 0.9rem; }
+
+    /* KPI cards - 1 column stack */
+    .kpi-grid,
+    .stats-grid,
+    .metric-grid,
+    .confidence-grid,
+    .card-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    /* Cards - full width */
+    .card {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    /* Tables - smaller font */
+    .table-responsive > .table {
+        font-size: 0.85rem;
+    }
+    .table-responsive > .table th,
+    .table-responsive > .table td {
+        padding: 0.5rem 0.75rem;
+    }
+
+    /* Buttons - full width, min tap target */
+    .btn {
+        min-height: 44px;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
+    }
+    .btn-group .btn,
+    .d-flex .btn {
+        flex: 1 1 auto;
+    }
+
+    /* Forms - full width inputs */
+    .form-control,
+    .form-select {
+        min-height: 44px;
+        font-size: 1rem;
+    }
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    /* Modals - fit viewport */
+    .modal-dialog {
+        max-width: 90vw;
+        margin: 0.5rem auto;
+    }
+    .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+
+    /* Navbar/sidebar - collapse to hamburger */
+    .navbar-collapse {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 280px;
+        height: 100vh;
+        background: var(--bg-secondary);
+        z-index: 1050;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    .navbar-collapse.show {
+        transform: translateX(0);
+    }
+
+    /* Plotly charts - reduce height */
+    .js-plotly-plot,
+    [id^="chart-"],
+    [id*="chart-"] {
+        height: 250px !important;
+    }
+
+    /* Padding/margin scale */
+    .container,
+    .section {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Small Mobile: up to 480px */
+@media (max-width: 480px) {
+    /* Typography scale */
+    h1 { font-size: 1.25rem; }
+    h2 { font-size: 1.1rem; }
+    h3 { font-size: 1rem; }
+    body { font-size: 0.85rem; }
+
+    /* Tables - even smaller */
+    .table-responsive > .table {
+        font-size: 0.8rem;
+        min-width: 20rem;
+    }
+    .table-responsive > .table th,
+    .table-responsive > .table td {
+        padding: 0.4rem 0.6rem;
+    }
+
+    /* Buttons - stack vertically */
+    .d-flex.gap-3,
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    .d-flex.gap-3 .btn,
+    .btn-group .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Forms - full width */
+    .row .col-md-6,
+    .row .col-lg-4 {
+        width: 100%;
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Plotly charts - further reduced */
+    .js-plotly-plot,
+    [id^="chart-"],
+    [id*="chart-"] {
+        height: 200px !important;
+    }
+
+    /* Cards - minimal padding */
+    .card-body {
+        padding: 0.75rem;
+    }
+
+    /* Modals - nearly full width */
+    .modal-dialog {
+        max-width: 95vw;
+        margin: 0.25rem auto;
+    }
+
+    /* Export/download buttons - prevent overlap */
+    .export-buttons,
+    .download-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    .export-buttons .btn,
+    .download-buttons .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* ---------------------------------------------------------------
+   PLOTLY CHART RESPONSIVE
+   --------------------------------------------------------------- */
+.js-plotly-plot,
+.plotly-graph-div {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+}

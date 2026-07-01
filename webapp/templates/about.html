@@ -853,3 +853,41 @@
 </div><!-- /about-page -->
 
 {% endblock %}
+
+/* -- RESPONSIVE ABOUT PAGE ------------------------------------ */
+@media (max-width: 768px) {
+  .about-hero h1 {
+    font-size: 1.75rem;
+  }
+  .about-hero p {
+    font-size: 0.95rem;
+  }
+  .cap-card {
+    padding: 1.25rem;
+  }
+  .col-md-4,
+  .col-md-6 {
+    width: 100%;
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .row.g-4 {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-hero h1 {
+    font-size: 1.5rem;
+  }
+  .about-hero p {
+    font-size: 0.85rem;
+  }
+  .cap-card {
+    padding: 1rem;
+  }
+  .btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}

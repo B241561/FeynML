@@ -27,3 +27,33 @@
   </div>
 </div>
 {% endblock %}
+
+/* -- RESPONSIVE ROOT CAUSE PAGE ------------------------------- */
+@media (max-width: 768px) {
+  .col-md-6,
+  .col-lg-4 {
+    width: 100%;
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .card {
+    margin-bottom: 16px;
+  }
+  .table-responsive > .table {
+    font-size: 0.85rem;
+  }
+  .table-responsive > .table th,
+  .table-responsive > .table td {
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-responsive > .table {
+    font-size: 0.8rem;
+  }
+  .table-responsive > .table th,
+  .table-responsive > .table td {
+    padding: 0.4rem 0.6rem;
+  }
+}

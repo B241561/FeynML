@@ -17,6 +17,17 @@
     {% block head %}{% endblock %}
     {% block extra_css %}{% endblock %}
 <style>
+  /* Global CSS Reset for Responsive Design */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  html, body {
+    overflow-x: hidden;
+  }
+  img, svg {
+    max-width: 100%;
+    height: auto;
+  }
   @keyframes spin1     { from{transform:rotate(0deg)}   to{transform:rotate(360deg)} }
   @keyframes spin2     { from{transform:rotate(0deg)}   to{transform:rotate(-360deg)} }
   @keyframes spin3     { from{transform:rotate(0deg)}   to{transform:rotate(360deg)} }
