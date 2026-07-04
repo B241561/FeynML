@@ -1,0 +1,431 @@
+/* ============================================================
+   FEYNML DESIGN SYSTEM — "LAB INSTRUMENT" THEME
+   Drop this file in as /webapp/static/css/design-system.css
+   and link it in base.html AFTER your existing bootstrap/theme css
+   so these rules win the cascade.
+   ============================================================ */
+
+/* ---------- 1. TOKENS ---------- */
+:root {
+  /* base */
+  --fy-bg:            #0B0D10;   /* graphite background */
+  --fy-bg-raised:     #101318;   /* slightly lighter panel bg (cards) */
+  --fy-bg-inset:      #06070A;   /* recessed areas, code blocks, table stripe */
+  --fy-text:          #E8E6DF;   /* bone/off-white primary text */
+  --fy-text-dim:      #8A8D93;   /* secondary/caption text */
+  --fy-border:        #23262C;   /* hairline borders, default */
+
+  /* structural accent — used for borders, icons, dividers, secondary state */
+  --fy-steel:         #3D5A73;
+  --fy-steel-dim:     #26384A;
+
+  /* signal accent — RESERVED for anomalies / alerts / live state / primary CTA only */
+  --fy-amber:         #FFB020;
+  --fy-phosphor:      #C9F227;
+
+  /* severity scale (built from signal + steel family, not new hues) */
+  --fy-critical:      #E23E3E;
+  --fy-high:           #FFB020;
+  --fy-medium:         #E8C547;
+  --fy-stable:         #4FB286;
+
+  /* type */
+  --fy-font-display:  'Space Grotesk', 'Inter', sans-serif;
+  --fy-font-body:     'Inter', system-ui, sans-serif;
+  --fy-font-mono:     'JetBrains Mono', 'IBM Plex Mono', monospace;
+
+  --fy-radius: 2px;             /* sharp corners everywhere, no pill/rounded default */
+  --fy-radius-sm: 1px;
+}
+
+/* ---------- 2. BASE RESET ---------- */
+body {
+  background: var(--fy-bg);
+  color: var(--fy-text);
+  font-family: var(--fy-font-body);
+}
+
+h1, h2, h3, .display {
+  font-family: var(--fy-font-display);
+  letter-spacing: -0.01em;
+}
+
+.mono, .fy-metric, table td.numeric, .kpi-value {
+  font-family: var(--fy-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 3. FLAT CARD (default everywhere) ---------- */
+.card, .fy-card {
+  background: var(--fy-bg-raised);
+  border: 1px solid var(--fy-border);
+  border-radius: var(--fy-radius);
+  box-shadow: none;           /* kill default glossy shadow/glow */
+  backdrop-filter: none;      /* kill glassmorphism blur */
+}
+
+.card:hover, .fy-card:hover {
+  border-color: var(--fy-steel);
+  transition: border-color 150ms ease;
+}
+
+/* ---------- 4. BUTTONS ---------- */
+.btn-secondary, .btn-outline {
+  background: transparent;
+  border: 1px solid var(--fy-steel);
+  color: var(--fy-text);
+  border-radius: var(--fy-radius);
+}
+
+.btn-primary {
+  background: var(--fy-amber);
+  color: #0B0D10;
+  border: none;
+  border-radius: var(--fy-radius);
+  font-weight: 600;
+}
+
+/* the ONE glow allowed: primary CTA, used sparingly, only on landing/dashboard hero */
+.btn-primary.fy-glow {
+  box-shadow: 0 0 24px -4px rgba(255, 176, 32, 0.45);
+}
+.btn-primary.fy-glow:hover {
+  box-shadow: 0 0 32px -2px rgba(255, 176, 32, 0.65);
+}
+
+/* ---------- 5. SEVERITY BADGES ---------- */
+.badge-critical { color: var(--fy-critical); border: 1px solid var(--fy-critical); background: rgba(226,62,62,0.08); }
+.badge-high     { color: var(--fy-high);     border: 1px solid var(--fy-high);     background: rgba(255,176,32,0.08); }
+.badge-medium   { color: var(--fy-medium);   border: 1px solid var(--fy-medium);   background: rgba(232,197,71,0.08); }
+.badge-stable   { color: var(--fy-stable);   border: 1px solid var(--fy-stable);   background: rgba(79,178,134,0.08); }
+
+.badge-critical, .badge-high, .badge-medium, .badge-stable {
+  font-family: var(--fy-font-mono);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: var(--fy-radius-sm);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* optional glow ONLY for critical badge on report.html final verdict */
+.badge-critical.fy-glow {
+  box-shadow: 0 0 12px -2px rgba(226,62,62,0.5);
+}
+
+/* ---------- 6. TABLES (flat, dense, readable — datasets/analysis pages) ---------- */
+.fy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--fy-font-mono);
+  font-size: 0.875rem;
+}
+.fy-table th {
+  text-align: left;
+  color: var(--fy-text-dim);
+  font-weight: 500;
+  border-bottom: 1px solid var(--fy-border);
+  padding: 8px 12px;
+}
+.fy-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--fy-bg-inset);
+}
+.fy-table tr:hover td {
+  background: var(--fy-bg-inset);
+}
+
+/* ---------- 7. LIVE / RUNNING STATE (functional pulse, not decoration) ---------- */
+@keyframes fy-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.fy-live-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--fy-phosphor);
+  animation: fy-pulse 1.4s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* used on analysis_running.html + configure.html while AI Investigator is active */
+.fy-processing-glow {
+  box-shadow: 0 0 20px -4px rgba(201, 242, 39, 0.35);
+  border-color: var(--fy-phosphor) !important;
+}
+
+/* ---------- 8. HERO WAVEFORM (landing.html signature element) ---------- */
+.fy-waveform {
+  stroke: var(--fy-amber);
+  stroke-width: 1.5;
+  fill: none;
+  filter: drop-shadow(0 0 6px rgba(255,176,32,0.4)); /* the one glow moment on landing */
+}
+.fy-waveform-path {
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  animation: fy-sweep 3.5s ease-in-out infinite;
+}
+@keyframes fy-sweep {
+  0%   { stroke-dashoffset: 1200; }
+  50%  { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -1200; }
+}
+
+/* ---------- 9. NAV / SIDEBAR / FOOTER — always flat, no exceptions ---------- */
+.navbar, .sidebar, footer {
+  background: var(--fy-bg);
+  border-color: var(--fy-border);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.sidebar .nav-link.active {
+  border-left: 2px solid var(--fy-amber);
+  color: var(--fy-text);
+  background: transparent;
+}
+
+/* ---------- 11. SLEEK FOOTER (lab-instrument theme) ---------- */
+.fy-footer {
+  border-top: 1px solid var(--fy-border);
+  padding: 64px 48px 28px;
+  background: var(--fy-bg);
+}
+.fy-footer-grid {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 48px;
+}
+.fy-footer-brand .brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-bottom: 14px;
+}
+.fy-footer-brand .brand-mark .dot {
+  width: 8px; height: 8px;
+  background: var(--fy-amber);
+  border-radius: 1px;
+}
+.fy-footer-brand p {
+  color: var(--fy-text-dim);
+  font-size: 0.85rem;
+  line-height: 1.7;
+  max-width: 280px;
+}
+.fy-footer-col h4 {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fy-text-dim);
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+.fy-footer-col a {
+  display: block;
+  color: var(--fy-text);
+  text-decoration: none;
+  font-size: 0.86rem;
+  padding: 5px 0;
+  opacity: 0.85;
+  border-left: 1px solid transparent;
+  padding-left: 0;
+  transition: all 120ms ease;
+}
+.fy-footer-col a:hover {
+  color: var(--fy-amber);
+  border-left: 2px solid var(--fy-amber);
+  padding-left: 8px;
+  opacity: 1;
+}
+
+/* status strip instead of glossy "Connect" card */
+.fy-footer-status {
+  max-width: 1120px;
+  margin: 40px auto 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--fy-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.fy-status-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: var(--fy-text-dim);
+}
+.fy-footer-status .fy-live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--fy-stable);
+  animation: fy-pulse 1.6s ease-in-out infinite;
+}
+
+.fy-status-right {
+  display: flex;
+  gap: 20px;
+}
+.fy-icon-link {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--fy-border);
+  color: var(--fy-text-dim);
+  text-decoration: none;
+  font-size: 0.8rem;
+  transition: all 120ms ease;
+}
+.fy-icon-link:hover {
+  border-color: var(--fy-steel);
+  color: var(--fy-text);
+}
+
+.fy-footer-legal {
+  max-width: 1120px;
+  margin: 24px auto 0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--fy-text-dim);
+  font-family: var(--fy-font-mono);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .fy-footer-grid { grid-template-columns: 1fr 1fr; }
+  .fy-footer { padding: 48px 24px 24px; }
+}
+
+/* ---------- 10. UTILITY: kill legacy glow/gradient classes site-wide ---------- */
+.glass, .glossy, .gradient-glow, .neon-border {
+  background: var(--fy-bg-raised) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  border: 1px solid var(--fy-border) !important;
+}
+
+/* ---------- 12. CTA v3 (ultra-minimal, no frame) ---------- */
+.fy-cta-section {
+  padding-top: 80px;
+  padding-bottom: 80px;
+}
+
+.fy-cta {
+  max-width: 620px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.fy-cta-eyebrow {
+  font-family: var(--fy-font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--fy-text-dim);
+  margin-bottom: 16px;
+}
+
+.fy-cta h2 {
+  font-size: 1.9rem;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+.fy-cta h2 .accent {
+  color: var(--fy-text);
+  position: relative;
+  display: inline-block;
+}
+.fy-cta h2 .accent::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -4px;
+  height: 1px;
+  background: var(--fy-amber);
+}
+
+.fy-cta p {
+  max-width: 380px;
+  margin: 16px auto 30px;
+  color: var(--fy-text-dim);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+
+.fy-cta-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 22px;
+}
+
+.fy-btn-primary {
+  padding: 9px 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--fy-amber);
+  color: #0B0D10;
+  border: none;
+  border-radius: 1px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+.fy-btn-primary:hover { background: #ffc04d; }
+
+.fy-link {
+  font-size: 0.8rem;
+  color: var(--fy-text-dim);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: all 150ms ease;
+}
+.fy-link:hover {
+  color: var(--fy-text);
+  border-bottom-color: var(--fy-text-dim);
+}
+
+/* ---------- 13. 4D HYPERCUBE HERO (isolated, namespaced fy4d- prefix) ---------- */
+.fy4d-hero-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+}
+#fy4d-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 0.82;
+  border: 1px solid var(--fy-border);
+}
+.fy4d-hud {
+  position: absolute;
+  font-family: var(--fy-font-mono);
+  font-size: 11px;
+  color: var(--fy-text-dim);
+  border: 1px solid var(--fy-border);
+  background: rgba(11,13,16,0.85);
+  padding: 6px 12px;
+  line-height: 1.6;
+}
+.fy4d-hud strong { color: var(--fy-amber); font-size: 13px; display: block; }
+.fy4d-hud-tl { top: 14px; left: 14px; }
+.fy4d-hud-tr { top: 14px; right: 14px; }
+.fy4d-hud-bl { bottom: 14px; left: 14px; }
+.fy4d-hud-center {
+  position: absolute;
+  bottom: 14px; left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--fy-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--fy-text-dim);
+  text-transform: uppercase;
+}
