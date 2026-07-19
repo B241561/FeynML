@@ -9,6 +9,7 @@ import traceback
 import plotly
 import plotly.graph_objects as go
 import plotly.express as px
+from webapp.chart_colors import FEYNML_CHART_COLORS
 
 # Make sklearn optional so tests that don't require ML packages can import webapp
 try:
@@ -222,7 +223,7 @@ class AnalysisRunner:
                 fig_dist = go.Figure()
                 fig_dist.add_trace(go.Histogram(
                     x=mean_predicted, name='Predicted Probabilities',
-                    marker_color='#3b82f6', nbinsx=30, opacity=0.7
+                    marker_color=FEYNML_CHART_COLORS['primary'], nbinsx=30, opacity=0.7
                 ))
                 fig_dist.update_layout(
                     title='Prediction Confidence Distribution',

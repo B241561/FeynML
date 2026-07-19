@@ -1,57 +1,57 @@
 :root {
-    --hud-primary: #38bdf8;
-    --hud-secondary: #0ea5e9;
-    --hud-tertiary: #0284c7;
-    --hud-core: #7dd3fc;
-    --hud-core-strong: #e0f2fe;
+    --hud-primary: var(--fy-amber);
+    --hud-secondary: var(--fy-amber);
+    --hud-tertiary: var(--fy-amber);
+    --hud-core: var(--fy-amber);
+    --hud-core-strong: #ffffff;
     --hud-text: #ffffff;
-    --hud-subtext: #38bdf8;
-    --hud-shadow: rgba(56, 189, 248, 0.28);
-    --hud-shell: rgba(14, 165, 233, 0.14);
-    --hud-grid: rgba(56, 189, 248, 0.08);
-    --hud-readout: rgba(56, 189, 248, 0.4);
+    --hud-subtext: var(--fy-amber);
+    --hud-shadow: rgba(245, 158, 11, 0.28);
+    --hud-shell: rgba(245, 158, 11, 0.14);
+    --hud-grid: rgba(245, 158, 11, 0.08);
+    --hud-readout: rgba(245, 158, 11, 0.4);
 }
 
 [data-theme="light"] {
-    --hud-primary: #0284c7;
-    --hud-secondary: #0369a1;
+    --hud-primary: var(--fy-amber);
+    --hud-secondary: var(--fy-amber);
     --hud-tertiary: #1d4ed8;
-    --hud-core: #0ea5e9;
-    --hud-core-strong: #e0f2fe;
+    --hud-core: var(--fy-amber);
+    --hud-core-strong: #ffffff;
     --hud-text: #0f172a;
-    --hud-subtext: #0369a1;
-    --hud-shadow: rgba(14, 165, 233, 0.18);
-    --hud-shell: rgba(14, 165, 233, 0.1);
-    --hud-grid: rgba(2, 132, 199, 0.12);
-    --hud-readout: rgba(3, 105, 161, 0.36);
+    --hud-subtext: var(--fy-amber);
+    --hud-shadow: rgba(245, 158, 11, 0.18);
+    --hud-shell: rgba(245, 158, 11, 0.1);
+    --hud-grid: rgba(245, 158, 11, 0.12);
+    --hud-readout: rgba(245, 158, 11, 0.36);
 }
 
 .feynml-logo[data-logo-theme="dark"] {
-    --hud-primary: #38bdf8;
-    --hud-secondary: #0ea5e9;
-    --hud-tertiary: #0284c7;
-    --hud-core: #7dd3fc;
+    --hud-primary: var(--fy-amber);
+    --hud-secondary: var(--fy-amber);
+    --hud-tertiary: var(--fy-amber);
+    --hud-core: var(--fy-amber);
     --hud-core-strong: #ffffff;
     --hud-text: #ffffff;
-    --hud-subtext: #38bdf8;
-    --hud-shadow: rgba(56, 189, 248, 0.32);
-    --hud-shell: rgba(14, 165, 233, 0.15);
-    --hud-grid: rgba(56, 189, 248, 0.08);
-    --hud-readout: rgba(56, 189, 248, 0.4);
+    --hud-subtext: var(--fy-amber);
+    --hud-shadow: rgba(245, 158, 11, 0.32);
+    --hud-shell: rgba(245, 158, 11, 0.15);
+    --hud-grid: rgba(245, 158, 11, 0.08);
+    --hud-readout: rgba(245, 158, 11, 0.4);
 }
 
 .feynml-logo[data-logo-theme="light"] {
-    --hud-primary: #0284c7;
-    --hud-secondary: #0369a1;
-    --hud-tertiary: #1d4ed8;
-    --hud-core: #0ea5e9;
+    --hud-primary: var(--fy-amber);
+    --hud-secondary: var(--fy-amber);
+    --hud-tertiary: var(--fy-amber);
+    --hud-core: var(--fy-amber);
     --hud-core-strong: #0f172a;
     --hud-text: #0f172a;
-    --hud-subtext: #0369a1;
-    --hud-shadow: rgba(14, 165, 233, 0.16);
-    --hud-shell: rgba(14, 165, 233, 0.09);
-    --hud-grid: rgba(2, 132, 199, 0.12);
-    --hud-readout: rgba(3, 105, 161, 0.36);
+    --hud-subtext: var(--fy-amber);
+    --hud-shadow: rgba(245, 158, 11, 0.16);
+    --hud-shell: rgba(245, 158, 11, 0.09);
+    --hud-grid: rgba(245, 158, 11, 0.12);
+    --hud-readout: rgba(245, 158, 11, 0.36);
 }
 
 .feynml-logo {

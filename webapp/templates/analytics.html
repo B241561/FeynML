@@ -3,12 +3,12 @@
 
 {% block content %}
 <div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 animate-premium">
+        <div class="d-flex justify-content-between align-items-center mb-4 animate-premium">
         <div>
             <h2 class="fw-bold mb-1 text-primary">Admin Analytics</h2>
             <p class="text-muted mb-0">Live insight into user activity, dataset uploads, and report generation.</p>
         </div>
-        <a href="/admin" class="btn btn-outline-indigo btn-sm rounded-pill"><i class="bi bi-arrow-left me-2"></i>Back to Admin</a>
+        <a href="/admin" class="btn btn-sm rounded-pill" style="border: 1px solid var(--fy-steel); color: var(--fy-steel); background: transparent;"><i class="bi bi-arrow-left me-2"></i>Back to Admin</a>
     </div>
 
     {% if analytics_error %}
@@ -30,17 +30,17 @@
     <div class="analytics-kpi-grid mb-4">
         <div class="card analytics-card p-4">
             <div class="small text-muted text-uppercase fw-bold mb-2">Total Users</div>
-            <div class="d-flex align-items-end justify-content-between gap-3">
+                <div class="d-flex align-items-end justify-content-between gap-3">
                 <div>
                     <h3 class="fw-bold mb-1">{{ total_users or 0 }}</h3>
                     <p class="mb-0 text-muted">Registered platform users</p>
                 </div>
-                <i class="bi bi-people-fill fs-2 text-indigo-400"></i>
+                <i class="bi bi-people-fill fs-2" style="color: var(--fy-steel)"></i>
             </div>
         </div>
         <div class="card analytics-card p-4">
             <div class="small text-muted text-uppercase fw-bold mb-2">New Users Today</div>
-            <div class="d-flex align-items-end justify-content-between gap-3">
+                <div class="d-flex align-items-end justify-content-between gap-3">
                 <div>
                     <h3 class="fw-bold mb-1">{{ new_users_today or 0 }}</h3>
                     <p class="mb-0 text-muted">Signups in the last 24 hours</p>
@@ -50,7 +50,7 @@
         </div>
         <div class="card analytics-card p-4">
             <div class="small text-muted text-uppercase fw-bold mb-2">Uploaded Datasets</div>
-            <div class="d-flex align-items-end justify-content-between gap-3">
+                <div class="d-flex align-items-end justify-content-between gap-3">
                 <div>
                     <h3 class="fw-bold mb-1">{{ uploaded_datasets or 0 }}</h3>
                     <p class="mb-0 text-muted">Dataset uploads by users</p>
@@ -60,7 +60,7 @@
         </div>
         <div class="card analytics-card p-4">
             <div class="small text-muted text-uppercase fw-bold mb-2">Models Trained</div>
-            <div class="d-flex align-items-end justify-content-between gap-3">
+                <div class="d-flex align-items-end justify-content-between gap-3">
                 <div>
                     <h3 class="fw-bold mb-1">{{ models_trained or 0 }}</h3>
                     <p class="mb-0 text-muted">Completed analysis runs</p>
@@ -70,7 +70,7 @@
         </div>
         <div class="card analytics-card p-4">
             <div class="small text-muted text-uppercase fw-bold mb-2">Reports Generated</div>
-            <div class="d-flex align-items-end justify-content-between gap-3">
+                <div class="d-flex align-items-end justify-content-between gap-3">
                 <div>
                     <h3 class="fw-bold mb-1">{{ reports_generated or 0 }}</h3>
                     <p class="mb-0 text-muted">Exported investigation reports</p>
@@ -80,7 +80,7 @@
         </div>
         <div class="card analytics-card p-4">
             <div class="small text-muted text-uppercase fw-bold mb-2">Active Users</div>
-            <div class="d-flex align-items-end justify-content-between gap-3">
+                <div class="d-flex align-items-end justify-content-between gap-3">
                 <div>
                     <h3 class="fw-bold mb-1">{{ active_users|default(0) }}</h3>
                     <p class="mb-0 text-muted">Users active in the last 7 days</p>
@@ -183,10 +183,10 @@
             datasets: [{
                 label: 'New Users',
                 data: userGrowthData,
-                borderColor: 'rgba(79, 124, 255, 0.92)',
-                backgroundColor: 'rgba(79, 124, 255, 0.18)',
+                borderColor: 'rgba(255, 176, 32, 0.92)',
+                backgroundColor: 'rgba(255, 176, 32, 0.18)',
                 pointBackgroundColor: '#ffffff',
-                pointBorderColor: 'rgba(79, 124, 255, 0.92)',
+                pointBorderColor: 'rgba(255, 176, 32, 0.92)',
                 fill: true,
                 tension: 0.38,
                 borderWidth: 2
@@ -221,8 +221,8 @@
             datasets: [{
                 label: 'Reports',
                 data: reportTrendData,
-                backgroundColor: 'rgba(79, 124, 255, 0.72)',
-                borderColor: 'rgba(79, 124, 255, 0.92)',
+                backgroundColor: 'rgba(255, 176, 32, 0.72)',
+                borderColor: 'rgba(255, 176, 32, 0.92)',
                 borderWidth: 1
             }]
         },

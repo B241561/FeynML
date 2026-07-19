@@ -19,7 +19,7 @@
         <label class="form-label">Target column (to explain)</label>
         <input name="target_col" class="form-control" placeholder="e.g. churn, price, label" required />
       </div>
-      <div class="alert alert-info">
+      <div class="alert alert-info" style="background: var(--fy-bg-raised); border: 1px solid var(--fy-steel); color: var(--fy-text);">
         <small>Note: If no model is provided, a baseline RandomForest will be trained automatically to demonstrate explainability.</small>
       </div>
       <button class="btn btn-indigo" type="submit">Run SHAP Analysis</button>

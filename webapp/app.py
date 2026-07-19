@@ -13,6 +13,8 @@ import plotly
 import plotly.graph_objects as go
 import plotly.express as px
 
+from webapp.chart_colors import FEYNML_CHART_COLORS
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file, send_from_directory
 from sqlalchemy import func, or_
 from flask_login import current_user, login_user, logout_user, login_required
@@ -1516,7 +1518,7 @@ def view_dashboard(report_id):
             x=confidences,
             y=accuracies,
             name='Actual Accuracy',
-            marker_color='#6366f1',
+            marker_color=FEYNML_CHART_COLORS['primary'],
             hovertemplate="Confidence: %{x:.2f}<br>Accuracy: %{y:.2f}<extra></extra>"
         ))
         fig_cal.add_trace(go.Scatter(
@@ -1524,7 +1526,7 @@ def view_dashboard(report_id):
             y=[0, 1],
             mode='lines',
             name='Perfectly Calibrated',
-            line=dict(dash='dash', color='#94a3b8')
+            line=dict(dash='dash', color=FEYNML_CHART_COLORS['secondary'])
         ))
         fig_cal.update_layout(
             title='Reliability Diagram (Calibration)',
@@ -1551,11 +1553,11 @@ def view_dashboard(report_id):
         for f in drift_features:
             status = f.get('status', 'STABLE')
             if status == 'DRIFT':
-                colors.append('#ea580c')
+                colors.append(FEYNML_CHART_COLORS['critical'])
             elif status == 'WARN':
-                colors.append('#d97706')
+                colors.append(FEYNML_CHART_COLORS['critical'])
             else:
-                colors.append('#4f46e5')
+                colors.append(FEYNML_CHART_COLORS['primary'])
 
         fig_drift = go.Figure()
         fig_drift.add_trace(go.Bar(
@@ -1566,7 +1568,7 @@ def view_dashboard(report_id):
             customdata=list(zip(psis, [f.get('status', 'STABLE') for f in drift_features])),
             hovertemplate="<b>%{x}</b><br>KS: %{y:.3f}<br>PSI: %{customdata[0]:.3f}<br>Status: %{customdata[1]}<extra></extra>"
         ))
-        fig_drift.add_hline(y=0.2, line_dash='dash', line_color='#ef4444', annotation_text='Drift Threshold')
+        fig_drift.add_hline(y=0.2, line_dash='dash', line_color=FEYNML_CHART_COLORS['critical'], annotation_text='Drift Threshold')
         fig_drift.update_layout(
             title='Feature Drift Analysis',
             xaxis_title='Feature',
@@ -1593,7 +1595,7 @@ def view_dashboard(report_id):
             labels=['Clean Labels', 'Suspected Noise'],
             values=[clean, errors],
             hole=.4,
-            marker_colors=['#059669', '#991b1b'],
+            marker_colors=[FEYNML_CHART_COLORS['stable'], FEYNML_CHART_COLORS['critical']],
             textinfo='label+percent',
             hovertemplate="<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>"
         ))
@@ -1616,11 +1618,11 @@ def view_dashboard(report_id):
         colors = []
         for r in rates:
             if r >= 10:
-                colors.append('#991b1b')
+                colors.append(FEYNML_CHART_COLORS['critical'])
             elif r > 0:
-                colors.append('#d97706')
+                colors.append(FEYNML_CHART_COLORS['critical'])
             else:
-                colors.append('#059669')
+                colors.append(FEYNML_CHART_COLORS['stable'])
         fig_miss = go.Figure(go.Bar(
             y=features,
             x=rates,
@@ -1804,7 +1806,7 @@ def view_report(report_id):
             fig_pred_dist.add_trace(go.Histogram(
                 x=confidences,
                 name='Predicted Probabilities',
-                marker_color='#3b82f6',
+                marker_color=FEYNML_CHART_COLORS['primary'],
                 nbinsx=30,
                 opacity=0.7
             ))
@@ -1829,11 +1831,11 @@ def view_report(report_id):
                 x=confidences,
                 y=residuals,
                 mode='markers',
-                marker=dict(size=8, color='#f97316', opacity=0.6),
+                marker=dict(size=8, color=FEYNML_CHART_COLORS['critical'], opacity=0.6),
                 name='Residuals',
                 hovertemplate='Predicted: %{x:.2f}<br>Residual: %{y:.2f}<extra></extra>'
             ))
-            fig_residuals.add_hline(y=0, line_dash='dash', line_color='#64748b', annotation_text='Perfect Calibration')
+            fig_residuals.add_hline(y=0, line_dash='dash', line_color=FEYNML_CHART_COLORS['secondary'], annotation_text='Perfect Calibration')
             fig_residuals.update_layout(
                 title='Residuals Plot (Actual - Predicted)',
                 xaxis_title='Predicted Confidence',
@@ -1881,8 +1883,12 @@ def view_report(report_id):
             sorted_features = sorted(drift_features, key=lambda x: x.get('ks_stat', 0), reverse=True)
             ks_names = [f['feature'] for f in sorted_features]
             ks_stats = [f.get('ks_stat', 0) for f in sorted_features]
-            colors = ['#ea580c' if f.get('status') == 'DRIFT' else '#f59e0b' if f.get('status') == 'WARN' else '#10b981' 
-                    for f in sorted_features]
+            colors = [
+                FEYNML_CHART_COLORS['critical'] if f.get('status') == 'DRIFT'
+                else FEYNML_CHART_COLORS['high'] if f.get('status') == 'WARN'
+                else FEYNML_CHART_COLORS['stable']
+                for f in sorted_features
+            ]
             
             fig_ks = go.Figure(data=go.Bar(
                 y=ks_names,
@@ -1913,7 +1919,7 @@ def view_report(report_id):
             fig_noise_dist.add_trace(go.Histogram(
                 x=noise_scores,
                 name='Noise Scores',
-                marker_color='#10b981',
+                marker_color=FEYNML_CHART_COLORS['stable'],
                 nbinsx=30,
                 opacity=0.7
             ))
@@ -1943,7 +1949,7 @@ def view_report(report_id):
                 labels=['Clean', 'Noisy'],
                 values=[clean, errors],
                 hole=.4,
-                marker_colors=['#059669', '#991b1b'],
+                marker_colors=[FEYNML_CHART_COLORS['stable'], FEYNML_CHART_COLORS['critical']],
                 textinfo='label+percent',
                 hovertemplate="<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>"
             ))
@@ -2005,7 +2011,7 @@ def view_report(report_id):
             fig_leakage = go.Figure(data=go.Bar(
                 x=suspect_names,
                 y=suspect_scores,
-                marker_color='#f97316',
+                marker_color=FEYNML_CHART_COLORS['critical'],
                 text=[f'{v:.3f}' for v in suspect_scores],
                 textposition='auto',
                 hovertemplate='%{x}<br>Leakage Score: %{y:.4f}<extra></extra>'
@@ -2030,7 +2036,7 @@ def view_report(report_id):
                        or miss_findings.get('missing_rates', {}))
             features = list(m_rates.keys())
             rates = [v * 100 for v in m_rates.values()]
-            fig_miss = go.Figure(go.Bar(x=features, y=rates, marker_color='#64748b'))
+            fig_miss = go.Figure(go.Bar(x=features, y=rates, marker_color=FEYNML_CHART_COLORS['secondary']))
             fig_miss.update_layout(title='Missing Data (%)', xaxis_title='Feature', yaxis_title='Missing %', height=350, margin=dict(l=20, r=20, t=40, b=20), font=dict(color='white'))
             charts['missing_data'] = json.dumps(fig_miss, cls=plotly.utils.PlotlyJSONEncoder)
     
@@ -2672,7 +2678,7 @@ def export_pdf(report_id):
             charts['prediction_dist'] = go.Figure(
                 data=[go.Histogram(
                     x=pred_dist_data,
-                    marker_color='#6366f1',
+                    marker_color=FEYNML_CHART_COLORS['primary'],
                     opacity=0.85,
                     name='Score Distribution'
                 )],
@@ -2690,7 +2696,7 @@ def export_pdf(report_id):
                 data=[go.Scatter(
                     y=residuals,
                     mode='markers',
-                    marker=dict(color='#f59e0b', size=4, opacity=0.6),
+                    marker=dict(color=FEYNML_CHART_COLORS['critical'], size=4, opacity=0.6),
                     name='Residual'
                 )],
                 layout=make_layout(
@@ -2705,7 +2711,7 @@ def export_pdf(report_id):
             psi_scores = data['drift']['findings']['psi_scores']
             features = list(psi_scores.keys())
             psi_vals  = list(psi_scores.values())
-            colors = ['#ef4444' if v > 0.25 else '#f59e0b' if v > 0.1 else '#22c55e'
+            colors = [FEYNML_CHART_COLORS['critical'] if v > 0.25 else FEYNML_CHART_COLORS['critical'] if v > 0.1 else FEYNML_CHART_COLORS['stable']
                       for v in psi_vals]
             charts['psi_heatmap'] = go.Figure(
                 data=[go.Bar(
@@ -2721,15 +2727,15 @@ def export_pdf(report_id):
                     ytitle='PSI Score',
                     shapes=[
                         dict(type='line', y0=0.1, y1=0.1, x0=0, x1=1,
-                             xref='paper', line=dict(color='#f59e0b', dash='dash', width=1)),
-                        dict(type='line', y0=0.25, y1=0.25, x0=0, x1=1,
-                             xref='paper', line=dict(color='#ef4444', dash='dash', width=1))
+                                xref='paper', line=dict(color=FEYNML_CHART_COLORS['critical'], dash='dash', width=1)),
+                            dict(type='line', y0=0.25, y1=0.25, x0=0, x1=1,
+                                xref='paper', line=dict(color=FEYNML_CHART_COLORS['critical'], dash='dash', width=1))
                     ],
                     annotations=[
-                        dict(x=1, y=0.1, xref='paper', text='Warn (0.1)',
-                             showarrow=False, font=dict(size=9, color='#f59e0b'), xanchor='right'),
-                        dict(x=1, y=0.25, xref='paper', text='Critical (0.25)',
-                             showarrow=False, font=dict(size=9, color='#ef4444'), xanchor='right')
+                            dict(x=1, y=0.1, xref='paper', text='Warn (0.1)',
+                                showarrow=False, font=dict(size=9, color=FEYNML_CHART_COLORS['critical']), xanchor='right'),
+                            dict(x=1, y=0.25, xref='paper', text='Critical (0.25)',
+                                showarrow=False, font=dict(size=9, color=FEYNML_CHART_COLORS['critical']), xanchor='right')
                     ]
                 )
             ).to_json()
@@ -2744,9 +2750,9 @@ def export_pdf(report_id):
             if sorted_feats:
                 feat_names = [f['feature'] for f in sorted_feats]
                 ks_vals    = [f.get('ks_stat', 0) for f in sorted_feats]
-                ks_colors  = ['#ef4444' if f.get('status') == 'DRIFT'
-                               else '#f59e0b' if f.get('status') == 'WARN'
-                               else '#22c55e' for f in sorted_feats]
+                ks_colors  = [FEYNML_CHART_COLORS['critical'] if f.get('status') == 'DRIFT'
+                               else FEYNML_CHART_COLORS['critical'] if f.get('status') == 'WARN'
+                               else FEYNML_CHART_COLORS['stable'] for f in sorted_feats]
                 charts['ks_ranked'] = go.Figure(
                     data=[go.Bar(
                         x=ks_vals, y=feat_names,
@@ -2770,7 +2776,7 @@ def export_pdf(report_id):
                 data=[go.Histogram(
                     x=noise_scores,
                     nbinsx=30,
-                    marker_color='#8b5cf6',
+                    marker_color=FEYNML_CHART_COLORS['primary'],
                     opacity=0.85,
                     name='Noise Score'
                 )],
@@ -2791,7 +2797,7 @@ def export_pdf(report_id):
                 charts['leakage_scores'] = go.Figure(
                     data=[go.Bar(
                         x=lk_feats, y=lk_vals,
-                        marker_color='#ef4444',
+                        marker_color=FEYNML_CHART_COLORS['critical'],
                         opacity=0.85,
                         name='Leakage Score',
                         text=[f'{v:.3f}' for v in lk_vals],

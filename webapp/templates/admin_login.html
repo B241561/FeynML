@@ -12,8 +12,8 @@
                     <p class="text-muted">Authenticate to access the admin analytics dashboard and management tools.</p>
                 </div>
                 {% if blocked_until %}
-                <div class="alert alert-warning">
-                    Too many failed attempts. Please wait {{ blocked_until }} seconds and try again.
+                <div class="alert alert-warning" style="background: var(--fy-bg-raised); border: 1px solid var(--fy-medium); color: var(--fy-text);">
+                    <span style="color: var(--fy-medium)">Too many failed attempts.</span> Please wait {{ blocked_until }} seconds and try again.
                 </div>
                 {% endif %}
                 <form method="POST" action="{{ url_for('admin_login', next=next) }}">

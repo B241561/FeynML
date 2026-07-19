@@ -6,43 +6,43 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   * { box-sizing: border-box; }
-  
+
   html, body,
   .container, .container-fluid,
   .row, .col, [class*="col-"],
   .main-content, .content-area,
   .page-content, #content {
-    background-color: #0f172a !important;
-    color: #e2e8f0 !important;
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
   }
 
   .card, .chart-builder-card,
   .chart-preview-card {
-    background-color: #1e293b !important;
-    border: 1px solid #2d3748 !important;
-    color: #e2e8f0 !important;
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
   }
 
   .card-header, [class*="card-header"] {
-    background-color: #1e293b !important;
-    border-bottom: 1px solid #2d3748 !important;
-    color: #ffffff !important;
+    background-color: var(--surface) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
   }
 
   select, input, .form-control, .form-select {
-    background-color: #0f172a !important;
-    color: #e2e8f0 !important;
-    border: 1px solid #334155 !important;
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid rgba(107, 110, 116, 0.12) !important;
   }
   
   select option {
-    background-color: #1e293b !important;
-    color: #e2e8f0 !important;
+    background-color: var(--card-bg) !important;
+    color: var(--text-primary) !important;
   }
 
 html, body {
-    background-color: #0f172a !important;
-    color: #e2e8f0 !important;
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
 }
 
 .visual-explorer-page,
@@ -50,82 +50,82 @@ html, body {
 .content-wrapper,
 #main,
 .page-wrapper {
-    background-color: #0f172a !important;
+    background-color: var(--bg-secondary) !important;
 }
 
 h1, h2 {
-    color: #ffffff !important;
+    color: var(--text-primary) !important;
 }
 
 p.subtitle {
-    color: #94a3b8 !important;
+    color: var(--text-muted) !important;
 }
 
 body.dark-mode {
-    background-color: #0f172a;
-    color: #e2e8f0;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
 }
 body.dark-mode .visual-explorer-panel {
-    background-color: #1e293b;
-    border: 1px solid #2d3748;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 0.75rem;
-    color: #e2e8f0;
+    color: var(--text-primary);
 }
 body.dark-mode .visual-explorer-panel .form-select,
 body.dark-mode .visual-explorer-panel .form-control,
 body.dark-mode .visual-explorer-panel .form-select:focus,
 body.dark-mode .visual-explorer-panel .form-control:focus {
-    background-color: #0f172a !important;
-    color: #e2e8f0 !important;
-    border: 1px solid #334155 !important;
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid rgba(107, 110, 116, 0.12) !important;
     border-radius: 0.5rem !important;
     box-shadow: none !important;
 }
 body.dark-mode .visual-explorer-label {
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
 body.dark-mode .visual-explorer-heading {
-    color: #ffffff;
+    color: var(--text-primary);
 }
 body.dark-mode .visual-explorer-subtitle {
-    color: #94a3b8;
+  color: var(--text-muted);
 }
 body.dark-mode .visual-explorer-panel .card-header {
-    background-color: #1e293b;
-    border-bottom: 1px solid #2d3748;
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--border-color);
 }
 body.dark-mode .visual-explorer-panel .btn-outline-secondary,
 body.dark-mode .visual-explorer-panel .btn-outline-indigo,
 body.dark-mode .visual-explorer-panel .btn-indigo {
-    color: #e2e8f0;
-    border-color: #334155;
+    color: var(--text-primary);
+    border-color: var(--border-color);
 }
 body.dark-mode .visual-explorer-panel .btn-outline-indigo {
     background: transparent;
-    border: 1px solid #334155;
-    color: #94a3b8;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
 }
 body.dark-mode #downloadPngBtn {
-    background-color: #0f172a !important;
-    border: 1px solid #334155 !important;
-    color: #e2e8f0 !important;
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
     border-radius: 0.5rem !important;
     padding: 0.25rem 0.75rem !important;
 }
 body.dark-mode #downloadPngBtn:hover {
-    background-color: #1e293b !important;
-    border-color: #475569 !important;
+    background-color: var(--surface) !important;
+    border-color: rgba(107, 110, 116, 0.25) !important;
 }
 
 .chart-pill {
   padding: 0.28rem 0.85rem;
   border-radius: 999px;
-  background: #1e293b;
-  border: 1px solid #334155;
-  color: #94a3b8;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
   font-size: 0.78rem;
   font-weight: 500;
   cursor: pointer;
@@ -134,13 +134,13 @@ body.dark-mode #downloadPngBtn:hover {
   user-select: none;
 }
 .chart-pill.active {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: #ffffff;
+  background: var(--fy-amber);
+  border-color: var(--fy-amber);
+  color: var(--text-primary);
 }
 .chart-pill:hover:not(.active) {
-  border-color: #3b82f6;
-  color: #e2e8f0;
+  border-color: var(--fy-steel);
+  color: var(--text-primary);
 }
 @keyframes shimmer {
   0%   { background-position: 200% 0; }
@@ -150,14 +150,14 @@ body.dark-mode #downloadPngBtn:hover {
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 visual-explorer-shell" style="background-color: #0f172a; min-height: 100vh;">
+<div class="container-fluid py-4 visual-explorer-shell" style="min-height: 100vh;">
     <!-- Hidden Report ID for JS -->
     <input type="hidden" id="report-id-hidden" value="{{ report_id }}">
     
     <!-- Page Header -->
     <div class="mb-4">
         <h1 class="display-5 fw-bold mb-2 visual-explorer-heading">
-            <i class="bi bi-graph-up text-indigo-400"></i> Visual Explorer
+          <i class="bi bi-graph-up me-2" style="color: var(--fy-steel)"></i> Visual Explorer
         </h1>
         <p class="lead visual-explorer-subtitle">Build custom charts to explore your dataset</p>
     </div>
@@ -167,7 +167,7 @@ body.dark-mode #downloadPngBtn:hover {
         <!-- LEFT PANEL: Chart Builder -->
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm h-100 bg-card visual-explorer-panel">
-                <div class="card-header border-0 py-3" style="background-color: #1e293b; border-bottom: 1px solid #2d3748;">
+                <div class="card-header border-0 py-3">
                     <h5 class="mb-0 fw-bold">
                         <i class="bi bi-sliders"></i> Chart Builder
                     </h5>
@@ -219,7 +219,7 @@ body.dark-mode #downloadPngBtn:hover {
                                 <button type="button" class="chart-pill" data-value="violin">Violin</button>
                             </div>
                             <input type="hidden" id="chartType" name="chart_type" value="scatter" />
-                            <small class="d-block text-muted" id="chartTypeHelper" style="color: #64748b !important;">Compare two numeric columns</small>
+                            <small class="d-block text-muted" id="chartTypeHelper">Compare two numeric columns</small>
                         </div>
 
                         <!-- Color By -->
@@ -263,7 +263,7 @@ body.dark-mode #downloadPngBtn:hover {
         <!-- RIGHT PANEL: Chart Output -->
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm h-100 bg-card visual-explorer-panel">
-                <div class="card-header border-0 py-3 d-flex justify-content-between align-items-center" style="background-color: #1e293b; border-bottom: 1px solid #2d3748;">
+                <div class="card-header border-0 py-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold">
                         <i class="bi bi-bar-chart"></i> Chart Preview
                     </h5>
@@ -273,7 +273,7 @@ body.dark-mode #downloadPngBtn:hover {
                         </button>
                     </div>
                 </div>
-                <div id="chart-toolbar" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; background: #162032; border-bottom: 1px solid #2d3748; border-radius: 0.75rem 0.75rem 0 0; width: 100%;">
+                <div id="chart-toolbar" class="chart-toolbar">
                     <button type="button" onclick="chartZoomIn()" title="Zoom In" class="tb-btn">🔍+</button>
                     <button type="button" onclick="chartZoomOut()" title="Zoom Out" class="tb-btn">🔍−</button>
                     <button type="button" onclick="chartPan()" title="Pan / Move" class="tb-btn" id="btn-pan">✋</button>
@@ -295,8 +295,8 @@ body.dark-mode #downloadPngBtn:hover {
     </div>
 
     <!-- SUGGESTED CHARTS SECTION -->
-    <div class="mt-5" style="background-color: #0f172a !important;">
-        <h2 class="fw-bold mb-4" style="color: #e2e8f0;">
+    <div class="mt-5">
+        <h2 class="fw-bold mb-4 text-primary">
             <i class="bi bi-lightbulb"></i> Suggested Charts
         </h2>
         <div class="row g-4">
@@ -310,7 +310,7 @@ body.dark-mode #downloadPngBtn:hover {
                     <div class="card-body">
                         <h5 class="card-title fw-bold text-primary">{{ suggestion.title }}</h5>
                         <p class="card-text small text-muted">{{ suggestion.description }}</p>
-                        <div class="badge bg-indigo-100 text-indigo-700 mb-3">{{ suggestion.chart_type }}</div>
+                        <div class="badge mb-3" style="background: transparent; border: 1px solid var(--fy-steel); color: var(--fy-steel);">{{ suggestion.chart_type }}</div>
                         <button class="btn btn-sm btn-indigo w-100 generate-suggestion-btn">
                             <i class="bi bi-lightning-charge"></i> Generate
                         </button>
@@ -321,23 +321,16 @@ body.dark-mode #downloadPngBtn:hover {
         </div>
     </div>
 
-    <section class="guide-section" style="
-      margin-top: 3rem;
-      padding: 2rem;
-      background: #1e293b;
-      border-radius: 1rem;
-      border: 1px solid #2d3748;">
+    <section class="guide-section">
 
-      <h2 style="color:#fff; font-size:1.25rem; 
-                 font-weight:700; margin-bottom:0.25rem;">
+      <h2 class="fw-bold mb-4 text-primary" style="font-size:1.25rem; font-weight:700; margin-bottom:0.25rem;">
         How to Use Visual Explorer
       </h2>
-      <p style="color:#64748b; font-size:0.85rem; 
-                margin-bottom:2rem;">
+      <p class="text-muted" style="font-size:0.85rem; margin-bottom:2rem;">
         Build, explore, and export custom charts from your dataset.
       </p>
 
-      <div class="guide-grid" style="display:grid; grid-template-columns: repeat(3,1fr); gap:1rem;">
+      <div class="guide-grid">
 
         <div class="guide-card">
           <span class="guide-icon">📐</span>
@@ -416,7 +409,7 @@ body.dark-mode #downloadPngBtn:hover {
     </section>
 
     <!-- My Visualizations Section (for future use) -->
-    <div class="mt-5" id="myVisualizationsSection" style="display:none; background-color: #0f172a !important;">
+    <div class="mt-5" id="myVisualizationsSection" style="display:none;">
         <h2 class="fw-bold mb-4">
             <i class="bi bi-collection"></i> My Visualizations
         </h2>
@@ -726,7 +719,7 @@ function showChartError(msg) {
   const chartLoading = document.getElementById('chartLoading');
   hideChartLoading();
   if (chartPlot) {
-    chartPlot.innerHTML = `<div style="color: #ef4444; font-size: 0.95rem; text-align: center; padding: 2rem; background: #1e293b; border-radius: 0.5rem; border: 1px solid #7f1d1d;">${msg}</div>`;
+    chartPlot.innerHTML = `<div class="chart-error-message">${msg}</div>`;
   }
   if (chartLoading) {
     chartLoading.style.display = 'none';
@@ -946,7 +939,7 @@ if (!histogramTypes.includes(defaultChartType)) {
 .skeleton-chart {
     width: 100%;
     height: 400px;
-    background: linear-gradient(90deg, #1e293b 25%, #2d3748 50%, #1e293b 75%);
+    background: linear-gradient(90deg, var(--card-bg) 25%, rgba(255,255,255,0.06) 50%, var(--card-bg) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
     border-radius: 0.5rem;
@@ -955,24 +948,24 @@ if (!histogramTypes.includes(defaultChartType)) {
 .suggestion-card {
     transition: all 0.3s ease;
     cursor: pointer;
-    border: 1px solid #2d3748;
-    background-color: #1e293b !important;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg) !important;
     border-radius: 0.75rem !important;
-    color: #e2e8f0 !important;
+    color: var(--text-primary) !important;
 }
 
 .suggestion-card:hover {
     transform: translateY(-4px);
-    border-color: #6366f1;
-    box-shadow: 0 12px 24px rgba(99, 102, 241, 0.15) !important;
+    border-color: var(--fy-steel);
+    box-shadow: 0 12px 24px rgba(107, 110, 116, 0.15) !important;
 }
 
 .suggestion-card .card-title {
-    color: #e2e8f0 !important;
+    color: var(--text-primary) !important;
 }
 
 .suggestion-card .card-text {
-    color: #94a3b8 !important;
+    color: var(--text-muted) !important;
 }
 
 .visual-explorer-shell {
@@ -982,7 +975,7 @@ if (!histogramTypes.includes(defaultChartType)) {
 .toolbar-divider {
     width: 0.0625rem;
     height: 1.5rem;
-    background: #2d3748;
+    background: var(--border-color);
     margin: 0 0.25rem;
     flex-shrink: 0;
 }
@@ -1019,8 +1012,8 @@ if (!histogramTypes.includes(defaultChartType)) {
     gap: 0.5rem;
     padding: 1.5rem;
     text-align: center;
-    background: rgba(15, 23, 42, 0.95);
-    color: #cbd5e1;
+    background: var(--surface);
+    color: var(--text-secondary);
     z-index: 2;
 }
 
@@ -1037,27 +1030,26 @@ if (!histogramTypes.includes(defaultChartType)) {
 
 .form-select.bg-main,
 .form-control.bg-main {
-    background-color: #0f172a !important;
-    border-color: #334155 !important;
-    color: #e2e8f0 !important;
+    background-color: var(--bg-secondary) !important;
+    border-color: rgba(107, 110, 116, 0.12) !important;
+    color: var(--text-primary) !important;
     border-radius: 0.5rem !important;
 }
 
 .form-select.bg-main:focus,
 .form-control.bg-main:focus {
-    background-color: #0f172a !important;
-    border-color: #6366f1 !important;
-    color: #e2e8f0 !important;
-    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25) !important;
+    background-color: var(--bg-secondary) !important;
+    border-color: var(--fy-steel) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(107, 110, 116, 0.25) !important;
 }
 
-/* Chart pill styles */
 .chart-pill {
     padding: 0.28rem 0.85rem;
     border-radius: 999px;
-    background: #1e293b;
-    border: 1px solid #334155;
-    color: #94a3b8;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
     font-size: 0.78rem;
     font-weight: 500;
     cursor: pointer;
@@ -1065,27 +1057,27 @@ if (!histogramTypes.includes(defaultChartType)) {
     white-space: nowrap;
 }
 .chart-pill.active {
-    background: #3b82f6;
-    border-color: #3b82f6;
-    color: #ffffff;
+    background: var(--fy-amber);
+    border-color: var(--fy-amber);
+    color: var(--text-primary);
 }
 .chart-pill:hover:not(.active) {
-    border-color: #3b82f6;
-    color: #e2e8f0;
+    border-color: var(--fy-steel);
+    color: var(--text-primary);
 }
 
 .guide-card {
-  background: #0f172a;
-  border: 1px solid #2d3748;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
   border-radius: 0.75rem;
   padding: 1.25rem;
-  color: #cbd5e1;
+  color: var(--text-secondary);
   font-size: 0.82rem;
   line-height: 1.6;
 }
 
 .guide-card h4 {
-  color: #e2e8f0;
+  color: var(--text-primary);
   font-size: 0.9rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
@@ -1098,14 +1090,17 @@ if (!histogramTypes.includes(defaultChartType)) {
 }
 
 .guide-card b {
-  color: #93c5fd;
+  color: var(--accent-blue);
 }
 
-@media (max-width: 767.98px) {
-  .guide-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-  #chartContainer {
+.chart-error-message {
+    color: var(--danger);
+    font-size: 0.95rem;
+    text-align: center;
+    padding: 2rem;
+    background: var(--card-bg);
+    border-radius: 0.5rem;
+    border: 1px solid var(--danger-soft);
     height: 30rem;
   }
   .chart-plot {
@@ -1127,9 +1122,9 @@ if (!histogramTypes.includes(defaultChartType)) {
   display: inline-block;
   padding: 0.25rem 0.85rem;
   border-radius: 999px !important;
-  background-color: #1e3a5f !important;
-  color: #93c5fd !important;
-  border: 1px solid #3b82f6 !important;
+  background-color: rgba(107,110,116,0.06) !important;
+  color: var(--fy-steel) !important;
+  border: 1px solid var(--fy-steel) !important;
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
@@ -1138,16 +1133,16 @@ if (!histogramTypes.includes(defaultChartType)) {
   white-space: nowrap;
 }
 
-/* Measure chips */
+/* Measure chips — match Dimensions flat/steel styling (non-CTA) */
 #measures-chips .chip,
 .measure-chip,
 .measures-chip {
   display: inline-block;
   padding: 0.25rem 0.85rem;
   border-radius: 999px !important;
-  background-color: #1a3a2a !important;
-  color: #6ee7b7 !important;
-  border: 1px solid #10b981 !important;
+  background-color: rgba(107,110,116,0.06) !important;
+  color: var(--fy-steel) !important;
+  border: 1px solid var(--fy-steel) !important;
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
@@ -1158,47 +1153,55 @@ if (!histogramTypes.includes(defaultChartType)) {
 
 .dimension-chip:hover,
 .dimensions-chip:hover {
-  background-color: #1d4ed8 !important;
+  background-color: rgba(107,110,116,0.12) !important;
 }
 
 .measure-chip:hover,
 .measures-chip:hover {
-  background-color: #065f46 !important;
+  background-color: rgba(107,110,116,0.12) !important;
 }
 
 html[data-theme="light"] .form-select.bg-main,
 html[data-theme="light"] .form-control.bg-main {
-    background-color: #f8fafc;
-    border-color: #e2e8f0;
-    color: #1e293b;
+    background-color: var(--surface);
+    border-color: var(--border-color);
+    color: var(--text-primary);
 }
 
 .modebar {
   position: absolute !important;
   top: 8px !important;
   right: 8px !important;
-  background: rgba(15,23,42,0.85) !important;
+  background: var(--surface) !important;
   border-radius: 6px !important;
   padding: 2px 4px !important;
 }
 
 .modebar-btn path {
-  fill: #94a3b8 !important;
+  fill: var(--text-muted) !important;
 }
 
 .modebar-btn:hover path {
-  fill: #ffffff !important;
+  fill: var(--text-primary) !important;
 }
 
 #chart-toolbar {
   position: relative;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0.75rem 0.75rem 0 0;
+  width: 100%;
 }
 
 .tb-btn {
-  background: #0f172a;
-  color: #e2e8f0;
-  border: 1px solid #334155;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   padding: 0.45rem 0.75rem;
   border-radius: 0.6rem;
   font-size: 0.85rem;
@@ -1207,8 +1210,8 @@ html[data-theme="light"] .form-control.bg-main {
 }
 
 .tb-btn:hover {
-  background: #1e293b;
-  border-color: #475569;
+  background: var(--surface);
+  border-color: var(--border-color);
 }
 
 @media (max-width: 992px) {
@@ -1242,28 +1245,28 @@ html[data-theme="light"] .form-control.bg-main {
 
 html[data-theme="light"] .form-select.bg-main:focus,
 html[data-theme="light"] .form-control.bg-main:focus {
-    background-color: #ffffff;
-    border-color: #6366f1;
-    color: #1e293b;
+    background-color: var(--surface);
+    border-color: var(--fy-steel);
+    color: var(--text-primary);
 }
 
 html[data-theme="light"] .bg-indigo-50 {
-    background-color: #eef2ff !important;
+    background-color: var(--surface) !important;
 }
 
 html[data-theme="light"] .text-indigo-700 {
-    color: #4f46e5 !important;
+    color: var(--fy-steel) !important;
 }
 
 html[data-theme="light"] .badge.bg-indigo-100 {
-    background-color: #e0e7ff !important;
+    background-color: rgba(107, 110, 116, 0.12) !important;
 }
 
 .chart-type-pill {
     padding: 0.5rem 1rem;
-    border: 1px solid #334155;
-    background-color: #1e293b;
-    color: #94a3b8;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--text-muted);
     border-radius: 9999px;
     font-size: 0.875rem;
     font-weight: 500;
@@ -1273,15 +1276,15 @@ html[data-theme="light"] .badge.bg-indigo-100 {
 }
 
 .chart-type-pill:hover {
-    background-color: #334155;
-    color: #cbd5e1;
-    border-color: #475569;
+    background-color: var(--surface);
+    color: var(--text-secondary);
+    border-color: var(--border-color);
 }
 
 .chart-type-pill.active {
-    background-color: #3b82f6;
-    color: white;
-    border-color: #3b82f6;
+    background-color: var(--fy-amber);
+    color: var(--text-primary);
+    border-color: var(--fy-amber);
 }
 </style>
 {% endblock %}

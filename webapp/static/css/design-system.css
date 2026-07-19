@@ -12,12 +12,12 @@
   --fy-bg-raised:     #101318;   /* slightly lighter panel bg (cards) */
   --fy-bg-inset:      #06070A;   /* recessed areas, code blocks, table stripe */
   --fy-text:          #E8E6DF;   /* bone/off-white primary text */
-  --fy-text-dim:      #8A8D93;   /* secondary/caption text */
-  --fy-border:        #23262C;   /* hairline borders, default */
+  --fy-text-dim:      #6B6E74;   /* secondary/caption text */
+  --fy-border:        #1C1F24;   /* hairline borders, default */
 
   /* structural accent — used for borders, icons, dividers, secondary state */
-  --fy-steel:         #3D5A73;
-  --fy-steel-dim:     #26384A;
+  --fy-steel:         #6B6E74;
+  --fy-steel-dim:     #3F4349;
 
   /* signal accent — RESERVED for anomalies / alerts / live state / primary CTA only */
   --fy-amber:         #FFB020;
@@ -153,12 +153,45 @@ h1, h2, h3, .display {
   border-color: var(--fy-phosphor) !important;
 }
 
-/* ---------- 8. HERO WAVEFORM (landing.html signature element) ---------- */
+/* ---------- 8. HERO TOGGLE / VARIANT SWITCHER ---------- */
+.hero-toggle-wrap {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-bottom: 16px;
+}
+.hero-variant-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border: 1px solid var(--fy-steel);
+  background: transparent;
+  color: var(--fy-text-dim);
+  font-family: var(--fy-font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+  border-radius: var(--fy-radius);
+  cursor: pointer;
+}
+.hero-variant-toggle:hover {
+  color: var(--fy-text);
+  border-color: var(--fy-amber);
+}
+.hero-variant {
+  display: none;
+  width: 100%;
+}
+.hero-variant.is-active {
+  display: block;
+}
+
 .fy-waveform {
   stroke: var(--fy-amber);
   stroke-width: 1.5;
   fill: none;
-  filter: drop-shadow(0 0 6px rgba(255,176,32,0.4)); /* the one glow moment on landing */
 }
 .fy-waveform-path {
   stroke-dasharray: 1200;
@@ -182,6 +215,120 @@ h1, h2, h3, .display {
   border-left: 2px solid var(--fy-amber);
   color: var(--fy-text);
   background: transparent;
+}
+
+/* ---------- NAVBAR SPECIFIC OVERRIDES (to beat style.css !important) ---------- */
+.navbar {
+  background: var(--fy-bg) !important;
+  backdrop-filter: none !important;
+  border-bottom: 1px solid var(--fy-border) !important;
+  box-shadow: none !important;
+}
+.navbar .nav-link {
+  color: var(--fy-text-dim) !important;
+}
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
+  color: var(--fy-amber) !important;
+}
+.navbar .navbar-brand {
+  color: var(--fy-text) !important;
+}
+.navbar-toggler {
+  border-color: var(--fy-border) !important;
+}
+.navbar-toggler-icon {
+  filter: none !important;
+  opacity: 0.7;
+}
+
+/* Override btn-indigo/btn-outline-indigo in navbar to use lab instrument theme */
+.navbar .btn-indigo,
+.navbar .btn-primary {
+  background: var(--fy-amber) !important;
+  color: #0B0D10 !important;
+  border: 1px solid var(--fy-amber) !important;
+  border-radius: var(--fy-radius) !important;
+}
+.navbar .btn-indigo:hover,
+.navbar .btn-primary:hover {
+  background: #ffc04d !important;
+  border-color: #ffc04d !important;
+  box-shadow: none !important;
+}
+.navbar .btn-outline-indigo,
+.navbar .btn-outline {
+  background: transparent !important;
+  border: 1px solid var(--fy-steel) !important;
+  color: var(--fy-text) !important;
+  border-radius: var(--fy-radius) !important;
+}
+.navbar .btn-outline-indigo:hover,
+.navbar .btn-outline:hover {
+  border-color: var(--fy-amber) !important;
+  color: var(--fy-amber) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* ---------- 10. 4D HYPERCUBE HERO (isolated, namespaced fy4d- prefix) ---------- */
+.fy4d-hero-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+#fy4d-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 0.82;
+  border: 1px solid var(--fy-border, #1C1F24);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(16,19,24,0.98), rgba(10,12,15,0.96));
+}
+.fy4d-hud {
+  position: absolute;
+  font-family: var(--fy-font-mono);
+  font-size: 11px;
+  color: var(--fy-text-dim);
+  border: 1px solid var(--fy-border, #1C1F24);
+  background: rgba(11,13,16,0.85);
+  padding: 6px 12px;
+  line-height: 1.6;
+}
+.fy4d-hud strong {
+  color: var(--fy-amber, #FFB020);
+  font-size: 13px;
+  display: block;
+}
+.fy4d-hud-tl { top: 14px; left: 14px; }
+.fy4d-hud-tr { top: 14px; right: 14px; }
+.fy4d-hud-bl { bottom: 14px; left: 14px; }
+.fy4d-hud-center {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--fy-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--fy-text-dim);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .fy4d-hud {
+    font-size: 10px;
+    padding: 5px 8px;
+  }
+  .fy4d-hud strong {
+    font-size: 12px;
+  }
+  .fy4d-hud-center {
+    font-size: 9px;
+  }
 }
 
 /* ---------- 11. SLEEK FOOTER (lab-instrument theme) ---------- */
@@ -393,39 +540,178 @@ h1, h2, h3, .display {
   border-bottom-color: var(--fy-text-dim);
 }
 
-/* ---------- 13. 4D HYPERCUBE HERO (isolated, namespaced fy4d- prefix) ---------- */
-.fy4d-hero-wrap {
-  position: relative;
-  width: 100%;
-  max-width: 560px;
+/* ---------- 13. CONTACT FORM (two-column layout) ---------- */
+.fy-contact-grid { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 48px; 
+  max-width: 1000px; 
+  margin: 0 auto; 
+  padding: 80px 24px; 
 }
-#fy4d-canvas {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1 / 0.82;
-  border: 1px solid var(--fy-border);
+.fy-contact-heading { 
+  font-family: var(--fy-font-display); 
+  font-size: 1.8rem; 
+  color: var(--fy-text); 
+  margin-bottom: 16px; 
 }
-.fy4d-hud {
-  position: absolute;
-  font-family: var(--fy-font-mono);
-  font-size: 11px;
-  color: var(--fy-text-dim);
-  border: 1px solid var(--fy-border);
-  background: rgba(11,13,16,0.85);
-  padding: 6px 12px;
-  line-height: 1.6;
+.fy-contact-desc { 
+  color: var(--fy-text-dim); 
+  line-height: 1.7; 
+  margin-bottom: 24px; 
 }
-.fy4d-hud strong { color: var(--fy-amber); font-size: 13px; display: block; }
-.fy4d-hud-tl { top: 14px; left: 14px; }
-.fy4d-hud-tr { top: 14px; right: 14px; }
-.fy4d-hud-bl { bottom: 14px; left: 14px; }
-.fy4d-hud-center {
-  position: absolute;
-  bottom: 14px; left: 50%;
-  transform: translateX(-50%);
-  font-family: var(--fy-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  color: var(--fy-text-dim);
-  text-transform: uppercase;
+.fy-contact-details { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
 }
+.fy-contact-row { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  color: var(--fy-text-dim); 
+  font-family: var(--fy-font-mono); 
+  font-size: 0.9rem; 
+}
+.fy-contact-icon { 
+  width: 18px; 
+  height: 18px; 
+  color: var(--fy-steel); 
+  flex-shrink: 0; 
+}
+.fy-contact-form { 
+  background: var(--fy-bg-raised); 
+  border: 1px solid var(--fy-border); 
+  border-radius: 8px; 
+  padding: 32px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 18px; 
+}
+.fy-form-group label { 
+  display: block; 
+  font-size: 0.8rem; 
+  color: var(--fy-text-dim); 
+  margin-bottom: 6px; 
+  font-family: var(--fy-font-mono); 
+  text-transform: uppercase; 
+  letter-spacing: 0.05em; 
+}
+.fy-form-group input, .fy-form-group textarea, .fy-form-group select { 
+  width: 100%; 
+  background: var(--fy-bg-inset); 
+  border: 1px solid var(--fy-border); 
+  border-radius: 2px; 
+  padding: 10px 12px; 
+  color: var(--fy-text); 
+  font-family: var(--fy-font-body); 
+  resize: none; 
+}
+.fy-form-group input:focus, .fy-form-group textarea:focus, .fy-form-group select:focus { 
+  outline: none; 
+  border-color: var(--fy-steel); 
+}
+.fy-contact-submit { 
+  width: 100%; 
+  text-align: center; 
+  padding: 12px; 
+}
+@media (max-width: 720px) { 
+  .fy-contact-grid { grid-template-columns: 1fr; } 
+}
+
+/* ---------- 14. FAQ ACCORDION (flat, hairline borders) ---------- */
+.fy-faq-list { 
+  max-width: 700px; 
+  margin: 48px auto 0; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px; 
+}
+.fy-faq-item { 
+  border: 1px solid var(--fy-border); 
+  border-radius: 2px; 
+  background: var(--fy-bg-raised); 
+}
+.fy-faq-summary { 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  gap: 16px; 
+  padding: 16px 20px; 
+  cursor: pointer; 
+  font-family: var(--fy-font-body); 
+  font-weight: 500; 
+  color: var(--fy-text); 
+  list-style: none; 
+}
+.fy-faq-summary::-webkit-details-marker { display: none; }
+.fy-faq-summary:hover { color: var(--fy-amber); }
+.fy-faq-chevron { 
+  width: 18px; 
+  height: 18px; 
+  color: var(--fy-text-dim); 
+  flex-shrink: 0; 
+  transition: transform 150ms ease; 
+}
+.fy-faq-item[open] .fy-faq-chevron { 
+  transform: rotate(180deg); 
+  color: var(--fy-amber); 
+}
+.fy-faq-answer { 
+  padding: 0 20px 16px; 
+  color: var(--fy-text-dim); 
+  font-size: 0.9rem; 
+  line-height: 1.7; 
+}
+.fy-faq-answer p { margin: 0; }
+
+/* ---------- 15. GENERAL-PURPOSE BADGES (utility classes) ---------- */
+.fy-badge { 
+  display: inline-block; 
+  padding: 4px 12px; 
+  font-size: 0.75rem; 
+  font-family: var(--fy-font-mono); 
+  text-transform: uppercase; 
+  letter-spacing: 0.04em; 
+  border-radius: 2px; 
+  border: 1px solid; 
+}
+.fy-badge-info    { 
+  color: var(--fy-steel); 
+  border-color: var(--fy-steel); 
+  background: rgba(61,90,115,0.08); 
+}
+.fy-badge-success { 
+  color: var(--fy-stable); 
+  border-color: var(--fy-stable); 
+  background: rgba(79,178,134,0.08); 
+}
+.fy-badge-error   { 
+  color: var(--fy-critical); 
+  border-color: var(--fy-critical); 
+  background: rgba(226,62,62,0.08); 
+}
+
+/* ---------- 16. LABELED DIVIDER (section breaks) ---------- */
+.fy-divider-labeled { 
+  display: flex; 
+  align-items: center; 
+  gap: 16px; 
+  max-width: 700px; 
+  margin: 0 auto; 
+}
+.fy-divider-line { 
+  height: 1px; 
+  flex: 1; 
+  background: var(--fy-border); 
+}
+.fy-divider-label { 
+  flex-shrink: 0; 
+  font-family: var(--fy-font-mono); 
+  font-size: 0.75rem; 
+  color: var(--fy-text-dim); 
+  text-transform: uppercase; 
+  letter-spacing: 0.08em; 
+}
+

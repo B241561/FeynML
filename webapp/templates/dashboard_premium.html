@@ -163,6 +163,192 @@
     border-radius: 9999px;
     font-weight: 600;
 }
+
+/* ── LAB INSTRUMENT THEME OVERRIDES ───────────────────────────── */
+.card {
+  background: var(--fy-bg-raised);
+  border: 1px solid var(--fy-border);
+  border-radius: var(--fy-radius);
+  box-shadow: none;
+}
+.card-header {
+  background: var(--fy-bg-inset);
+  border-bottom: 1px solid var(--fy-border);
+  color: var(--fy-text);
+  font-family: var(--fy-font-body);
+  font-weight: 600;
+}
+.card-body {
+  color: var(--fy-text);
+  font-family: var(--fy-font-body);
+}
+
+/* KPI cards - flat with mono font for metrics */
+.kpi-card .label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--fy-steel);
+  font-family: var(--fy-font-mono);
+}
+.kpi-card .metric {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--fy-text);
+  font-family: var(--fy-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Buttons - flat styling */
+.btn-outline {
+  border-color: var(--fy-steel);
+  color: var(--fy-steel);
+}
+.btn-outline:hover {
+  background: var(--fy-bg-inset);
+  border-color: var(--fy-text);
+  color: var(--fy-text);
+}
+
+/* Dropdown menus - flat */
+.dropdown-menu {
+  background: var(--fy-bg-raised);
+  border: 1px solid var(--fy-border);
+  color: var(--fy-text);
+}
+.dropdown-item {
+  color: var(--fy-text);
+}
+.dropdown-item:hover {
+  background: var(--fy-bg-inset);
+}
+
+/* Badges - flat */
+.badge {
+  background: var(--fy-bg-inset);
+  border: 1px solid var(--fy-border);
+  color: var(--fy-text);
+  font-family: var(--fy-font-mono);
+}
+
+/* Tables - flat */
+.table {
+  color: var(--fy-text);
+  border-color: var(--fy-border);
+}
+.table thead th {
+  color: var(--fy-steel);
+  border-bottom-color: var(--fy-border);
+  font-family: var(--fy-font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.table td {
+  border-color: var(--fy-border);
+}
+
+/* Processing glow for live cards (reserved) */
+.fy-processing-glow {
+  box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
+  border-color: var(--fy-high) !important;
+}
+.fy-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fy-high);
+  animation: pulse 1.5s ease-in-out infinite;
+  display: inline-block;
+  margin-right: 6px;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Override premium status colors for dark theme */
+.status-critical { 
+  color: var(--fy-critical) !important; 
+  background-color: rgba(220, 38, 38, 0.1) !important; 
+  border-color: var(--fy-critical) !important; 
+}
+.status-high { 
+  color: var(--fy-high) !important; 
+  background-color: rgba(251, 146, 60, 0.1) !important; 
+  border-color: var(--fy-high) !important; 
+}
+.status-medium { 
+  color: var(--fy-amber) !important; 
+  background-color: rgba(234, 179, 8, 0.1) !important; 
+  border-color: var(--fy-amber) !important; 
+}
+.status-stable { 
+  color: var(--fy-stable) !important; 
+  background-color: rgba(34, 197, 94, 0.1) !important; 
+  border-color: var(--fy-stable) !important; 
+}
+.status-neutral { 
+  color: var(--fy-steel) !important; 
+  background-color: var(--fy-bg-inset) !important; 
+  border-color: var(--fy-border) !important; 
+}
+
+/* Override recommendation cards for dark theme */
+.recommendation-card {
+  background: var(--fy-bg-raised);
+  border: 1px solid var(--fy-border);
+  color: var(--fy-text);
+}
+.recommendation-card:hover {
+  border-color: var(--fy-steel);
+  transform: translateY(-2px);
+}
+.recommendation-card.priority-critical {
+  border-left: 4px solid var(--fy-critical);
+  background: var(--fy-bg-raised);
+}
+.recommendation-card.priority-high {
+  border-left: 4px solid var(--fy-high);
+  background: var(--fy-bg-raised);
+}
+.recommendation-card.priority-medium {
+  border-left: 4px solid var(--fy-amber);
+  background: var(--fy-bg-raised);
+}
+.recommendation-card.priority-low {
+  border-left: 4px solid var(--fy-steel);
+  background: var(--fy-bg-raised);
+}
+
+/* Override KPI priority cards */
+.kpi-card-priority {
+  box-shadow: none;
+  transform: none;
+}
+
+/* Override confidence summary for dark theme */
+.confidence-summary {
+  background: var(--fy-bg-raised);
+  border: 1px solid var(--fy-border);
+  color: var(--fy-text);
+}
+.confidence-drivers-compact {
+  gap: 0.5rem;
+}
+.confidence-driver-item {
+  background: var(--fy-bg-inset);
+  border: 1px solid var(--fy-border);
+  color: var(--fy-text);
+}
+.confidence-driver-item .driver-label {
+  color: var(--fy-steel);
+}
+.confidence-driver-item .driver-value {
+  color: var(--fy-text);
+  font-family: var(--fy-font-mono);
+  font-variant-numeric: tabular-nums;
+}
 </style>
 {% endblock %}
 

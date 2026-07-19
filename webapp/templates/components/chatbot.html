@@ -26,8 +26,9 @@
       z-index: 1050;
       border: none;
       padding: 0;
-      background: #0c4a6e;
-      box-shadow: 0 4px 24px rgba(14,165,233,0.30) !important;
+      background: var(--fy-bg-raised);
+      border: 1px solid rgba(148,163,184,0.12);
+      box-shadow: 0 4px 24px rgba(255,176,32,0.30) !important;
       transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
                   box-shadow 0.2s ease;
     ">
@@ -56,20 +57,20 @@
       </defs>
       <!-- Rotating rings -->
       <g class="tf-r1">
-        <circle cx="23" cy="23" r="21" fill="none" stroke="#38bdf8" stroke-width="0.7"
+        <circle cx="23" cy="23" r="21" fill="none" stroke="#FFB020" stroke-width="0.7"
           stroke-dasharray="8 5 3 5" opacity="0.4"/>
       </g>
       <g class="tf-r2">
-        <circle cx="23" cy="23" r="19" fill="none" stroke="#0ea5e9" stroke-width="0.5"
+        <circle cx="23" cy="23" r="19" fill="none" stroke="#FFB020" stroke-width="0.5"
           stroke-dasharray="12 6 4 6" opacity="0.3"/>
       </g>
       <!-- Background circle -->
       <circle cx="23" cy="23" r="17" fill="#07111f" stroke="#1a3a52" stroke-width="0.8"/>
       <!-- Scan line -->
-      <rect class="tf-sc" x="6" y="22" width="34" height="1" rx="0.5" fill="#38bdf8" opacity="0.5"/>
+      <rect class="tf-sc" x="6" y="22" width="34" height="1" rx="0.5" fill="#FFB020" opacity="0.5"/>
       <!-- Transformers logo scaled into 46x46 -->
       <g class="tf-icon" transform="translate(6.5, 6.5) scale(1.03)">
-        <path fill="#38bdf8"
+        <path fill="#FFB020"
           d="M25.115 5.265l0.045-1.455c-2.694-1.348-5.686-2.155-8.973-2.155s-6.653 0.807-9.347 2.155l0.045 1.455 9.115 5.981 9.115-5.981z
              M16 4.556c1.875 0 3.448 0.601 3.448 0.601l-3.448 2.317-3.448-2.317c0 0 1.573-0.601 3.448-0.601z
              M18.073 23.977v-7.020l0.468-6.035-2.541 1.671-2.479-1.671 0.53 6.035v7.020h4.022z
@@ -117,59 +118,59 @@
             aria-hidden="true"
             style="display:block; overflow:visible; pointer-events:none;">
 
-            <radialGradient id="fmlHdrGlow" cx="50%" cy="48%" r="40%"><stop offset="0%" stop-color="#0284c7" stop-opacity="0.18"/><stop offset="100%" stop-color="#060d1a" stop-opacity="0"/></radialGradient><rect width="680" height="420" fill="url(#fmlHdrGlow)"/>
+            <radialGradient id="fmlHdrGlow" cx="50%" cy="48%" r="40%"><stop offset="0%" stop-color="var(--fy-amber)" stop-opacity="0.18"/><stop offset="100%" stop-color="#060d1a" stop-opacity="0"/></radialGradient><rect width="680" height="420" fill="url(#fmlHdrGlow)"/>
 
-            <circle cx="340" cy="200" r="118" fill="none" stroke="#0ea5e9"
+            <circle cx="340" cy="200" r="118" fill="none" stroke="var(--fy-amber)"
               stroke-width="0.8" opacity="0.3"/>
 
             <g class="fml-r4">
-              <circle cx="340" cy="200" r="108" fill="none" stroke="#0369a1"
+              <circle cx="340" cy="200" r="108" fill="none" stroke="var(--fy-amber)"
                 stroke-width="1" stroke-dasharray="5 15 3 20 5 10" opacity="0.45"/>
             </g>
 
             <g class="fml-r1">
-              <circle cx="340" cy="200" r="92" fill="none" stroke="#0ea5e9"
+              <circle cx="340" cy="200" r="92" fill="none" stroke="var(--fy-amber)"
                 stroke-width="2" stroke-dasharray="32 9 9 9 55 9 9 9" opacity="0.8"/>
-              <rect x="336" y="107" width="8"   height="2.5" rx="1" fill="#38bdf8" opacity="0.8"/>
-              <rect x="336" y="291" width="8"   height="2.5" rx="1" fill="#38bdf8" opacity="0.8"/>
-              <rect x="247" y="198" width="2.5" height="4"   rx="1" fill="#38bdf8" opacity="0.8"/>
-              <rect x="431" y="198" width="2.5" height="4"   rx="1" fill="#38bdf8" opacity="0.8"/>
+              <rect x="336" y="107" width="8"   height="2.5" rx="1" fill="var(--fy-amber)" opacity="0.8"/>
+              <rect x="336" y="291" width="8"   height="2.5" rx="1" fill="var(--fy-amber)" opacity="0.8"/>
+              <rect x="247" y="198" width="2.5" height="4"   rx="1" fill="var(--fy-amber)" opacity="0.8"/>
+              <rect x="431" y="198" width="2.5" height="4"   rx="1" fill="var(--fy-amber)" opacity="0.8"/>
             </g>
 
             <g class="fml-r2">
-              <circle cx="340" cy="200" r="72" fill="none" stroke="#38bdf8"
+              <circle cx="340" cy="200" r="72" fill="none" stroke="var(--fy-amber)"
                 stroke-width="1.5" stroke-dasharray="22 7 7 7 44 7" opacity="0.75"/>
-              <circle cx="340"   cy="128" r="5" fill="#7dd3fc" opacity="0.95"/>
+              <circle cx="340"   cy="128" r="5" fill="var(--fy-amber)" opacity="0.95"/>
               <circle cx="340"   cy="128" r="9" fill="none"
-                stroke="#7dd3fc" stroke-width="0.8" opacity="0.5"/>
-              <circle cx="402.4" cy="236" r="5" fill="#7dd3fc" opacity="0.95"/>
+                stroke="var(--fy-amber)" stroke-width="0.8" opacity="0.5"/>
+              <circle cx="402.4" cy="236" r="5" fill="var(--fy-amber)" opacity="0.95"/>
               <circle cx="402.4" cy="236" r="9" fill="none"
-                stroke="#7dd3fc" stroke-width="0.8" opacity="0.5"/>
-              <circle cx="277.6" cy="236" r="5" fill="#7dd3fc" opacity="0.95"/>
+                stroke="var(--fy-amber)" stroke-width="0.8" opacity="0.5"/>
+              <circle cx="277.6" cy="236" r="5" fill="var(--fy-amber)" opacity="0.95"/>
               <circle cx="277.6" cy="236" r="9" fill="none"
-                stroke="#7dd3fc" stroke-width="0.8" opacity="0.5"/>
+                stroke="var(--fy-amber)" stroke-width="0.8" opacity="0.5"/>
             </g>
 
             <g class="fml-r3">
-              <circle cx="340" cy="200" r="52" fill="none" stroke="#0284c7"
+              <circle cx="340" cy="200" r="52" fill="none" stroke="var(--fy-amber)"
                 stroke-width="2" stroke-dasharray="12 5 5 5 24 5" opacity="0.9"/>
-              <circle class="fml-scan" cx="340" cy="148" r="3.5" fill="#bae6fd"/>
+              <circle class="fml-scan" cx="340" cy="148" r="3.5" fill="var(--fy-amber)"/>
             </g>
 
-            <g opacity="0.10" stroke="#38bdf8" stroke-width="0.8" fill="none">
+            <g opacity="0.10" stroke="var(--fy-amber)" stroke-width="0.8" fill="none">
               <polygon points="340,174 366,189 366,219 340,234 314,219 314,189"/>
               <polygon points="340,154 374,173 374,213 340,232 306,213 306,173"/>
             </g>
 
-            <circle cx="340" cy="200" r="34" fill="#082f49" opacity="0.6"/>
-            <circle cx="340" cy="200" r="28" fill="#0c4a6e" opacity="0.75"/>
-            <circle cx="340" cy="200" r="22" fill="#075985" opacity="0.85"/>
-            <circle cx="340" cy="200" r="17" fill="#0284c7" opacity="0.90"/>
-            <circle cx="340" cy="200" r="12" fill="#38bdf8" opacity="0.92"/>
+            <circle cx="340" cy="200" r="34" fill="#FFB020" opacity="0.6"/>
+            <circle cx="340" cy="200" r="28" fill="#FFB020" opacity="0.75"/>
+            <circle cx="340" cy="200" r="22" fill="#FFB020" opacity="0.85"/>
+            <circle cx="340" cy="200" r="17" fill="var(--fy-amber)" opacity="0.90"/>
+            <circle cx="340" cy="200" r="12" fill="var(--fy-amber)" opacity="0.92"/>
             <circle cx="340" cy="200" r="7"
-              fill="#bae6fd" opacity="0.97" class="fml-core"/>
+              fill="var(--fy-amber)" opacity="0.97" class="fml-core"/>
 
-            <g stroke="#082f49" stroke-width="2" opacity="0.95" stroke-linecap="round">
+            <g stroke="var(--fy-steel)" stroke-width="2" opacity="0.95" stroke-linecap="round">
               <line x1="340" y1="184" x2="340" y2="195"/>
               <line x1="340" y1="205" x2="340" y2="216"/>
               <line x1="324" y1="200" x2="335" y2="200"/>
@@ -262,15 +263,15 @@
   border: none !important;
   outline: none !important;
   /* shadow-only glow — no border artifact */
-  box-shadow: 0 4px 24px rgba(14,165,233,0.30) !important;
+  box-shadow: 0 4px 24px rgba(255,176,32,0.30) !important;
 }
 #feyn-chat-bubble:hover {
   transform: scale(1.10);
-  box-shadow: 0 6px 32px rgba(14,165,233,0.50) !important;
+  box-shadow: 0 6px 32px rgba(255,176,32,0.35) !important;
 }
 /* FIX: keyboard users still get a visible ring via :focus-visible */
 #feyn-chat-bubble:focus-visible {
-  outline: 2px solid #38bdf8 !important;
+  outline: 2px solid var(--fy-amber) !important;
   outline-offset: 3px !important;
 }
 
@@ -308,7 +309,7 @@
 }
 .feyn-msg-user {
   align-self: flex-end;
-  background: #6366f1;
+  background: var(--fy-steel);
   color: #ffffff;
   border-radius: 18px 18px 4px 18px;
 }
@@ -322,7 +323,7 @@
 /* Inline code inside AI messages */
 .feyn-msg-ai code {
   background: #0f172a;
-  color: #7dd3fc;
+  color: var(--fy-amber);
   padding: 1px 5px;
   border-radius: 4px;
   font-family: 'Fira Code', monospace;
@@ -341,16 +342,16 @@
 }
 .starter-chip:hover,
 .starter-chip:focus-visible {
-  background: #6366f1 !important;
+  background: var(--fy-amber) !important;
   color: #ffffff !important;
-  border-color: #6366f1 !important;
+  border-color: var(--fy-amber) !important;
   outline: none;
 }
 
 /* ── Close & send button accessible focus ── */
 #feyn-chat-close:focus-visible,
 #feyn-send-btn:focus-visible {
-  outline: 2px solid #38bdf8 !important;
+  outline: 2px solid var(--fy-amber) !important;
   outline-offset: 2px !important;
   border-radius: 4px;
 }
@@ -578,6 +579,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
+<style>
 /* -- RESPONSIVE CHATBOT -------------------------------------- */
 @media (max-width: 480px) {
   #feyn-chat-bubble {
@@ -591,3 +593,4 @@ document.addEventListener('DOMContentLoaded', function () {
     height: 38px;
   }
 }
+</style>

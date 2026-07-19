@@ -15,13 +15,13 @@
     </filter>
     <linearGradient id="coreGlow" x1="512" y1="216" x2="512" y2="360" gradientUnits="userSpaceOnUse">
       <stop stop-color="#F8FAFC"/>
-      <stop offset="1" stop-color="#67E8F9"/>
+      <stop offset="1" stop-color="var(--fy-amber)"/>
     </linearGradient>
     <style>
       .bg { fill: #0f0f0f; }
-      .incoming { stroke: #06b6d4; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 13 14; }
+      .incoming { stroke: var(--fy-amber); stroke-width: 7; stroke-linecap: round; stroke-dasharray: 13 14; }
       .outgoing { stroke: #10b981; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 13 14; }
-      .orbit-indigo { stroke: #4f46e5; stroke-width: 3; opacity: 0.4; fill: none; }
+      .orbit-indigo { stroke: var(--fy-amber); stroke-width: 3; opacity: 0.4; fill: none; }
       .orbit-violet { stroke: #8b5cf6; stroke-width: 3; opacity: 0.4; fill: none; }
       .particle-label { fill: #E2E8F0; font-size: 30px; font-family: Inter, Geist, Arial, sans-serif; letter-spacing: 0.04em; }
       .brand { fill: #FFFFFF; font-size: 80px; font-weight: 600; font-family: Inter, Geist, Arial, sans-serif; letter-spacing: 0.02em; }
@@ -51,7 +51,7 @@
         <animateTransform attributeName="transform" type="rotate" from="74" to="-286" dur="18s" repeatCount="indefinite"/>
       </ellipse>
 
-      <circle cx="0" cy="0" r="34" fill="#06b6d4" opacity="0.18" filter="url(#auraGlow)">
+      <circle cx="0" cy="0" r="34" fill="var(--fy-amber)" opacity="0.18" filter="url(#auraGlow)">
         <animate attributeName="r" values="34;42;34" dur="2.8s" repeatCount="indefinite"/>
         <animate attributeName="opacity" values="0.16;0.28;0.16" dur="2.8s" repeatCount="indefinite"/>
       </circle>

@@ -16,47 +16,47 @@
   <svg width="36" height="36"
        viewBox="195 55 290 290"
        xmlns="http://www.w3.org/2000/svg"
-       style="flex-shrink:0; filter: drop-shadow(0 0 6px rgba(14,165,233,0.35));">
+       style="flex-shrink:0; filter: none;">
     <radialGradient id="db-bg" cx="50%" cy="48%" r="40%">
-      <stop offset="0%"  stop-color="#0284c7" stop-opacity="0.18"/>
+      <stop offset="0%"  stop-color="var(--fy-amber)" stop-opacity="0.18"/>
       <stop offset="100%" stop-color="#060d1a" stop-opacity="0"/>
     </radialGradient>
     <rect width="680" height="420" fill="url(#db-bg)"/>
-    <circle cx="340" cy="200" r="145" fill="none" stroke="#38bdf8" stroke-width="0.5"/>
-    <circle cx="340" cy="200" r="118" fill="none" stroke="#0ea5e9" stroke-width="0.8" opacity="0.3"/>
-    <g stroke="#38bdf8" stroke-width="1.8" opacity="0.6">
+    <circle cx="340" cy="200" r="145" fill="none" stroke="var(--fy-amber)" stroke-width="0.5"/>
+    <circle cx="340" cy="200" r="118" fill="none" stroke="var(--fy-amber)" stroke-width="0.8" opacity="0.3"/>
+    <g stroke="var(--fy-amber)" stroke-width="1.8" opacity="0.6">
       <line x1="340" y1="79"  x2="340" y2="68"/>
       <line x1="340" y1="321" x2="340" y2="332"/>
       <line x1="219" y1="200" x2="208" y2="200"/>
       <line x1="461" y1="200" x2="472" y2="200"/>
     </g>
     <g class="fml-r4">
-      <circle cx="340" cy="200" r="108" fill="none" stroke="#0369a1" stroke-width="1"
+      <circle cx="340" cy="200" r="108" fill="none" stroke="var(--fy-amber)" stroke-width="1"
         stroke-dasharray="5 15 3 20 5 10" opacity="0.45"/>
     </g>
     <g class="fml-r1">
-      <circle cx="340" cy="200" r="92" fill="none" stroke="#0ea5e9" stroke-width="2"
+      <circle cx="340" cy="200" r="92" fill="none" stroke="var(--fy-amber)" stroke-width="2"
         stroke-dasharray="32 9 9 9 55 9 9 9" opacity="0.8"/>
     </g>
     <g class="fml-r2">
-      <circle cx="340" cy="200" r="72" fill="none" stroke="#38bdf8" stroke-width="1.5"
+      <circle cx="340" cy="200" r="72" fill="none" stroke="var(--fy-amber)" stroke-width="1.5"
         stroke-dasharray="22 7 7 7 44 7" opacity="0.75"/>
-      <circle cx="340"   cy="128" r="5" fill="#7dd3fc" opacity="0.95"/>
-      <circle cx="402.4" cy="236" r="5" fill="#7dd3fc" opacity="0.95"/>
-      <circle cx="277.6" cy="236" r="5" fill="#7dd3fc" opacity="0.95"/>
+      <circle cx="340"   cy="128" r="5" fill="var(--fy-amber)" opacity="0.95"/>
+      <circle cx="402.4" cy="236" r="5" fill="var(--fy-amber)" opacity="0.95"/>
+      <circle cx="277.6" cy="236" r="5" fill="var(--fy-amber)" opacity="0.95"/>
     </g>
     <g class="fml-r3">
-      <circle cx="340" cy="200" r="52" fill="none" stroke="#0284c7" stroke-width="2"
+      <circle cx="340" cy="200" r="52" fill="none" stroke="var(--fy-amber)" stroke-width="2"
         stroke-dasharray="12 5 5 5 24 5" opacity="0.9"/>
-      <circle class="fml-scan" cx="340" cy="148" r="3.5" fill="#bae6fd"/>
+      <circle class="fml-scan" cx="340" cy="148" r="3.5" fill="var(--fy-amber)"/>
     </g>
-    <circle cx="340" cy="200" r="34" fill="#082f49" opacity="0.6"/>
-    <circle cx="340" cy="200" r="28" fill="#0c4a6e" opacity="0.75"/>
-    <circle cx="340" cy="200" r="22" fill="#075985" opacity="0.85"/>
-    <circle cx="340" cy="200" r="17" fill="#0284c7" opacity="0.9"/>
-    <circle cx="340" cy="200" r="12" fill="#38bdf8" opacity="0.92"/>
-    <circle cx="340" cy="200" class="fml-core" r="7" fill="#bae6fd" opacity="0.97"/>
-    <g stroke="#082f49" stroke-width="2" opacity="0.95" stroke-linecap="round">
+    <circle cx="340" cy="200" r="34" fill="#FFB020" opacity="0.6"/>
+    <circle cx="340" cy="200" r="28" fill="#FFB020" opacity="0.75"/>
+    <circle cx="340" cy="200" r="22" fill="#FFB020" opacity="0.85"/>
+    <circle cx="340" cy="200" r="17" fill="var(--fy-amber)" opacity="0.9"/>
+    <circle cx="340" cy="200" r="12" fill="var(--fy-amber)" opacity="0.92"/>
+    <circle cx="340" cy="200" class="fml-core" r="7" fill="var(--fy-amber)" opacity="0.97"/>
+    <g stroke="var(--fy-steel)" stroke-width="2" opacity="0.95" stroke-linecap="round">
       <line x1="340" y1="184" x2="340" y2="195"/>
       <line x1="340" y1="205" x2="340" y2="216"/>
       <line x1="324" y1="200" x2="335" y2="200"/>
@@ -77,10 +77,10 @@
                 <button class="btn btn-outline-indigo dropdown-toggle rounded-pill" type="button" data-bs-toggle="dropdown">
                     <i class="bi bi-download me-2"></i>Export
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 bg-card">
-                    <li><a class="dropdown-item py-2 text-main" href="{{ url_for('export_json', report_id=report_id) }}"><i class="bi bi-filetype-json me-2 text-indigo-500"></i>Raw JSON</a></li>
-                    <li><a class="dropdown-item py-2 text-main" href="{{ url_for('export_csv', report_id=report_id) }}"><i class="bi bi-filetype-csv me-2 text-indigo-500"></i>Summary CSV</a></li>
-                    <li><a class="dropdown-item py-2 text-main" href="{{ url_for('export_pdf', report_id=report_id) }}"><i class="bi bi-filetype-pdf me-2 text-indigo-500"></i>Full PDF</a></li>
+                <ul class="dropdown-menu dropdown-menu-end ">
+                    <li><a class="dropdown-item py-2 " href="{{ url_for('export_json', report_id=report_id) }}"><i class="bi bi-filetype-json me-2 "></i>Raw JSON</a></li>
+                    <li><a class="dropdown-item py-2 " href="{{ url_for('export_csv', report_id=report_id) }}"><i class="bi bi-filetype-csv me-2 "></i>Summary CSV</a></li>
+                    <li><a class="dropdown-item py-2 " href="{{ url_for('export_pdf', report_id=report_id) }}"><i class="bi bi-filetype-pdf me-2 "></i>Full PDF</a></li>
                 </ul>
             </div>
             <div class="dropdown">
@@ -88,16 +88,16 @@
                     <i class="bi bi-people me-2"></i>
                     <span id="current-audience-label">{{ selected_audience | default('Audience') }}</span>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 bg-card">
-                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="ML Engineer" href="#"><i class="bi bi-cpu me-2 text-indigo-500"></i>ML Engineer</a></li>
-                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Executive" href="#"><i class="bi bi-briefcase me-2 text-indigo-500"></i>Executive</a></li>
-                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Doctor" href="#"><i class="bi bi-heart-pulse me-2 text-indigo-500"></i>Doctor</a></li>
-                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Loan Officer" href="#"><i class="bi bi-bank me-2 text-indigo-500"></i>Loan Officer</a></li>
-                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Student" href="#"><i class="bi bi-mortarboard me-2 text-indigo-500"></i>Student</a></li>
-                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="HR Manager" href="#"><i class="bi bi-people me-2 text-indigo-500"></i>HR Manager</a></li>
-                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Insurance Analyst" href="#"><i class="bi bi-shield me-2 text-indigo-500"></i>Insurance Analyst</a></li>
-                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Legal / Compliance Officer" href="#"><i class="bi bi-balance-scale me-2 text-indigo-500"></i>Legal / Compliance Officer</a></li>
-                    <li><a class="dropdown-item py-2 text-main audience-option" data-audience="Researcher" href="#"><i class="bi bi-microscope me-2 text-indigo-500"></i>Researcher</a></li>
+                <ul class="dropdown-menu dropdown-menu-end ">
+                    <li><a class="dropdown-item py-2  audience-option" data-audience="ML Engineer" href="#"><i class="bi bi-cpu me-2 "></i>ML Engineer</a></li>
+                    <li><a class="dropdown-item py-2  audience-option" data-audience="Executive" href="#"><i class="bi bi-briefcase me-2 "></i>Executive</a></li>
+                    <li><a class="dropdown-item py-2  audience-option" data-audience="Doctor" href="#"><i class="bi bi-heart-pulse me-2 "></i>Doctor</a></li>
+                    <li><a class="dropdown-item py-2  audience-option" data-audience="Loan Officer" href="#"><i class="bi bi-bank me-2 "></i>Loan Officer</a></li>
+                    <li><a class="dropdown-item py-2  audience-option" data-audience="Student" href="#"><i class="bi bi-mortarboard me-2 "></i>Student</a></li>
+                    <li><a class="dropdown-item py-2  audience-option" data-audience="HR Manager" href="#"><i class="bi bi-people me-2 "></i>HR Manager</a></li>
+                    <li><a class="dropdown-item py-2  audience-option" data-audience="Insurance Analyst" href="#"><i class="bi bi-shield me-2 "></i>Insurance Analyst</a></li>
+                    <li><a class="dropdown-item py-2  audience-option" data-audience="Legal / Compliance Officer" href="#"><i class="bi bi-balance-scale me-2 "></i>Legal / Compliance Officer</a></li>
+                    <li><a class="dropdown-item py-2  audience-option" data-audience="Researcher" href="#"><i class="bi bi-microscope me-2 "></i>Researcher</a></li>
                 </ul>
             </div>
         </div>
@@ -142,9 +142,9 @@
             <div class="card kpi-card h-100 p-4">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <div class="label">Calibration</div>
-                    {% if data.get('calibration') and data.calibration.get('prediction_source') == 'auto_generated' %}
-                    <span class="badge badge-xs bg-indigo-50 text-indigo-600 border border-indigo-200">AUTO MODEL</span>
-                    {% endif %}
+                        {% if data.get('calibration') and data.calibration.get('prediction_source') == 'auto_generated' %}
+                        <span class="badge badge-xs" style="background: transparent; border: 1px solid var(--fy-steel); color: var(--fy-steel);">AUTO MODEL</span>
+                        {% endif %}
                 </div>
                 {% if not data.get('calibration') or data.calibration.status == 'SKIPPED' %}
                 <div class="metric text-muted">SKIPPED</div>
@@ -237,7 +237,7 @@
                         <small class="text-indigo-600 ms-2 fw-normal" style="font-size: 0.75rem;">(Auto-generated: {{ data.calibration.get('model_type', 'Baseline') }})</small>
                         {% endif %}
                     </div>
-                    <i class="bi bi-graph-up text-indigo-500"></i>
+                    <i class="bi bi-graph-up "></i>
                 </div>
                 <div class="card-body p-0">
                     {% if data.get('calibration') and data.calibration.status == 'SKIPPED' %}
@@ -270,7 +270,7 @@
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Feature Drift Analytics</span>
-                    <i class="bi bi-bar-chart-line text-indigo-500"></i>
+                    <i class="bi bi-bar-chart-line "></i>
                 </div>
                 <div class="card-body p-0">
                     <div id="chart-drift" style="width:100%; height:350px;"></div>
@@ -283,7 +283,7 @@
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Diagnostics & Fairness</span>
-                    <i class="bi bi-activity text-indigo-500"></i>
+                    <i class="bi bi-activity "></i>
                 </div>
                 <div class="card-body">
                     <div class="row text-center g-4">
@@ -314,7 +314,7 @@
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Observability (Drift)</span>
-                    <i class="bi bi-eye text-indigo-500"></i>
+                    <i class="bi bi-eye "></i>
                 </div>
                 <div class="card-body p-4">
                     <div class="row align-items-center">
@@ -417,7 +417,7 @@
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed fw-semibold" type="button"
                                 data-bs-toggle="collapse" data-bs-target="#appendixRootCause">
-                            <i class="bi bi-search me-2 text-indigo-500"></i>Root Cause Analysis
+                            <i class="bi bi-search me-2 "></i>Root Cause Analysis
                             <span class="badge bg-secondary ms-2">{{ root_cause_data.root_causes | length }}</span>
                         </button>
                     </h2>
@@ -467,7 +467,7 @@
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed fw-semibold" type="button"
                                 data-bs-toggle="collapse" data-bs-target="#appendixLeakage">
-                            <i class="bi bi-shield-exclamation me-2 text-indigo-500"></i>Leakage Details
+                            <i class="bi bi-shield-exclamation me-2 "></i>Leakage Details
                             <span class="badge bg-secondary ms-2">{{ suspect_list | length }}</span>
                         </button>
                     </h2>
@@ -519,7 +519,7 @@
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed fw-semibold" type="button"
                                 data-bs-toggle="collapse" data-bs-target="#appendixNoise">
-                            <i class="bi bi-tags me-2 text-indigo-500"></i>Label Noise Details
+                            <i class="bi bi-tags me-2 "></i>Label Noise Details
                             {% if error_details %}<span class="badge bg-secondary ms-2">{{ error_details | length }} flagged</span>{% endif %}
                         </button>
                     </h2>
@@ -573,7 +573,7 @@
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed fw-semibold" type="button"
                                 data-bs-toggle="collapse" data-bs-target="#appendixActions">
-                            <i class="bi bi-lightbulb me-2 text-indigo-500"></i>Recommended Actions
+                            <i class="bi bi-lightbulb me-2 "></i>Recommended Actions
                             <span class="badge bg-secondary ms-2">{{ root_cause_data.recommended_actions | length }}</span>
                         </button>
                     </h2>
@@ -753,15 +753,15 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 #technicalAppendix .accordion-button {
-    background: var(--bg-card, #1e293b) !important;
-    color: var(--text-main, #e2e8f0) !important;
+    background: var(--fy-bg-raised, #1e293b) !important;
+    color: var(--fy-text, #e2e8f0) !important;
     border-radius: 8px !important;
     box-shadow: none !important;
 }
 
 #technicalAppendix .accordion-button:not(.collapsed) {
-    background: var(--bg-card, #1e293b) !important;
-    color: var(--text-main, #e2e8f0) !important;
+    background: var(--fy-bg-raised, #1e293b) !important;
+    color: var(--fy-text, #e2e8f0) !important;
 }
 
 #technicalAppendix .accordion-button::after {
@@ -769,24 +769,24 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 #technicalAppendix .accordion-body {
-    background: var(--bg-card, #1e293b) !important;
-    color: var(--text-main, #e2e8f0) !important;
+    background: var(--fy-bg-raised, #1e293b) !important;
+    color: var(--fy-text, #e2e8f0) !important;
 }
 
 /* Action cards inside Recommended Actions panel */
 #appendixActions .card {
     background: rgba(255,255,255,0.04) !important;
     border: 1px solid rgba(255,255,255,0.07) !important;
-    color: var(--text-main, #e2e8f0) !important;
+    color: var(--fy-text, #e2e8f0) !important;
 }
 
 /* Tables inside appendix */
 #technicalAppendix .table {
-    color: var(--text-main, #e2e8f0) !important;
+    color: var(--fy-text, #e2e8f0) !important;
 }
 
 #technicalAppendix .table thead th {
-    color: var(--text-muted, #94a3b8) !important;
+    color: var(--fy-text-dim, #94a3b8) !important;
     border-bottom-color: rgba(255,255,255,0.1) !important;
 }
 
@@ -796,8 +796,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /* Toggle button for appendix */
 [data-bs-target="#technicalAppendix"] {
-    background: var(--bg-card, #1e293b) !important;
-    color: var(--text-main, #e2e8f0) !important;
+    background: var(--fy-bg-raised, #1e293b) !important;
+    color: var(--fy-text, #e2e8f0) !important;
     border-color: rgba(255,255,255,0.12) !important;
 }
 
@@ -850,6 +850,109 @@ document.addEventListener('DOMContentLoaded', function() {
   .table-responsive > .table td {
     padding: 0.4rem 0.6rem;
   }
+}
+
+/* ── LAB INSTRUMENT THEME OVERRIDES ───────────────────────────── */
+.card {
+  background: var(--fy-bg-raised);
+  border: 1px solid var(--fy-border);
+  border-radius: var(--fy-radius);
+  box-shadow: none;
+}
+.card-header {
+  background: var(--fy-bg-inset);
+  border-bottom: 1px solid var(--fy-border);
+  color: var(--fy-text);
+  font-family: var(--fy-font-body);
+  font-weight: 600;
+}
+.card-body {
+  color: var(--fy-text);
+  font-family: var(--fy-font-body);
+}
+
+/* KPI cards - flat with mono font for metrics */
+.kpi-card .label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--fy-steel);
+  font-family: var(--fy-font-mono);
+}
+.kpi-card .metric {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--fy-text);
+  font-family: var(--fy-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Buttons - flat styling */
+.btn-outline {
+  border-color: var(--fy-steel);
+  color: var(--fy-steel);
+}
+.btn-outline:hover {
+  background: var(--fy-bg-inset);
+  border-color: var(--fy-text);
+  color: var(--fy-text);
+}
+
+/* Dropdown menus - flat */
+.dropdown-menu {
+  background: var(--fy-bg-raised);
+  border: 1px solid var(--fy-border);
+  color: var(--fy-text);
+}
+.dropdown-item {
+  color: var(--fy-text);
+}
+.dropdown-item:hover {
+  background: var(--fy-bg-inset);
+}
+
+/* Badges - flat */
+.badge {
+  background: var(--fy-bg-inset);
+  border: 1px solid var(--fy-border);
+  color: var(--fy-text);
+  font-family: var(--fy-font-mono);
+}
+
+/* Tables - flat */
+.table {
+  color: var(--fy-text);
+  border-color: var(--fy-border);
+}
+.table thead th {
+  color: var(--fy-steel);
+  border-bottom-color: var(--fy-border);
+  font-family: var(--fy-font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.table td {
+  border-color: var(--fy-border);
+}
+
+/* Processing glow for live cards (reserved) */
+.fy-processing-glow {
+  box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
+  border-color: var(--fy-high) !important;
+}
+.fy-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fy-high);
+  animation: pulse 1.5s ease-in-out infinite;
+  display: inline-block;
+  margin-right: 6px;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 </style>
 

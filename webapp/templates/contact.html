@@ -1,52 +1,50 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container py-5 mt-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-6 animate-up">
-            <div class="text-center mb-5">
-                <h1 class="display-4 fw-bold mb-3">Contact Us</h1>
-                <p class="lead text-muted">Have questions about the platform or interested in enterprise licensing?</p>
-            </div>
-            
-            <div class="card p-5 shadow border-0 rounded-4">
-                <form id="contactForm">
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Full Name</label>
-                        <input type="text" class="form-control bg-main border-color p-3" placeholder="John Doe" required>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Work Email</label>
-                        <input type="email" class="form-control bg-main border-color p-3" placeholder="john@company.ai" required>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Inquiry Type</label>
-                        <select class="form-select bg-main border-color p-3">
-                            <option>Platform Support</option>
-                            <option>Enterprise Inquiry</option>
-                            <option>Feature Request</option>
-                            <option>General Feedback</option>
-                        </select>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Message</label>
-                        <textarea class="form-control bg-main border-color p-3" rows="4" placeholder="How can we help?" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-indigo w-100 p-3 rounded-3 fw-bold">
-                        Send Message
-                    </button>
-                </form>
-                
-                <div id="successMessage" class="mt-4 alert alert-success d-none border-0 shadow-sm">
-                    <i class="bi bi-check-circle-fill me-2"></i> Message sent successfully! We'll get back to you shortly.
-                </div>
-            </div>
-            
-            <div class="mt-5">
-                <p class="contact-email-note">Prefer email? Reach us at <a href="mailto:b241706@skit.ac.in">b241706@skit.ac.in</a></p>
-            </div>
-        </div>
+<div class="fy-contact-grid">
+  <div class="fy-contact-info">
+    <h2 class="fy-contact-heading">Get in touch</h2>
+    <p class="fy-contact-desc">Have a question about FeynML, want to report a bug, or just want to talk ML diagnostics? Reach out.</p>
+    <dl class="fy-contact-details">
+      <div class="fy-contact-row">
+        <svg class="fy-contact-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>
+        <span>b241706@skit.ac.in</span>
+      </div>
+      <div class="fy-contact-row">
+        <svg class="fy-contact-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
+        <span>Jaipur, Rajasthan, India</span>
+      </div>
+    </dl>
+  </div>
+
+  <form id="contactForm" class="fy-contact-form">
+    <div class="fy-form-group">
+      <label for="name">Name</label>
+      <input id="name" type="text" placeholder="Your name" />
     </div>
+    <div class="fy-form-group">
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="Your email" />
+    </div>
+    <div class="fy-form-group">
+      <label for="inquiry">Inquiry Type</label>
+      <select id="inquiry">
+        <option>Platform Support</option>
+        <option>Enterprise Inquiry</option>
+        <option>Feature Request</option>
+        <option>General Feedback</option>
+      </select>
+    </div>
+    <div class="fy-form-group">
+      <label for="message">Message</label>
+      <textarea id="message" rows="4" placeholder="Your message"></textarea>
+    </div>
+    <button type="submit" class="btn-primary fy-contact-submit">Send Message</button>
+    
+    <div id="successMessage" class="mt-4 d-none" style="color: var(--fy-stable); font-size: 0.9rem;">
+      <i class="bi bi-check-circle-fill me-2"></i> Message sent successfully! We'll get back to you shortly.
+    </div>
+  </form>
 </div>
 {% endblock %}
 
