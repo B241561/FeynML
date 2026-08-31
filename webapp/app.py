@@ -1146,7 +1146,6 @@ def admin_settings():
     settings = {s.key: s.value for s in settings_q}
     return render_template('admin_settings.html', settings=settings)
 
-
 @app.route('/upload', methods=['POST'])
 @login_required
 def upload_file():
@@ -1184,6 +1183,50 @@ def upload_file():
     return redirect(url_for('index'))
 
 
+# ============================================================
+# NEW ROUTE — Model upload (.pkl / .joblib)
+# Placed here, right after upload_file(), following the same
+# structure and error-handling pattern as the dataset upload.
+# ============================================================
+@app.route('/upload-model', methods=['POST'])
+@login_required
+def upload_model():
+    if 'model_file' not in request.files:
+        flash('No file part', 'warning')
+        return redirect(url_for('index'))
+
+    file = request.files['model_file']
+    if file.filename == '':
+        flash('No selected file', 'warning')
+        return redirect(url_for('index'))
+
+    if file and (file.filename.endswith('.pkl') or file.filename.endswith('.joblib')):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+        try:
+            file.save(filepath)
+
+            # Sanity-check: make sure the file actually loads before trusting it
+            import joblib
+            joblib.load(filepath)
+
+            session['model_filename'] = filename
+            flash('Model uploaded successfully!', 'success')
+            return redirect(url_for('index'))
+        except Exception as e:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            flash(f'Model upload failed: {str(e)}', 'danger')
+            return redirect(url_for('index'))
+
+    flash('Invalid file type. Please upload a .pkl or .joblib file.', 'danger')
+    return redirect(url_for('index'))
+# ============================================================
+# END NEW ROUTE
+# ============================================================
+
+
 @app.route('/configure')
 @login_required
 def configure_schema():
@@ -1210,6 +1253,129 @@ def configure_schema():
         return redirect(url_for('index'))
 
     return render_template('configure.html', columns=columns, filename=filename)
+
+
+@app.route('/configure-model')
+@login_required
+def configure_model_schema():
+    filename = session.get('filename')
+    model_filename = session.get('model_filename')
+    if not filename or not model_filename:
+        flash('Please upload both a dataset and a model first.', 'warning')
+        return redirect(url_for('index'))
+
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    model_path = os.path.join(app.config['UPLOAD_FOLDER'], model_filename)
+
+    try:
+        if filename.endswith('.csv'):
+            dataset_columns = pd.read_csv(filepath, nrows=1).columns.tolist()
+        else:
+            with open(filepath, 'r') as f:
+                data = json.loads(f.readline())
+                dataset_columns = list(data.keys()) if isinstance(data, dict) else []
+    except Exception as e:
+        flash(f'Error reading dataset columns: {str(e)}', 'danger')
+        return redirect(url_for('configure_schema'))
+
+    try:
+        from webapp.services.model_loader import load_model
+        model = load_model(model_path)
+    except Exception as e:
+        flash(f'Error loading model: {str(e)}', 'danger')
+        return redirect(url_for('index'))
+
+    target_col = session.get('analysis_config', {}).get('target_col')
+    candidate_cols = [c for c in dataset_columns if c != target_col]
+
+    if hasattr(model, 'feature_names_in_'):
+        expected_features = list(model.feature_names_in_)
+        named = True
+    elif hasattr(model, 'n_features_in_'):
+        expected_features = [f"feature_{i+1}" for i in range(model.n_features_in_)]
+        named = False
+    else:
+        expected_features = candidate_cols
+        named = False
+
+    import difflib
+    suggested_mapping = {}
+    used = set()
+    for ef in expected_features:
+        match = None
+        if named:
+            for c in candidate_cols:
+                if c.lower() == ef.lower() and c not in used:
+                    match = c
+                    break
+            if not match:
+                close = difflib.get_close_matches(
+                    ef, [c for c in candidate_cols if c not in used], n=1, cutoff=0.6
+                )
+                if close:
+                    match = close[0]
+        suggested_mapping[ef] = match
+        if match:
+            used.add(match)
+
+    return render_template(
+        'configure_model.html',
+        expected_features=expected_features,
+        candidate_cols=candidate_cols,
+        suggested_mapping=suggested_mapping,
+        named=named,
+        model_filename=model_filename
+    )
+
+
+@app.route('/save-model-mapping', methods=['POST'])
+@login_required
+def save_model_mapping():
+    filename = session.get('filename')
+    model_filename = session.get('model_filename')
+    if not filename or not model_filename:
+        flash('Session expired. Please upload again.', 'warning')
+        return redirect(url_for('index'))
+
+    mapping_fields = {
+        key: value for key, value in request.form.items()
+        if key.startswith('map__')
+    }
+    missing_features = [
+        key[len('map__'):] for key, value in mapping_fields.items()
+        if not value
+    ]
+    if not mapping_fields or missing_features:
+        flash('Please map every feature before running the analysis.', 'warning')
+        return redirect(url_for('configure_model_schema'))
+
+    feature_mapping = {
+        key[len('map__'):]: value for key, value in mapping_fields.items()
+    }
+
+    session['feature_mapping'] = feature_mapping
+    session['feature_mapping_key'] = f"{model_filename}::{filename}"
+
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    model_path = os.path.join(app.config['UPLOAD_FOLDER'], model_filename)
+
+    try:
+        r = get_runner()
+        if r is None:
+            flash('Analysis runner not available in this environment.', 'warning')
+            return redirect(url_for('configure_schema'))
+        r.audience = session.get('selected_audience', 'ml_engineer')
+        r.run(
+            filepath,
+            session['analysis_config'],
+            model_path=model_path,
+            feature_mapping=feature_mapping
+        )
+        return redirect(url_for('analysis_progress'))
+    except Exception as e:
+        traceback.print_exc()
+        flash(f'Analysis failed to start: {str(e)}', 'danger')
+        return redirect(url_for('configure_schema'))
 
 
 @app.route('/run_analysis', methods=['POST'])
@@ -1249,7 +1415,27 @@ def run_analysis():
                 flash('Analysis runner not available in this environment.', 'warning')
                 return redirect(url_for('configure_schema'))
             r.audience = session.get('selected_audience', 'ml_engineer')
-            r.run(filepath, session['analysis_config'])
+
+            model_path = None
+            model_filename = session.get('model_filename')
+            if model_filename:
+                model_path = os.path.join(app.config['UPLOAD_FOLDER'], model_filename)
+
+                # A model is attached — route through feature mapping first,
+                # unless this exact model+dataset pair was already mapped.
+                mapping_key = f"{model_filename}::{filename}"
+                if session.get('feature_mapping_key') != mapping_key:
+                    return redirect(url_for('configure_model_schema'))
+
+                r.run(
+                    filepath,
+                    session['analysis_config'],
+                    model_path=model_path,
+                    feature_mapping=session.get('feature_mapping')
+                )
+            else:
+                r.run(filepath, session['analysis_config'], model_path=model_path)
+
             return redirect(url_for('analysis_progress'))
         except Exception as e:
             traceback.print_exc()

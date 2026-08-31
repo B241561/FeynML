@@ -1,0 +1,221 @@
+/* ============================================================
+   JARVIS WIDGET STYLES
+   Location: webapp/static/css/jarvis.css
+   Uses FeynML design-system tokens (graphite/bone/amber/steel-blue).
+   No gradients, no glow, flat hairline borders, sharp corners —
+   matches design-system.css conventions. Falls back to literal
+   values if a token isn't defined globally.
+   ============================================================ */
+
+:root {
+    --jarvis-bg: var(--fml-graphite, #0B0D10);
+    --jarvis-fg: var(--fml-bone, #E8E6DF);
+    --jarvis-accent: var(--fml-amber, #FFB020);
+    --jarvis-structural: var(--fml-steel-blue, #3D5A73);
+    --jarvis-border: rgba(232, 230, 223, 0.14);
+    --jarvis-muted: rgba(232, 230, 223, 0.55);
+}
+
+.jarvis-widget {
+    position: fixed;
+    right: 20px;
+    bottom: 96px;
+    z-index: 1050;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ---------- Trigger (collapsed orb) ---------- */
+.jarvis-trigger {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    background: var(--jarvis-bg);
+    border: 1px solid var(--jarvis-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.jarvis-trigger:hover,
+.jarvis-trigger:focus-visible {
+    border-color: var(--jarvis-accent);
+    transform: translateY(-1px);
+}
+
+.jarvis-trigger:focus-visible {
+    outline: 2px solid var(--jarvis-accent);
+    outline-offset: 2px;
+}
+
+.jarvis-orb-ring {
+    fill: none;
+    stroke: var(--jarvis-structural);
+    stroke-width: 1.5;
+}
+
+.jarvis-orb-core {
+    fill: var(--jarvis-accent);
+}
+
+/* Listening state pulses the core — deliberately subtle, no glow/shadow */
+.jarvis-widget[data-listening="true"] .jarvis-orb-core {
+    animation: jarvis-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes jarvis-pulse {
+    0%, 100% { opacity: 1; r: 6; }
+    50%      { opacity: 0.55; r: 7.5; }
+}
+
+/* ---------- Panel (expanded) ---------- */
+.jarvis-panel {
+    position: absolute;
+    right: 0;
+    bottom: 60px;
+    width: 320px;
+    max-width: calc(100vw - 40px);
+    background: var(--jarvis-bg);
+    border: 1px solid var(--jarvis-border);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.jarvis-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--jarvis-border);
+}
+
+.jarvis-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--jarvis-fg);
+}
+
+.jarvis-close {
+    background: none;
+    border: none;
+    color: var(--jarvis-muted);
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+}
+
+.jarvis-close:hover,
+.jarvis-close:focus-visible {
+    color: var(--jarvis-fg);
+}
+
+.jarvis-panel-body {
+    padding: 12px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.jarvis-status {
+    font-size: 12px;
+    color: var(--jarvis-muted);
+    margin-bottom: 8px;
+}
+
+.jarvis-log {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+}
+
+.jarvis-log-entry {
+    padding: 6px 8px;
+    border: 1px solid var(--jarvis-border);
+    border-radius: 2px;
+    color: var(--jarvis-fg);
+}
+
+.jarvis-log-entry.jarvis-log-user {
+    border-left: 2px solid var(--jarvis-structural);
+}
+
+.jarvis-log-entry.jarvis-log-reply {
+    border-left: 2px solid var(--jarvis-accent);
+}
+
+/* ---------- Input row ---------- */
+.jarvis-input-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--jarvis-border);
+}
+
+.jarvis-input {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--jarvis-border);
+    border-radius: 2px;
+    color: var(--jarvis-fg);
+    font-size: 13px;
+    padding: 7px 9px;
+}
+
+.jarvis-input:focus-visible {
+    outline: none;
+    border-color: var(--jarvis-accent);
+}
+
+.jarvis-mic-btn,
+.jarvis-send-btn {
+    background: transparent;
+    border: 1px solid var(--jarvis-border);
+    border-radius: 2px;
+    color: var(--jarvis-fg);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.jarvis-mic-btn:hover,
+.jarvis-send-btn:hover,
+.jarvis-mic-btn:focus-visible,
+.jarvis-send-btn:focus-visible {
+    border-color: var(--jarvis-accent);
+    color: var(--jarvis-accent);
+}
+
+.jarvis-mic-btn[aria-pressed="true"] {
+    border-color: var(--jarvis-accent);
+    color: var(--jarvis-accent);
+}
+
+.jarvis-mic-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+    .jarvis-widget {
+        right: 20px;
+        bottom: 92px;
+    }
+    .jarvis-panel {
+        width: calc(100vw - 24px);
+    }
+}

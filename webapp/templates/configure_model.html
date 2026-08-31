@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+.cfg-card{background:var(--bg-card,rgba(255,255,255,0.04));border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:13px;transition:border-color .15s}
+.cfg-card:focus-within{border-color:rgba(107,110,116,0.5)}
+.cfg-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px;margin-top:2px}
+.icon-green{background:rgba(34,197,94,0.12);color:#4ade80}
+.icon-red{background:rgba(239,68,68,0.12);color:#f87171}
+.cfg-body{flex:1;min-width:0}
+.cfg-label{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin:0 0 6px;display:block}
+.cfg-select{width:100%;background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-main,#e2e8f0);font-size:14px;font-weight:500;padding:2px 0 6px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none}
+.cfg-select option{background:#1e293b;color:#e2e8f0}
+.cfg-hint{font-size:11px;color:#475569;margin-top:5px}
+.match-badge{font-size:9px;padding:2px 8px;border-radius:10px;font-weight:700;text-transform:uppercase;margin-left:6px}
+.match-yes{background:rgba(34,197,94,0.15);color:#4ade80}
+.match-no{background:rgba(239,68,68,0.15);color:#f87171}
+.mapping-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
+.mapping-search{max-width:280px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--text-main,#e2e8f0);border-radius:8px;padding:8px 12px}
+.mapping-search::placeholder{color:#64748b}
+.mapping-count{font-size:12px;color:#94a3b8;font-weight:600;white-space:nowrap}
+.cfg-card.is-mapped{border-color:rgba(34,197,94,0.28)}
+.cfg-card.is-hidden{display:none}
+.btn-mapping:disabled{background:#475569;border-color:#475569;color:#94a3b8;opacity:1;cursor:not-allowed;box-shadow:none!important}
+@media (max-width:575.98px){.mapping-toolbar{align-items:stretch;flex-direction:column}.mapping-search{max-width:none}}
+</style>
+
+<div class="container py-5 mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 animate-up">
+            <div class="d-flex justify-content-between align-items-end mb-5">
+                <div>
+                    <h1 class="display-5 fw-bold mb-1">Model Feature Mapping</h1>
+                    <p class="text-muted mb-0">Map dataset columns to <span class="badge bg-light border">{{ model_filename }}</span>'s expected inputs</p>
+                </div>
+                <div class="text-end d-none d-md-block">
+                    <div class="small text-muted text-uppercase fw-bold mb-1">Step 3 of 4</div>
+                    <div class="progress progress-sm">
+                        <div class="progress-bar" style="width: 75%; background-color: var(--fy-steel);"></div>
+                    </div>
+                </div>
+            </div>
+
+            {% if not named %}
+            <div class="alert alert-warning small mb-4">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                This model doesn't store feature names — only a feature count
+                ({{ expected_features|length }}). Map dataset columns to each
+                positional slot in the order the model expects them.
+            </div>
+            {% endif %}
+
+            <form action="{{ url_for('save_model_mapping') }}" method="POST" id="feature-mapping-form">
+                <div class="mapping-toolbar">
+                    <div class="mapping-count" id="mapping-count" aria-live="polite"></div>
+                    {% if expected_features|length > 12 %}
+                    <input type="search" class="mapping-search" id="mapping-search"
+                           placeholder="Search feature slots..." aria-label="Search feature slots">
+                    {% endif %}
+                </div>
+                <div class="row g-3 mb-4">
+                    {% for ef in expected_features %}
+                    <div class="col-md-6 mapping-slot" data-feature="{{ ef|lower }}">
+                        <div class="cfg-card {{ 'is-mapped' if suggested_mapping.get(ef) else '' }}">
+                            <div class="cfg-icon {{ 'icon-green' if suggested_mapping.get(ef) else 'icon-red' }}" data-status-icon>
+                                <i class="bi {{ 'bi-check-lg' if suggested_mapping.get(ef) else 'bi-arrow-left-right' }}"></i>
+                            </div>
+                            <div class="cfg-body">
+                                <label class="cfg-label" for="map__{{ ef }}">
+                                    {{ ef }}
+                                    {% if suggested_mapping.get(ef) %}
+                                    <span class="match-badge match-yes" data-status-badge>mapped</span>
+                                    {% else %}
+                                    <span class="match-badge match-no" data-status-badge>needs mapping</span>
+                                    {% endif %}
+                                </label>
+                                <select class="cfg-select" name="map__{{ ef }}" id="map__{{ ef }}">
+                                    <option value="" {{ 'selected' if not suggested_mapping.get(ef) else '' }}>Select dataset column...</option>
+                                    {% for col in candidate_cols %}
+                                    <option value="{{ col }}" {{ 'selected' if suggested_mapping.get(ef) == col else '' }}>{{ col }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="cfg-hint">Model expects this as feature "{{ ef }}".</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <hr class="opacity-10">
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a href="{{ url_for('configure_schema') }}" class="btn btn-link text-muted text-decoration-none">
+                        <i class="bi bi-arrow-left me-2"></i> Back
+                    </a>
+                    <button type="submit" class="btn btn-indigo btn-mapping px-5 py-3 rounded-3 fw-bold shadow-sm" id="mapping-submit" disabled>
+                        Confirm Mapping &amp; Run Analysis <i class="bi bi-play-fill ms-2"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('feature-mapping-form');
+    const slots = Array.from(form.querySelectorAll('.mapping-slot'));
+    const submit = document.getElementById('mapping-submit');
+    const count = document.getElementById('mapping-count');
+    const search = document.getElementById('mapping-search');
+
+    function updateMappingState() {
+        let mapped = 0;
+        slots.forEach(function (slot) {
+            const select = slot.querySelector('.cfg-select');
+            const icon = slot.querySelector('[data-status-icon]');
+            const iconGlyph = icon.querySelector('i');
+            const badge = slot.querySelector('[data-status-badge]');
+            const isMapped = Boolean(select.value);
+            mapped += isMapped ? 1 : 0;
+            slot.querySelector('.cfg-card').classList.toggle('is-mapped', isMapped);
+            icon.classList.toggle('icon-green', isMapped);
+            icon.classList.toggle('icon-red', !isMapped);
+            iconGlyph.classList.toggle('bi-check-lg', isMapped);
+            iconGlyph.classList.toggle('bi-arrow-left-right', !isMapped);
+            badge.classList.toggle('match-yes', isMapped);
+            badge.classList.toggle('match-no', !isMapped);
+            badge.textContent = isMapped ? 'mapped' : 'needs mapping';
+        });
+        count.textContent = mapped + ' of ' + slots.length + ' mapped';
+        submit.disabled = mapped !== slots.length;
+    }
+
+    form.querySelectorAll('.cfg-select').forEach(function (select) {
+        select.addEventListener('change', updateMappingState);
+    });
+    if (search) {
+        search.addEventListener('input', function () {
+            const query = search.value.trim().toLowerCase();
+            slots.forEach(function (slot) {
+                slot.classList.toggle('is-hidden', query && !slot.dataset.feature.includes(query));
+            });
+        });
+    }
+    updateMappingState();
+});
+</script>
+{% endblock %}

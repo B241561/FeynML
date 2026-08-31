@@ -56,3 +56,4 @@ urllib3==2.7.0
 websockets==16.0
 Werkzeug==3.1.8
 python-dotenv
+shap

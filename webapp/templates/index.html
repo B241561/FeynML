@@ -27,6 +27,31 @@
                     </button>
                 </form>
             </div>
+
+            <!-- ============================================================ -->
+            <!-- NEW: Model Upload Card (.pkl / .joblib) — optional, secondary -->
+            <!-- ============================================================ -->
+            <div class="card p-5 shadow border-0 rounded-4 mt-4">
+                <form action="{{ url_for('upload_model') }}" method="post" enctype="multipart/form-data">
+                    <div class="mb-4 text-center p-5 border-2 border-dashed rounded-4 bg-main border-color" id="model-drop-area">
+                        <i class="bi bi-box-seam display-3 text-indigo-600 mb-3"></i>
+                        <h4 class="fw-bold">Drag & Drop Trained Model</h4>
+                        <p class="text-muted small">Optional — supports .pkl and .joblib formats</p>
+                        <input type="file" name="model_file" class="form-control mt-4 d-none" id="modelFileInput" accept=".pkl,.joblib">
+                        <button type="button" class="btn btn-outline-indigo px-4" onclick="document.getElementById('modelFileInput').click()">
+                            Browse Files
+                        </button>
+                        <div id="model-file-name" class="mt-3 small fw-bold text-indigo-600"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-indigo w-100 p-3 rounded-3 fw-bold fs-5">
+                        Upload Model
+                    </button>
+                </form>
+            </div>
+            <!-- ============================================================ -->
+            <!-- END NEW: Model Upload Card                                   -->
+            <!-- ============================================================ -->
             
             <div class="mt-5 row g-4">
                 <div class="col-md-4 text-center">
@@ -84,5 +109,37 @@
         fileInput.files = files;
         fileNameDisplay.textContent = `Selected: ${files[0].name}`;
     }
+
+    // ============================================================
+    // NEW: Same drag-drop behavior, wired to the model upload card
+    // ============================================================
+    const modelFileInput = document.getElementById('modelFileInput');
+    const modelFileNameDisplay = document.getElementById('model-file-name');
+    const modelDropArea = document.getElementById('model-drop-area');
+
+    modelFileInput.addEventListener('change', function(e) {
+        if (this.files && this.files.length > 0) {
+            modelFileNameDisplay.textContent = `Selected: ${this.files[0].name}`;
+        }
+    });
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        modelDropArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        modelDropArea.addEventListener(eventName, () => modelDropArea.classList.add('border-indigo-600'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        modelDropArea.addEventListener(eventName, () => modelDropArea.classList.remove('border-indigo-600'), false);
+    });
+
+    modelDropArea.addEventListener('drop', function(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        modelFileInput.files = files;
+        modelFileNameDisplay.textContent = `Selected: ${files[0].name}`;
+    }, false);
 </script>
 {% endblock %}

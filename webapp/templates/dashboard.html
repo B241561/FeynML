@@ -226,6 +226,34 @@
         </div>
     </div>
 
+    {% if data.get('explainability') and data.explainability.get('status') == 'COMPLETED' %}
+    <div class="card mb-5">
+        <div class="card-header">Explainability (SHAP)</div>
+        <div class="card-body p-4">
+            <p class="text-muted small mb-3">{{ data.explainability.summary }}</p>
+            <div id="explainability-shap-chart" style="height: 400px;"></div>
+        </div>
+    </div>
+    <script>
+        const shapData = {{ data.explainability.findings.global_importance | tojson }};
+        Plotly.newPlot('explainability-shap-chart', [{
+            type: 'bar',
+            orientation: 'h',
+            x: shapData.map(d => d.importance),
+            y: shapData.map(d => d.feature),
+            marker: { color: '#6366f1' }
+        }], {
+            margin: { l: 160, r: 30, t: 20, b: 40 },
+            xaxis: { title: 'Mean |SHAP value|' },
+            yaxis: { autorange: 'reversed' }
+        });
+    </script>
+    {% elif data.get('explainability') and data.explainability.get('status') == 'SKIPPED' %}
+    <div class="alert alert-secondary mt-3 mb-5">
+        Explainability skipped: {{ data.explainability.reason or data.explainability.summary }}
+    </div>
+    {% endif %}
+
     {# ── SECTION 3: VISUAL ANALYTICS ── #}
     <div class="row g-4 mb-5">
         <div class="col-md-6">

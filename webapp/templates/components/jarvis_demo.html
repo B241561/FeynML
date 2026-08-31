@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />Please type the following sentence:
+I agree to the terms above
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Jarvis Demo</title>
+  <style>
+    :root{ --bg:#000; --accent:#0070ff; --muted:#cfe9ff }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--muted);font-family:Segoe UI, Roboto, Arial, sans-serif}
+    .center{height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column}
+    .jarvis{position:relative;width:420px;height:420px;display:flex;align-items:center;justify-content:center}
+    /* three animated blobs */
+    .blob{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 30% 30%, rgba(107,114,255,0) 40%, rgba(0,13,255,0.18) 60%);filter:blur(8px);mix-blend-mode:screen;opacity:0.85}
+    .b1{animation:blob1 6s linear infinite}
+    .b2{animation:blob2 4s linear infinite}
+    .b3{animation:blob3 8s linear infinite}
+    @keyframes blob1{0%{transform:translate(0,0) scale(1)}50%{transform:translate(-8%,6%) scale(1.06)}100%{transform:translate(0,0) scale(1)}}
+    @keyframes blob2{0%{transform:translate(0,0) scale(1)}50%{transform:translate(6%,-6%) scale(1.03)}100%{transform:translate(0,0) scale(1)}}
+    @keyframes blob3{0%{transform:translate(0,0) scale(1)}50%{transform:translate(6%,6%) scale(0.98)}100%{transform:translate(0,0) scale(1)}}
+    /* central sphere */
+    .sphere{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95) 0%, rgba(207,233,255,0.6) 12%, rgba(0,112,255,0.25) 60%, rgba(0,20,40,0.06) 100%);box-shadow:0 0 40px rgba(0,120,255,0.5), inset 0 -12px 30px rgba(0,0,0,0.28);mix-blend-mode:screen;z-index:5;animation:spherePulse 3s ease-in-out infinite}
+    @keyframes spherePulse{0%{transform:translate(-50%,-50%) scale(1);opacity:0.95}50%{transform:translate(-50%,-50%) scale(1.08);opacity:0.82}100%{transform:translate(-50%,-50%) scale(1);opacity:0.95}}
+    .sheen{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:160px;height:160px;border-radius:50%;background:conic-gradient(from 0deg, rgba(255,255,255,0.18), rgba(0,200,255,0.08), rgba(255,255,255,0.12), rgba(0,200,255,0.06));filter:blur(10px);mix-blend-mode:screen;z-index:4;animation:sheenSpin 6s linear infinite}
+    @keyframes sheenSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+    /* message */
+    .message{position:relative;margin-top:24px;color:var(--muted);text-align:center;min-height:28px}
+    .type{display:inline-block;font-size:18px;white-space:nowrap;overflow:hidden;border-right:2px solid rgba(255,255,255,0.9);box-sizing:content-box;padding-right:6px}
+    /* small helper */
+    .hint{margin-top:12px;color:#9fbffb;font-size:13px;opacity:0.8}
+    .status{position:absolute;top:12px;left:12px;color:#8fb8ff;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="center">
+    <div class="jarvis" role="application" aria-label="Jarvis assistant">
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+      <div class="blob b3"></div>
+      <div class="sheen"></div>
+      <div class="sphere"></div>
+      <div class="status" id="status">Initializing...</div>
+    </div>
+    <div class="message" aria-live="polite"><span id="msg" class="type">Say "Jarvis" to wake me.</span></div>
+    <div class="hint">Open this page in Chrome and allow microphone access. Then say "Jarvis".</div>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const msgEl = document.getElementById('msg');
+    const speak = (t)=>{ if(!('speechSynthesis' in window)) return; const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); }
+    const setMsg=(t)=>{ msgEl.textContent = t; }
+
+    // wake-word continuous listener + single-shot command listener
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SpeechRec){ statusEl.textContent='SpeechRecognition not supported'; setMsg('Speech recognition not supported in this browser.'); }
+    else{
+      statusEl.textContent='Listening for wake word';
+      const wake = new SpeechRec(); wake.lang='en-US'; wake.continuous=true; wake.interimResults=true;
+      let lastTranscript='';
+      wake.onresult = (ev)=>{
+        let acc='';
+        for(let i=ev.resultIndex;i<ev.results.length;i++) acc += ev.results[i][0].transcript + ' ';
+        lastTranscript = acc.toLowerCase();
+        // detect 'jarvis' word
+        if(lastTranscript.includes('jarvis')){
+          try{ wake.stop(); }catch(e){}
+          statusEl.textContent='Woke'; setMsg('Yes, Mudit — how may I help you?'); speak('Yes, Mudit — how may I help you?');
+          // start single-shot listener
+          const cmd = new SpeechRec(); cmd.lang='en-US'; cmd.interimResults=false; cmd.maxAlternatives=1;
+          cmd.onresult = (e2)=>{ const t = e2.results[0][0].transcript; setMsg(t); handleCommand(t); };
+          cmd.onerror = (e3)=>{ console.warn('cmd err',e3); speak('I could not hear you clearly.'); }
+          cmd.onend = ()=>{ setTimeout(()=>{ try{ wake.start(); statusEl.textContent='Listening for wake word'; setMsg('Say "Jarvis" to wake me.'); }catch(e){ statusEl.textContent='Idle'; } },500); };
+          try{ cmd.start(); }catch(e){ console.error(e); }
+        }
+      };
+      wake.onerror = (e)=>{ console.warn('wake err',e); statusEl.textContent='Wake error'; setTimeout(()=>wake.start(),1000); };
+      wake.onend = ()=>{ setTimeout(()=>{ try{ wake.start(); }catch(e){} },300); };
+      try{ wake.start(); }catch(e){ console.error(e); }
+    }
+
+    function handleCommand(cmdRaw){ if(!cmdRaw) return; const cmd = cmdRaw.trim(); // show
+      // simple intents
+      const lower = cmd.toLowerCase();
+      if(lower.startsWith('search for ')||lower.startsWith('search ')){
+        const q = cmd.replace(/search for /i,'').replace(/search /i,''); setMsg('Searching for '+q); speak('Searching for '+q); window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank'); return;
+      }
+      if(lower.includes('time')){ const t = new Date().toLocaleTimeString(); setMsg('It is '+t); speak('The time is '+t); return; }
+      if(lower.startsWith('open ')){
+        const t = lower.replace(/^open /i,''); const map={'youtube':'https://youtube.com','google':'https://google.com','github':'https://github.com'};
+        for(const k in map) if(t.includes(k)){ setMsg('Opening '+k); speak('Opening '+k); window.open(map[k],'_blank'); return; }
+        try{ setMsg('Opening '+t); speak('Opening '+t); const url = /^https?:\/\//i.test(t)?t:'https://'+t; window.open(url,'_blank'); }catch(e){ speak('Cannot open '+t); }
+        return;
+      }
+      if(lower.includes('joke')){ const jokes=['Why did the developer go broke? Because he used up all his cache.','I would tell you a UDP joke, but you might not get it.']; const j=jokes[Math.floor(Math.random()*jokes.length)]; setMsg(j); speak(j); return; }
+      // default
+      setMsg('I heard: '+cmd); speak('I heard '+cmd+'. I can search, open sites, tell the time, or take notes.');
+    }
+  </script>
+</body>
+</html>

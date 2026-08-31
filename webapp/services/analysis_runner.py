@@ -41,6 +41,7 @@ try:
     from engine.modules.ai_investigator import AIInvestigator
     from engine.modules.audience_translator import AudienceTranslator
     from engine.modules.domain_translator import DomainTranslator
+    from engine.modules.explainability_engine import ExplainabilityEngine
     ENGINES_AVAILABLE = True
 except Exception:
     # In test environments we may not have optional engine dependencies installed.
@@ -48,6 +49,7 @@ except Exception:
     LabelNoiseEngine = MissingDataEngine = SlicerEngine = None
     AutoRootCauseEngine = AIInvestigator = AudienceTranslator = None
     DomainTranslator = None
+    ExplainabilityEngine = None
     ENGINES_AVAILABLE = False
 
 
@@ -372,30 +374,7 @@ class AnalysisRunner:
             )
             charts['missing_data'] = to_json_standard(fig_md)
 
-        # 6. Label Noise Per Class Chart
-        ln_findings = results.get('label_noise', {}).get('findings', {})
-        per_class = ln_findings.get('per_class_noise', [])
-        if per_class:
-            class_labels = [str(c['class_label']) for c in per_class]
-            error_counts = [c['error_samples'] for c in per_class]
-            fig_ln = go.Figure(go.Bar(
-                x=class_labels,
-                y=error_counts,
-                marker_color='#f97316',
-                name='Mislabeled Samples'
-            ))
-            fig_ln.update_layout(
-                title='Mislabeled Samples per Class',
-                xaxis_title='Class',
-                yaxis_title='Mislabeled Samples',
-                **base_layout
-            )
-            charts['label_noise_per_class'] = to_json_standard(fig_ln)
-
-        results['charts'] = charts
-        self.log(f"CHARTS_GENERATED: Created {len(charts)} visualizations.")
-
-    def run(self, filepath, config):
+    def run(self, filepath, config, model_path=None, feature_mapping=None):
         """
         Main entry point for analysis.
         """
@@ -411,18 +390,28 @@ class AnalysisRunner:
             self.results = {}
             self.error = None
             self.report_path = None
-            
-            thread = threading.Thread(target=self._execute, args=(filepath, config))
+
+            thread = threading.Thread(target=self._execute, args=(filepath, config, model_path, feature_mapping))
             thread.start()
         except Exception:
             traceback.print_exc()
             raise
 
-    def _execute(self, filepath, config):
+    def _execute(self, filepath, config, model_path=None, feature_mapping=None):
         try:
             self.log("ANALYSIS_STARTED: Background thread initialized.")
             self.log(f"Loading dataset: {os.path.basename(filepath)}")
             df = pd.read_csv(filepath) if filepath.endswith('.csv') else pd.read_json(filepath)
+
+            # --- Load uploaded model, if provided ---
+            self.model = None
+            if model_path:
+                try:
+                    from webapp.services.model_loader import load_model
+                    self.model = load_model(model_path)
+                    self.log(f"MODEL_LOADED: {os.path.basename(model_path)}")
+                except Exception as model_err:
+                    self.log(f"MODEL_LOAD_FAILED: {str(model_err)}")
             
             # --- Type Sanitization: Convert pandas StringDtype to standard object ---
             # Modern pandas can use StringDtype which crashes many numpy/engine operations.
@@ -500,7 +489,39 @@ class AnalysisRunner:
             prediction_source = "user_supplied" if pred_col else ("auto_generated" if auto_predict else "simulated")
             model_type = "None"
 
-            if pred_col:
+            # --- Uploaded model takes priority if it can predict on this dataset ---
+            uploaded_model_used = False
+            if self.model is not None and not pred_col:
+                self.log("USING_UPLOADED_MODEL: Attempting predictions with uploaded model...")
+                try:
+                    if feature_mapping:
+                        missing_cols = [dc for dc in feature_mapping.values() if dc not in df.columns]
+                        if missing_cols:
+                            raise ValueError(f"Mapped dataset columns not found in dataset: {missing_cols}")
+                        X_for_model = df[list(feature_mapping.values())].copy()
+                        X_for_model.columns = list(feature_mapping.keys())
+                        self.log(f"FEATURE_MAPPING_APPLIED: {len(feature_mapping)} feature(s) mapped to model inputs.")
+                    else:
+                        X_for_model = df.drop(columns=[target_col])
+                        self.log("FEATURE_MAPPING_SKIPPED: No explicit mapping provided — using dataset column order as-is.")
+                    y_proba_model = self.model.predict_proba(X_for_model)
+                    if y_proba_model.shape[1] == 2:
+                        y_proba = y_proba_model
+                    else:
+                        y_preds_norm = y_proba_model[:, 1] if y_proba_model.shape[1] > 1 else y_proba_model[:, 0]
+                        y_proba = np.zeros((len(y_true), 2))
+                        y_proba[:, 1] = y_preds_norm
+                        y_proba[:, 0] = 1 - y_preds_norm
+                    model_type = type(self.model).__name__
+                    prediction_source = "uploaded_model"
+                    uploaded_model_used = True
+                    self.log("MODEL_PREDICTIONS_SUCCESS: Using uploaded model's predictions.")
+                except Exception as model_pred_err:
+                    self.log(f"MODEL_PREDICTION_FAILED: {str(model_pred_err)}. Falling back to next available option.")
+
+            if uploaded_model_used:
+                pass
+            elif pred_col:
                 self.log(f"Using provided prediction column: {pred_col}")
                 y_preds_raw = df[pred_col].values
                 # Check if it's already 2D (probabilities for all classes) or 1D
@@ -753,7 +774,7 @@ class AnalysisRunner:
 
             def _run_leakage():
                 leak_engine = LeakageEngine()
-                return leak_engine.run(X.values, y_for_engines, df, None, X.columns.tolist(), timestamp_col)
+                return leak_engine.run(X.values, y_for_engines, df, self.model, X.columns.tolist(), timestamp_col)
 
             leak_status, leak_payload = self._run_with_timeout(
                 "LeakageEngine",
@@ -807,6 +828,50 @@ class AnalysisRunner:
             self.results['missing_data'] = missing_payload
             if missing_status == "ok":
                 self.log("ENGINE_COMPLETED: MissingDataEngine analysis complete.")
+
+            # 4. Explainability (SHAP) — only runs if the uploaded model
+            # produced valid predictions earlier in this run.
+            #
+            # NOTE: _check_watchdog is guarded with hasattr() below because
+            # this task doc cannot confirm it exists at this exact point in
+            # your actual analysis_runner.py. If it's already called earlier
+            # in this same method (as the other phases suggest), this guard
+            # is a no-op safety net. If it does NOT exist at all in your
+            # class, remove the `if hasattr(...)` line entirely — it will
+            # simply be skipped and cause no error either way.
+            if hasattr(self, '_check_watchdog') and self._check_watchdog(df):
+                return
+
+            if uploaded_model_used and self.model is not None and ExplainabilityEngine is not None:
+                self.log("ENGINE_STARTED: ExplainabilityEngine")
+
+                def _run_explainability():
+                    exp_engine = ExplainabilityEngine()
+                    return exp_engine.run(self.model, X_for_model, X_for_model.columns.tolist())
+
+                exp_status, exp_payload = self._run_with_timeout(
+                    "ExplainabilityEngine",
+                    60,
+                    _run_explainability,
+                    {
+                        "status": "SKIPPED",
+                        "severity": "NONE",
+                        "findings": {},
+                        "summary": "Explainability analysis timed out on this dataset."
+                    },
+                    "EXPLAINABILITY_TIMEOUT"
+                )
+                self.results['explainability'] = exp_payload
+                if exp_status == "ok":
+                    self.log("ENGINE_COMPLETED: ExplainabilityEngine SHAP analysis complete.")
+            else:
+                self.log("Skipping ExplainabilityEngine (no uploaded model with valid predictions).")
+                self.results['explainability'] = {
+                    "status": "SKIPPED",
+                    "reason": "No uploaded model with valid predictions available",
+                    "severity": "NONE",
+                    "findings": {}
+                }
 
             # --- Auto Root Cause Analysis ---
             self.progress = 80

@@ -1,0 +1,73 @@
+<!-- ============================================================
+     JARVIS WIDGET — FeynML voice/visual assistant
+     Include location: webapp/templates/components/jarvis_widget.html
+     Loaded once in base.html, right before </body>
+     ============================================================ -->
+<div id="jarvis-widget" class="jarvis-widget" data-state="collapsed">
+
+    <!-- Collapsed trigger: floating orb, bottom-right -->
+    <button type="button"
+            id="jarvis-trigger"
+            class="jarvis-trigger"
+            aria-label="Open Jarvis assistant"
+            aria-expanded="false"
+            aria-controls="jarvis-panel">
+        <span class="jarvis-orb" aria-hidden="true">
+            <svg viewBox="0 0 40 40" width="22" height="22">
+                <circle cx="20" cy="20" r="16" class="jarvis-orb-ring" />
+                <circle cx="20" cy="20" r="6" class="jarvis-orb-core" />
+            </svg>
+        </span>
+    </button>
+
+    <!-- Expanded panel -->
+    <div id="jarvis-panel"
+         class="jarvis-panel"
+         role="dialog"
+         aria-modal="false"
+         aria-label="Jarvis assistant"
+         hidden>
+
+        <div class="jarvis-panel-header">
+            <span class="jarvis-panel-title">
+                <svg viewBox="0 0 40 40" width="16" height="16" aria-hidden="true">
+                    <circle cx="20" cy="20" r="16" class="jarvis-orb-ring" />
+                    <circle cx="20" cy="20" r="6" class="jarvis-orb-core" />
+                </svg>
+                JARVIS
+            </span>
+            <button type="button" id="jarvis-close" class="jarvis-close" aria-label="Close Jarvis panel">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <div class="jarvis-panel-body">
+            <div id="jarvis-status" class="jarvis-status" aria-live="polite">
+                Ready. Type a command or use the mic.
+            </div>
+
+            <div id="jarvis-log" class="jarvis-log" aria-live="polite"></div>
+        </div>
+
+        <!-- Text input is the primary, always-available input method.
+             Mic is an enhancement, not a requirement — this is the
+             accessibility fallback for browsers/users without speech support. -->
+        <form id="jarvis-form" class="jarvis-input-row" autocomplete="off">
+            <input type="text"
+                   id="jarvis-input"
+                   class="jarvis-input"
+                   placeholder="Ask Jarvis…"
+                   aria-label="Type a command for Jarvis" />
+            <button type="button"
+                    id="jarvis-mic"
+                    class="jarvis-mic-btn"
+                    aria-label="Use voice input"
+                    aria-pressed="false">
+                <i class="bi bi-mic" aria-hidden="true"></i>
+            </button>
+            <button type="submit" class="jarvis-send-btn" aria-label="Send command">
+                <i class="bi bi-arrow-return-left" aria-hidden="true"></i>
+            </button>
+        </form>
+    </div>
+</div>
