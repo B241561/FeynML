@@ -6,7 +6,7 @@ load_dotenv()
 
 # Groq Configuration (same pattern as chatbot_routes.py)
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-MODEL_NAME = "llama-3.3-70b-versatile"
+MODEL_NAME = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
 
 
 class DomainTranslator:

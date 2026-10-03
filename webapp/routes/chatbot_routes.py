@@ -270,7 +270,7 @@ Never make users feel stupid | Never use jargon over a good analogy | Never say 
 
 # Groq Configuration
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-MODEL_NAME = "llama-3.3-70b-versatile"
+MODEL_NAME = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
 
 print(f"--- FeynML Chatbot: Startup ---")
 print(f"DEBUG: GROQ_API_KEY exists: {GROQ_API_KEY is not None}")
