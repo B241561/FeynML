@@ -31,6 +31,14 @@ SEVERITY_ORDER = {
     "CRITICAL": 4
 }
 
+# Execution status (distinct from severity)
+STATUS_ORDER = {
+    "SUCCESS": 0,
+    "PARTIAL": 1,
+    "SKIPPED": 2,
+    "FAILED": 3
+}
+
 
 class GateError(Exception):
     """Raised when a module's quality gate is not met."""
@@ -75,7 +83,7 @@ class BaseModule:
 
     # ── Result envelope ──────────────────────────────────────────────────────
 
-    def _result(self, findings, severity="NONE", module_name=None):
+    def _result(self, findings, severity="NONE", module_name=None, status=None, skip_reason=None):
         """
         Wrap findings in a standard envelope consumed by the report engine.
 
@@ -84,6 +92,8 @@ class BaseModule:
         findings    : dict  — module-specific output
         severity    : str   — NONE / LOW / MEDIUM / HIGH / CRITICAL
         module_name : str   — defaults to class name
+        status      : str   — SUCCESS / PARTIAL / SKIPPED / FAILED (optional)
+        skip_reason : str   — reason for SKIPPED status (optional)
 
         Returns
         -------
@@ -91,18 +101,35 @@ class BaseModule:
           module     : str
           timestamp  : str
           severity   : str
+          status     : str   — execution status (distinct from severity)
           passed     : bool  (severity <= LOW)
           findings   : dict
           log        : list[str]
         """
-        return {
+        # Infer status from severity if not provided
+        if status is None:
+            if severity in ["NONE", "LOW"]:
+                status = "SUCCESS"
+            elif severity in ["MEDIUM", "WARNING"]:
+                status = "PARTIAL"
+            elif severity in ["HIGH", "CRITICAL"]:
+                status = "FAILED"
+        
+        result = {
             "module":    module_name or self.__class__.__name__,
             "timestamp": datetime.now().isoformat(timespec="seconds"),
             "severity":  severity,
+            "status":    status,
             "passed":    SEVERITY_ORDER.get(severity, 0) <= 1,
             "findings":  findings,
             "log":       list(self._log_lines),
         }
+        
+        # Add skip_reason if status is SKIPPED
+        if status == "SKIPPED" and skip_reason:
+            result["skip_reason"] = skip_reason
+        
+        return result
 
     # ── Input validation ─────────────────────────────────────────────────────
 
@@ -232,6 +259,24 @@ class BaseModule:
             f"Target column '{target_hint}' not found in dataset. "
             f"Available columns: {list(df.columns[:10])}..."
         )
+
+    # ── Execution eligibility ───────────────────────────────────────────────────
+
+    def can_run(self, *args, **kwargs) -> tuple:
+        """
+        Determine if this engine can execute with the provided data.
+        
+        Engines should override this method to check if required data is available.
+        
+        Returns:
+            Tuple of (can_run: bool, reason: str)
+            - can_run: True if engine can execute, False otherwise
+            - reason: Human-readable explanation if can_run is False
+        """
+        # Default implementation: always allow execution
+        # Subclasses should override with specific checks
+        return True, "No specific requirements"
+
 
     # ── Public interface ─────────────────────────────────────────────────────
 

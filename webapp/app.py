@@ -57,6 +57,12 @@ try:
     app.register_blueprint(chatbot_bp, url_prefix='/api/chatbot')
 except Exception:
     pass
+
+try:
+    from webapp.routes.monitoring_routes import monitoring_bp
+    app.register_blueprint(monitoring_bp)
+except Exception:
+    pass
 app.debug = True
 app.config["PROPAGATE_EXCEPTIONS"] = True
 app.config["TRAP_HTTP_EXCEPTIONS"] = True

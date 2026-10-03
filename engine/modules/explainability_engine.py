@@ -8,6 +8,11 @@ except ImportError:
     shap = None
     SHAP_AVAILABLE = False
 
+
+class ExplainabilityGateError(Exception):
+    """Raised when explainability analysis fails a quality gate."""
+    pass
+
 class ExplainabilityEngine:
     """
     Computes SHAP-based global feature importance for an uploaded model.

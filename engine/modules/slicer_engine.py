@@ -160,18 +160,39 @@ class SlicerEngine(BaseModule):
     """
 
     def __init__(self, k=5, effect_size_threshold=0.20,
-                 alpha=0.05, n_bins=4, verbose=True):
+                 alpha=0.05, n_bins=4, min_samples=10, verbose=True):
         """
         k                    : number of top slices to find
         effect_size_threshold: minimum Cohen's d to report (0.2=small)
         alpha                : significance level for Welch's t-test
         n_bins               : bins for discretizing numeric features
+        min_samples          : minimum samples required for slice analysis
         """
         super().__init__(verbose=verbose)
         self.k                    = k
         self.effect_size_threshold = effect_size_threshold
         self.alpha                = alpha
         self.n_bins               = n_bins
+        self.min_samples          = min_samples
+
+    def can_run(self, y_true=None, y_pred=None, X=None, **kwargs) -> tuple:
+        """
+        Determine if this engine can execute with the provided data.
+
+        Returns:
+            Tuple of (can_run: bool, reason: str)
+        """
+        if y_true is None or y_pred is None:
+            return False, "Slice analysis requires both true labels and predictions"
+        
+        n = len(y_true)
+        if n < self.min_samples:
+            return False, f"Insufficient samples ({n} < {self.min_samples}) for slice analysis"
+        
+        if X is None or len(X) == 0:
+            return False, "Slice analysis requires feature data"
+        
+        return True, "Slice analysis can run"
 
     # ── Main run ─────────────────────────────────────────────────────────────
 

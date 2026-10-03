@@ -223,3 +223,162 @@ class OTPToken(db.Model):
 
     def __repr__(self):
         return f'<OTPToken admin_id={self.admin_id} is_used={self.is_used}>'
+
+
+# ============================================================================
+# Phase 3: Production Monitoring Models
+# ============================================================================
+
+class MonitoredModel(db.Model):
+    """Model Registry - tracks registered ML models for monitoring."""
+    __tablename__ = 'monitored_models'
+
+    id = db.Column(db.Integer, primary_key=True)
+    model_id = db.Column(db.String(128), nullable=False, unique=True, index=True)
+    model_name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    task_type = db.Column(db.String(50), nullable=False)  # classification, regression
+    owner = db.Column(db.String(255), nullable=True)
+    model_metadata = db.Column(db.JSON, nullable=True)  # Renamed from 'metadata' (reserved keyword)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    versions = db.relationship('ModelVersion', backref='model', lazy='dynamic', cascade='all, delete-orphan')
+    monitoring_configs = db.relationship('MonitoringConfig', backref='model', lazy='dynamic', cascade='all, delete-orphan')
+    monitoring_runs = db.relationship('MonitoringRun', backref='model', lazy='dynamic', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<MonitoredModel {self.model_id}>'
+
+
+class ModelVersion(db.Model):
+    """Model Versions - tracks different versions of a monitored model."""
+    __tablename__ = 'model_versions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    model_id = db.Column(db.Integer, db.ForeignKey('monitored_models.id'), nullable=False, index=True)
+    version_id = db.Column(db.String(128), nullable=False, index=True)
+    version_name = db.Column(db.String(50), nullable=False)  # v1, v2, etc.
+    status = db.Column(db.String(20), nullable=False, default='ACTIVE')  # ACTIVE, INACTIVE, ARCHIVED
+    task_type = db.Column(db.String(50), nullable=False)
+    evaluation_metadata = db.Column(db.JSON, nullable=True)  # metrics, training info
+    deployment_metadata = db.Column(db.JSON, nullable=True)  # deployment info
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    monitoring_runs = db.relationship('MonitoringRun', backref='version', lazy='dynamic')
+
+    __table_args__ = (
+        db.UniqueConstraint('model_id', 'version_name', name='unique_model_version'),
+    )
+
+    def __repr__(self):
+        return f'<ModelVersion {self.version_id}>'
+
+
+class MonitoringConfig(db.Model):
+    """Monitoring Configuration - defines what to monitor for a model."""
+    __tablename__ = 'monitoring_configs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    model_id = db.Column(db.Integer, db.ForeignKey('monitored_models.id'), nullable=False, index=True)
+    config_name = db.Column(db.String(255), nullable=False)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    
+    # Monitoring signals
+    monitor_data_drift = db.Column(db.Boolean, nullable=False, default=True)
+    monitor_prediction_drift = db.Column(db.Boolean, nullable=False, default=True)
+    monitor_performance = db.Column(db.Boolean, nullable=False, default=True)
+    monitor_data_quality = db.Column(db.Boolean, nullable=False, default=True)
+    monitor_calibration = db.Column(db.Boolean, nullable=False, default=True)
+    monitor_error_rate = db.Column(db.Boolean, nullable=False, default=True)
+    monitor_segment_degradation = db.Column(db.Boolean, nullable=False, default=True)
+    monitor_temporal_degradation = db.Column(db.Boolean, nullable=False, default=True)
+    
+    # Thresholds (JSON for flexibility)
+    thresholds = db.Column(db.JSON, nullable=True)  # {"psi": 0.20, "error_rate_increase": 0.10}
+    
+    # Scheduling
+    schedule_enabled = db.Column(db.Boolean, nullable=False, default=False)
+    schedule_interval = db.Column(db.String(50), nullable=True)  # hourly, daily, weekly
+    schedule_timezone = db.Column(db.String(50), nullable=True)
+    
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    monitoring_runs = db.relationship('MonitoringRun', backref='config', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<MonitoringConfig {self.config_name}>'
+
+
+class MonitoringRun(db.Model):
+    """Monitoring Runs - stores individual monitoring execution results."""
+    __tablename__ = 'monitoring_runs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    run_id = db.Column(db.String(128), nullable=False, unique=True, index=True)
+    model_id = db.Column(db.Integer, db.ForeignKey('monitored_models.id'), nullable=False, index=True)
+    version_id = db.Column(db.Integer, db.ForeignKey('model_versions.id'), nullable=True, index=True)
+    config_id = db.Column(db.Integer, db.ForeignKey('monitoring_configs.id'), nullable=True)
+    
+    # Run metadata
+    trigger_type = db.Column(db.String(20), nullable=False)  # MANUAL, SCHEDULED, API, AUTOMATED
+    status = db.Column(db.String(20), nullable=False, default='PENDING')  # PENDING, RUNNING, SUCCESS, PARTIAL, FAILED
+    started_at = db.Column(db.DateTime, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    
+    # Input information
+    reference_info = db.Column(db.JSON, nullable=True)  # reference dataset info
+    current_info = db.Column(db.JSON, nullable=True)  # current dataset info
+    
+    # Results (stores InvestigationRun results)
+    results = db.Column(db.JSON, nullable=True)
+    
+    # Summary
+    health_status = db.Column(db.String(20), nullable=True)  # HEALTHY, WARNING, CRITICAL
+    confidence_score = db.Column(db.Integer, nullable=True)
+    
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # Relationships
+    alerts = db.relationship('Alert', backref='monitoring_run', lazy='dynamic', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<MonitoringRun {self.run_id}>'
+
+
+class Alert(db.Model):
+    """Alerts - stores monitoring alerts generated from threshold violations."""
+    __tablename__ = 'alerts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    alert_id = db.Column(db.String(128), nullable=False, unique=True, index=True)
+    model_id = db.Column(db.Integer, db.ForeignKey('monitored_models.id'), nullable=False, index=True)
+    version_id = db.Column(db.Integer, db.ForeignKey('model_versions.id'), nullable=True, index=True)
+    run_id = db.Column(db.Integer, db.ForeignKey('monitoring_runs.id'), nullable=False, index=True)
+    
+    # Alert details
+    alert_type = db.Column(db.String(50), nullable=False)  # DRIFT, PERFORMANCE, DATA_QUALITY, CALIBRATION
+    severity = db.Column(db.String(20), nullable=False)  # LOW, MEDIUM, HIGH, CRITICAL
+    metric = db.Column(db.String(100), nullable=False)  # PSI, accuracy, missing_rate, etc.
+    observed_value = db.Column(db.Float, nullable=True)
+    threshold = db.Column(db.Float, nullable=True)
+    message = db.Column(db.Text, nullable=True)
+    
+    # Alert lifecycle
+    status = db.Column(db.String(20), nullable=False, default='OPEN')  # OPEN, ACKNOWLEDGED, RESOLVED
+    acknowledged_at = db.Column(db.DateTime, nullable=True)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+    
+    # Deduplication
+    deduplication_key = db.Column(db.String(255), nullable=True, index=True)  # for grouping similar alerts
+    
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Alert {self.alert_id} severity={self.severity}>'

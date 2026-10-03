@@ -42,6 +42,17 @@ try:
     from engine.modules.audience_translator import AudienceTranslator
     from engine.modules.domain_translator import DomainTranslator
     from engine.modules.explainability_engine import ExplainabilityEngine
+    # Phase 1 reliability modules
+    from engine.modules.schema_validator import SchemaValidator
+    from engine.modules.capability_detector import CapabilityDetector
+    from engine.modules.data_quality_engine import DataQualityEngine
+    from engine.modules.investigation_run import InvestigationRun
+    # Phase 2 investigation modules
+    from engine.modules.prediction_drift_engine import PredictionDriftEngine
+    from engine.modules.error_taxonomy_engine import ErrorTaxonomyEngine
+    from engine.modules.temporal_analysis_engine import TemporalAnalysisEngine
+    from engine.modules.threshold_simulator_engine import ThresholdSimulatorEngine
+    from engine.modules.model_comparison_engine import ModelComparisonEngine
     ENGINES_AVAILABLE = True
 except Exception:
     # In test environments we may not have optional engine dependencies installed.
@@ -50,6 +61,11 @@ except Exception:
     AutoRootCauseEngine = AIInvestigator = AudienceTranslator = None
     DomainTranslator = None
     ExplainabilityEngine = None
+    SchemaValidator = CapabilityDetector = DataQualityEngine = None
+    InvestigationRun = None
+    PredictionDriftEngine = ErrorTaxonomyEngine = None
+    TemporalAnalysisEngine = ThresholdSimulatorEngine = None
+    ModelComparisonEngine = None
     ENGINES_AVAILABLE = False
 
 
@@ -454,6 +470,77 @@ class AnalysisRunner:
             if target_col not in df.columns:
                 raise ValueError(f"Target column '{target_col}' not found in dataset.")
 
+            # --- Phase 1 Reliability: Schema Validation ---
+            self.log("PHASE1: Schema validation started.")
+            if SchemaValidator is not None:
+                try:
+                    schema_validator = SchemaValidator(verbose=False)
+                    schema_result = schema_validator.validate(df, target_col=target_col, prediction_col=pred_col)
+                    self.results['schema_validation'] = schema_result
+                    schema_status = schema_result.get('findings', {}).get('status', 'UNKNOWN')
+                    if schema_status == 'INVALID':
+                        self.log(f"PHASE1: Schema validation FAILED - {schema_result.get('findings', {}).get('errors', [])}")
+                        raise ValueError(f"Dataset schema validation failed: {schema_result.get('findings', {}).get('errors', [])}")
+                    elif schema_status == 'WARNING':
+                        self.log(f"PHASE1: Schema validation WARNING - {schema_result.get('findings', {}).get('warnings', [])}")
+                    else:
+                        self.log("PHASE1: Schema validation PASSED.")
+                except Exception as schema_err:
+                    self.log(f"PHASE1: Schema validation error: {str(schema_err)}")
+                    # Continue anyway for backward compatibility
+                    self.results['schema_validation'] = {'error': str(schema_err), 'status': 'ERROR'}
+            else:
+                self.log("PHASE1: SchemaValidator not available, skipping.")
+                self.results['schema_validation'] = {'status': 'SKIPPED', 'reason': 'SchemaValidator not available'}
+
+            # --- Phase 1 Reliability: Capability Detection ---
+            self.log("PHASE1: Capability detection started.")
+            if CapabilityDetector is not None:
+                try:
+                    capability_detector = CapabilityDetector(verbose=False)
+                    capability_result = capability_detector.detect(df, target_col=target_col, prediction_col=pred_col)
+                    self.results['capabilities'] = capability_result
+                    self.log(f"PHASE1: Capabilities detected - task_type: {capability_result.get('findings', {}).get('capabilities', {}).get('task_type', 'UNKNOWN')}")
+                except Exception as cap_err:
+                    self.log(f"PHASE1: Capability detection error: {str(cap_err)}")
+                    self.results['capabilities'] = {'error': str(cap_err)}
+            else:
+                self.log("PHASE1: CapabilityDetector not available, skipping.")
+                self.results['capabilities'] = {'status': 'SKIPPED', 'reason': 'CapabilityDetector not available'}
+
+            # --- Phase 1 Reliability: Data Quality Analysis ---
+            self.log("PHASE1: Data quality analysis started.")
+            if DataQualityEngine is not None:
+                try:
+                    dq_engine = DataQualityEngine(verbose=False)
+                    dq_result = dq_engine.analyze(df, target_col=target_col)
+                    self.results['data_quality'] = dq_result
+                    dq_status = dq_result.get('findings', {}).get('overall_status', 'UNKNOWN')
+                    self.log(f"PHASE1: Data quality status: {dq_status}")
+                except Exception as dq_err:
+                    self.log(f"PHASE1: Data quality analysis error: {str(dq_err)}")
+                    self.results['data_quality'] = {'error': str(dq_err)}
+            else:
+                self.log("PHASE1: DataQualityEngine not available, skipping.")
+                self.results['data_quality'] = {'status': 'SKIPPED', 'reason': 'DataQualityEngine not available'}
+
+            # --- Phase 1 Reliability: Initialize InvestigationRun ---
+            self.log("PHASE1: Initializing investigation run tracking.")
+            if InvestigationRun is not None:
+                try:
+                    self.investigation_run = InvestigationRun()
+                    self.investigation_run.start(df, target_col=target_col, prediction_col=pred_col)
+                    self.investigation_run.record_schema_validation(self.results.get('schema_validation', {}))
+                    self.investigation_run.record_capabilities(self.results.get('capabilities', {}))
+                    self.investigation_run.record_data_quality(self.results.get('data_quality', {}))
+                    self.log(f"PHASE1: Investigation run initialized with ID: {self.investigation_run.run_id}")
+                except Exception as run_err:
+                    self.log(f"PHASE1: Investigation run initialization error: {str(run_err)}")
+                    self.investigation_run = None
+            else:
+                self.log("PHASE1: InvestigationRun not available, skipping.")
+                self.investigation_run = None
+
             y_raw = df[target_col].values
             
             # --- Data Preparation: Handle Regression vs Classification ---
@@ -629,14 +716,20 @@ class AnalysisRunner:
                 self.results['calibration'] = cal_payload
                 if cal_status == "ok":
                     self.log("ENGINE_COMPLETED: CalibrationEngine audit complete.")
+                # Record in InvestigationRun
+                if self.investigation_run:
+                    self.investigation_run.record_engine_result('calibration', self.results['calibration'])
             else:
                 self.log("Skipping CalibrationEngine (no prediction column provided).")
                 self.results['calibration'] = {
                     "status": "SKIPPED",
-                    "reason": "No prediction column provided",
+                    "skip_reason": "No prediction column provided",
                     "severity": "NONE",
                     "findings": {}
                 }
+                # Record in InvestigationRun
+                if self.investigation_run:
+                    self.investigation_run.record_engine_result('calibration', self.results['calibration'])
             
             if sensitive_col and sensitive_col in df.columns:
                 if self._check_watchdog(df):
@@ -667,14 +760,20 @@ class AnalysisRunner:
                 self.results['fairness'] = fair_payload
                 if fair_status == "ok":
                     self.log(f"ENGINE_COMPLETED: FairnessEngine audit complete.")
+                # Record in InvestigationRun
+                if self.investigation_run:
+                    self.investigation_run.record_engine_result('fairness', self.results['fairness'])
             else:
                 self.log("Skipping FairnessEngine (no sensitive column provided or auto-detected).")
                 self.results['fairness'] = {
                     "status": "SKIPPED",
-                    "reason": "No sensitive column provided or auto-detected",
+                    "skip_reason": "No sensitive column provided or auto-detected",
                     "severity": "NONE",
                     "findings": {}
                 }
+                # Record in InvestigationRun
+                if self.investigation_run:
+                    self.investigation_run.record_engine_result('fairness', self.results['fairness'])
             
             # --- Phase 3: Observability ---
             self.progress = 40
@@ -710,6 +809,9 @@ class AnalysisRunner:
             self.results['drift'] = drift_payload
             if drift_status == "ok":
                 self.log("ENGINE_COMPLETED: DriftEngine feature drift detection complete.")
+            # Record in InvestigationRun
+            if self.investigation_run:
+                self.investigation_run.record_engine_result('drift', self.results['drift'])
 
             # Slice Analysis
             if self._check_watchdog(df):
@@ -736,6 +838,9 @@ class AnalysisRunner:
             self.results['slice'] = slice_payload
             if slice_status == "ok":
                 self.log("ENGINE_COMPLETED: SlicerEngine slice analysis complete.")
+            # Record in InvestigationRun
+            if self.investigation_run:
+                self.investigation_run.record_engine_result('slice', self.results['slice'])
 
             # --- Phase 4: Root Cause Analysis ---
             self.progress = 70
@@ -766,6 +871,9 @@ class AnalysisRunner:
             self.results['label_noise'] = label_payload
             if label_status == "ok":
                 self.log("ENGINE_COMPLETED: LabelNoiseEngine audit complete.")
+            # Record in InvestigationRun
+            if self.investigation_run:
+                self.investigation_run.record_engine_result('label_noise', self.results['label_noise'])
             
             # 2. Leakage
             if self._check_watchdog(df):
@@ -791,6 +899,9 @@ class AnalysisRunner:
             self.results['leakage'] = leak_payload
             if leak_status == "ok":
                 self.log("ENGINE_COMPLETED: LeakageEngine feature leakage scan complete.")
+            # Record in InvestigationRun
+            if self.investigation_run:
+                self.investigation_run.record_engine_result('leakage', self.results['leakage'])
             
             # 3. Missing Data
             if self._check_watchdog(df):
@@ -828,6 +939,9 @@ class AnalysisRunner:
             self.results['missing_data'] = missing_payload
             if missing_status == "ok":
                 self.log("ENGINE_COMPLETED: MissingDataEngine analysis complete.")
+            # Record in InvestigationRun
+            if self.investigation_run:
+                self.investigation_run.record_engine_result('missing_data', self.results['missing_data'])
 
             # 4. Explainability (SHAP) — only runs if the uploaded model
             # produced valid predictions earlier in this run.
@@ -864,14 +978,173 @@ class AnalysisRunner:
                 self.results['explainability'] = exp_payload
                 if exp_status == "ok":
                     self.log("ENGINE_COMPLETED: ExplainabilityEngine SHAP analysis complete.")
+                # Record in InvestigationRun
+                if self.investigation_run:
+                    self.investigation_run.record_engine_result('explainability', self.results['explainability'])
             else:
                 self.log("Skipping ExplainabilityEngine (no uploaded model with valid predictions).")
                 self.results['explainability'] = {
                     "status": "SKIPPED",
-                    "reason": "No uploaded model with valid predictions available",
+                    "skip_reason": "No uploaded model with valid predictions available",
                     "severity": "NONE",
                     "findings": {}
                 }
+                # Record in InvestigationRun
+                if self.investigation_run:
+                    self.investigation_run.record_engine_result('explainability', self.results['explainability'])
+
+            # --- Phase 2: Enhanced Investigation ---
+            self.progress = 75
+            self.status = "running (Phase 2 Enhanced)"
+            self.log("STATUS_UPDATE: Phase 2 Enhanced Investigation started.")
+            
+            # Phase 2: Error Taxonomy
+            if self._check_watchdog(df):
+                return
+            self.log("ENGINE_STARTED: ErrorTaxonomyEngine")
+
+            def _run_error_taxonomy():
+                et_engine = ErrorTaxonomyEngine(verbose=False)
+                task_type = "regression" if is_regression else "classification"
+                return et_engine.run(y_true, (y_proba[:, 1] > 0.5).astype(int), y_proba[:, 1], 
+                                     X.values, X.columns.tolist(), task_type=task_type)
+
+            error_status, error_payload = self._run_with_timeout(
+                "ErrorTaxonomyEngine",
+                30,
+                _run_error_taxonomy,
+                {
+                    "status": "SKIPPED",
+                    "severity": "NONE",
+                    "findings": {},
+                    "summary": "Error taxonomy analysis timed out on this dataset."
+                },
+                "ERROR_TAXONOMY_TIMEOUT"
+            )
+            self.results['error_taxonomy'] = error_payload
+            if error_status == "ok":
+                self.log("ENGINE_COMPLETED: ErrorTaxonomyEngine analysis complete.")
+            # Record in InvestigationRun
+            if self.investigation_run:
+                self.investigation_run.record_engine_result('error_taxonomy', self.results['error_taxonomy'])
+            
+            # Phase 2: Temporal Analysis (if timestamp available)
+            if timestamp_col and timestamp_col in df.columns:
+                if self._check_watchdog(df):
+                    return
+                self.log("ENGINE_STARTED: TemporalAnalysisEngine")
+
+                def _run_temporal_analysis():
+                    ta_engine = TemporalAnalysisEngine(verbose=False)
+                    task_type = "regression" if is_regression else "classification"
+                    return ta_engine.run(y_true, (y_proba[:, 1] > 0.5).astype(int), 
+                                         df[timestamp_col], y_proba[:, 1], task_type=task_type)
+
+                temporal_status, temporal_payload = self._run_with_timeout(
+                    "TemporalAnalysisEngine",
+                    30,
+                    _run_temporal_analysis,
+                    {
+                        "status": "SKIPPED",
+                        "severity": "NONE",
+                        "findings": {},
+                        "summary": "Temporal analysis timed out on this dataset."
+                    },
+                    "TEMPORAL_ANALYSIS_TIMEOUT"
+                )
+                self.results['temporal_analysis'] = temporal_payload
+                if temporal_status == "ok":
+                    self.log("ENGINE_COMPLETED: TemporalAnalysisEngine analysis complete.")
+                # Record in InvestigationRun
+                if self.investigation_run:
+                    self.investigation_run.record_engine_result('temporal_analysis', self.results['temporal_analysis'])
+            else:
+                self.log("Skipping TemporalAnalysisEngine (no timestamp column provided).")
+                self.results['temporal_analysis'] = {
+                    "status": "SKIPPED",
+                    "skip_reason": "No timestamp column provided",
+                    "severity": "NONE",
+                    "findings": {}
+                }
+                # Record in InvestigationRun
+                if self.investigation_run:
+                    self.investigation_run.record_engine_result('temporal_analysis', self.results['temporal_analysis'])
+            
+            # Phase 2: Threshold Simulator (for classification with probabilities)
+            if not is_regression and y_proba is not None:
+                if self._check_watchdog(df):
+                    return
+                self.log("ENGINE_STARTED: ThresholdSimulatorEngine")
+
+                def _run_threshold_simulator():
+                    ts_engine = ThresholdSimulatorEngine(verbose=False)
+                    return ts_engine.run(y_true, y_proba[:, 1])
+
+                threshold_status, threshold_payload = self._run_with_timeout(
+                    "ThresholdSimulatorEngine",
+                    30,
+                    _run_threshold_simulator,
+                    {
+                        "status": "SKIPPED",
+                        "severity": "NONE",
+                        "findings": {},
+                        "summary": "Threshold simulation timed out on this dataset."
+                    },
+                    "THRESHOLD_SIMULATOR_TIMEOUT"
+                )
+                self.results['threshold_simulation'] = threshold_payload
+                if threshold_status == "ok":
+                    self.log("ENGINE_COMPLETED: ThresholdSimulatorEngine analysis complete.")
+                # Record in InvestigationRun
+                if self.investigation_run:
+                    self.investigation_run.record_engine_result('threshold_simulation', self.results['threshold_simulation'])
+            else:
+                self.log("Skipping ThresholdSimulatorEngine (regression task or no probabilities).")
+                self.results['threshold_simulation'] = {
+                    "status": "SKIPPED",
+                    "skip_reason": "Threshold simulation requires classification with probabilities",
+                    "severity": "NONE",
+                    "findings": {}
+                }
+                # Record in InvestigationRun
+                if self.investigation_run:
+                    self.investigation_run.record_engine_result('threshold_simulation', self.results['threshold_simulation'])
+
+            # --- Phase 2: Model Comparison ---
+            self.progress = 78
+            self.status = "running (Model Comparison)"
+            self.log("STATUS_UPDATE: Model Comparison started.")
+            
+            # Model comparison requires multiple model evaluation reports
+            # Check if model_reports parameter is provided
+            model_reports = kwargs.get('model_reports', None)
+            
+            if self._check_watchdog(df):
+                return
+            self.log("ENGINE_STARTED: ModelComparisonEngine")
+
+            def _run_model_comparison():
+                mc_engine = ModelComparisonEngine(verbose=False)
+                return mc_engine.run(model_reports=model_reports)
+
+            model_comp_status, model_comp_payload = self._run_with_timeout(
+                "ModelComparisonEngine",
+                30,
+                _run_model_comparison,
+                {
+                    "status": "SKIPPED",
+                    "severity": "NONE",
+                    "findings": {},
+                    "summary": "Model comparison timed out on this dataset."
+                },
+                "MODEL_COMPARISON_TIMEOUT"
+            )
+            self.results['model_comparison'] = model_comp_payload
+            if model_comp_status == "ok":
+                self.log("ENGINE_COMPLETED: ModelComparisonEngine analysis complete.")
+            # Record in InvestigationRun
+            if self.investigation_run:
+                self.investigation_run.record_engine_result('model_comparison', self.results['model_comparison'])
 
             # --- Auto Root Cause Analysis ---
             self.progress = 80
@@ -925,6 +1198,10 @@ class AnalysisRunner:
                     )
             except Exception:
                 pass
+
+            # Record in InvestigationRun
+            if self.investigation_run:
+                self.investigation_run.record_engine_result('root_cause', self.results['root_cause'])
 
             if root_status in ("ok", "timeout", "error"):
                 self.log("ENGINE_COMPLETED: AutoRootCauseEngine analysis complete.")
@@ -1076,6 +1353,9 @@ class AnalysisRunner:
                 self.results.update(ai_payload)
             if ai_status == "ok":
                 self.log("ENGINE_COMPLETED: AIInvestigator analysis complete.")
+            # Record in InvestigationRun
+            if self.investigation_run:
+                self.investigation_run.record_engine_result('ai_investigator', {'status': 'SUCCESS' if ai_status == 'ok' else 'FAILED', 'findings': ai_payload})
             
             # --- Audience Translation ---
             self.progress = 90
@@ -1107,6 +1387,18 @@ class AnalysisRunner:
             self.results['audience_reports'] = audience_payload
             if audience_status == "ok":
                 self.log("ENGINE_COMPLETED: AudienceTranslator analysis complete.")
+            # Record in InvestigationRun
+            if self.investigation_run:
+                self.investigation_run.record_engine_result('audience_reports', self.results['audience_reports'])
+
+            # --- Phase 1 Reliability: Complete InvestigationRun ---
+            if self.investigation_run:
+                try:
+                    self.investigation_run.complete()
+                    self.log(f"PHASE1: Investigation run completed with status: {self.investigation_run.status}")
+                    self.results['investigation_run'] = self.investigation_run.to_dict()
+                except Exception as run_err:
+                    self.log(f"PHASE1: Investigation run completion error: {str(run_err)}")
 
             # --- Save Results ---
             self._write_report(df=df)
