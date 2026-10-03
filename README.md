@@ -66,7 +66,9 @@ Machine learning models in production inevitably degrade over time due to data d
 ## 🏗️ Architecture
 
 ```
+
 <img width="1233" height="1275" alt="11903b8a-3912-4207-af5e-078ced28c1b9" src="https://github.com/user-attachments/assets/b2b50e86-6435-4f63-b010-966c93eb6d01" />
+<br><br>
 
 ```
 
