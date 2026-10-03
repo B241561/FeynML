@@ -65,12 +65,10 @@ Machine learning models in production inevitably degrade over time due to data d
 
 ## 🏗️ Architecture
 
-```
 <img width="1233" height="1275" alt="Multi-Layer ML Failure Analysis Architecture" src="https://github.com/user-attachments/assets/022d277f-8a5e-4fac-b101-97eb4957b6b6" />
 
 <br><br>
 
-```
 
 ---
 
